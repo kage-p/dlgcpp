@@ -1,194 +1,322 @@
-#include "control.h"
+#include "control_p.h"
 #include "utility.h"
 #include "dialog.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h>
-//#include <CommDlg.h>
-//#include <ShellAPI.h>
-//#include <ShlObj.h>
 
 using namespace dlgcpp;
 
-Control::Control(const std::string& className,
-                 IDialog& parent) :
+
+Control::Control(std::shared_ptr<IDialog> parent) :
+    _props(new ctl_props()),
+    _state(new ctl_state()),
     _parent(parent)
 {
-    _props._className = className;
-    _props._p._cx = 0;
-    _props._p._cy = 0;
+    _props->_p._cx = 0;
+    _props->_p._cy = 0;
+    _state->hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
-    _rebuild();
+    // TODO: translate and store system font
+    //auto lfw = LOGFONTW();
+    //GetObject(_state->_font, sizeof(LOGFONTW), &lfw);
+    //_props->font = Font{};
 }
 
 Control::~Control()
 {
-    _dump();
+    dump();
+
+    if (_state->hFont != nullptr)
+        DeleteObject(_state->hFont);
+    if (_state->hbrBack != NULL)
+        DeleteObject(_state->hbrBack);
+
+    delete _props;
+    delete _state;
+}
+
+std::shared_ptr<Control> Control::shared_ptr()
+{
+    try
+    {
+        return shared_from_this();
+    }
+    catch (const std::exception&)
+    {
+        return nullptr;
+    }
 }
 
 int Control::id() const
 {
-    return _props._id;
+    return _props->_id;
 }
 
 void Control::id(int value)
 {
-    _props._id = value;
-    _rebuild();
+    _props->_id = value;
+    rebuild();
 }
+
+std::shared_ptr<IControl> Control::control()
+{
+    return shared_from_this();
+}
+
+ctl_state Control::state()
+{
+    return *_state;
+}
+
+bool Control::enabled() const
+{
+    return _props->_enabled;
+}
+
+void Control::enabled(bool value)
+{
+    if (_props->_enabled == value)
+        return;
+    _props->_enabled = value;
+    if (_state->_hwnd == NULL)
+        return;
+
+    EnableWindow(_state->_hwnd, _props->_enabled);
+}
+
 
 bool Control::visible() const
 {
-    return _props._visible;
+    return _props->_visible;
 }
 
 void Control::visible(bool value)
 {
-    _props._visible = value;
+    _props->_visible = value;
 
-    if (_props._hwnd == NULL)
+    if (_state->_hwnd == NULL)
         return;
 
-    auto hwnd = reinterpret_cast<HWND>(_props._hwnd);
-
-    ShowWindow(hwnd,
-               _props._visible ? SW_SHOW : SW_HIDE);
+    ShowWindow(_state->_hwnd,
+               _props->_visible ? SW_SHOW : SW_HIDE);
 }
 
 const Position& Control::p() const
 {
-    return _props._p;
+    //if (_state->_hwnd == NULL)
+        return _props->_p;
+
+    // auto hwndParent = reinterpret_cast<HWND>(_parent->handle());
+
+    // auto rc = RECT();
+    // GetWindowRect(_state->_hwnd, &rc);
+    // MapWindowPoints(HWND_DESKTOP, hwndParent, (LPPOINT)&rc, 2);
+    // MapDialogRect(hwndParent, &rc);
+
+    // return Position{rc.left,rc.top,rc.right-rc.left,rc.bottom-rc.top};
 }
 
 void Control::p(const Position& p)
 {
-    _props._p = p;
+    _props->_p = p;
 
-    if (_props._hwnd == NULL)
+    if (_state->_hwnd == NULL)
         return;
 
-    auto hwnd = reinterpret_cast<HWND>(_props._hwnd);
+    auto hwndParent = reinterpret_cast<HWND>(_parent->handle());
 
     // Convert units to pixels
     auto rc = RECT();
     SetRect(&rc, p._x, p._y, p._cx, p._cy);
-    MapDialogRect(hwnd, &rc);
+    MapDialogRect(hwndParent, &rc);
 
-    bool redraw = true;
-    SetWindowPos(hwnd, 0, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | (redraw ? 0 : SWP_NOREDRAW) );
+    SetWindowPos(_state->_hwnd, 0, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER);
 }
 
 const std::string& Control::text() const
 {
-    return _props._text;
+    return _props->_text;
 }
 
 void Control::text(const std::string& value)
 {
-    _props._text = value;
-    if (_props._hwnd == NULL)
+    if (_props->_text == value)
+        return;
+    _props->_text = value;
+    if (_state->_hwnd == NULL)
         return;
 
-    auto hwnd = reinterpret_cast<HWND>(_props._hwnd);
-    SetWindowTextW(hwnd,
-                   toWide(_props._text).c_str());
+    SetWindowTextW(_state->_hwnd,
+                   toWide(_props->_text).c_str());
 }
 
-bool Control::tabbable() const
+std::pair<Color, Color> Control::colors() const
 {
-    return _props._tabbable;
+    return std::make_pair(_props->_fgColor, _props->_bgColor);
 }
 
-void Control::tabbable(bool value)
+void Control::colors(Color fgColor, Color bgColor)
 {
-    _props._tabbable = value;
-    _rebuild();
+    _props->_fgColor = fgColor;
+    _props->_bgColor = bgColor;
+
+    if (_state->hbrBack != NULL)
+    {
+        DeleteObject(_state->hbrBack);
+        _state->hbrBack = NULL;
+    }
+
+    if (bgColor != Color::None && bgColor != Color::Default)
+        _state->hbrBack = CreateSolidBrush((COLORREF)bgColor);
+    redraw();
 }
 
-void* Control::handle()
+Cursor Control::cursor() const
 {
-    return _props._hwnd;
+    return _props->_cursor;
 }
 
-IDialog& Control::parent()
+void Control::cursor(Cursor value)
+{
+    _props->_cursor = value;
+}
+
+const Font& Control::font() const
+{
+    return _props->_font;
+}
+
+void Control::font(const Font& value)
+{
+    _props->_font = value;
+
+    if (_state->hFont != NULL)
+        DeleteObject(_state->hFont);
+
+    if (!_props->_font.faceName.empty())
+        _state->hFont = makeFont(_props->_font);
+    else
+        _state->hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+
+    if (_state->_hwnd == NULL)
+        return;
+
+    SendMessage(_state->_hwnd, WM_SETFONT, (WPARAM)_state->hFont, TRUE);
+}
+
+void* Control::handle() const
+{
+    return _state->_hwnd;
+}
+
+void* Control::user() const
+{
+    return _props->_user;
+}
+
+void Control::user(void* value)
+{
+    _props->_user = value;
+}
+
+std::shared_ptr<IDialog> Control::parent()
 {
     return _parent;
 }
 
-long long Control::sendMsg(unsigned int msg, long long wParam, long long lParam)
+long long Control::sendMsg(UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    auto hwnd = reinterpret_cast<HWND>(_props._hwnd);
-    return SendMessage(hwnd, msg, wParam, lParam);
+    if (_state->_hwnd == NULL)
+        return 0;
+    return SendMessage(_state->_hwnd, msg, wParam, lParam);
 }
 
-void Control::rebuild()
+std::string Control::className() const
 {
-    _rebuild();
+    return "STATIC";
 }
 
-unsigned int Control::exStyles()
+unsigned int Control::styles() const
+{
+    unsigned int styles = WS_CHILD | WS_TABSTOP | WS_CLIPSIBLINGS;
+    if (_props->_visible)
+        styles |= WS_VISIBLE;
+    if (!_props->_enabled)
+        styles |= WS_DISABLED;
+    return styles;
+}
+
+unsigned int Control::exStyles() const
 {
     return 0;
 }
 
-unsigned int Control::styles()
+void Control::redraw()
 {
-    unsigned int styles = WS_CHILD;
-    if (_props._visible)
-        styles |= WS_VISIBLE;
-    if (_props._tabbable)
-        styles |= WS_TABSTOP;
-    return styles;
+    if (_state->_hwnd == NULL)
+        return;
+
+    RedrawWindow(_state->_hwnd, NULL, 0, RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
-void Control::_rebuild()
+void Control::setFocus()
 {
-    _dump();
+    if (_state->_hwnd == NULL)
+        return;
+
+    SetFocus(_state->_hwnd);
+}
+
+void Control::rebuild()
+{
+    dump();
 
     // safety checks
-    if (_props._id < 1)
+    if (_props->_id < 1)
         return;
-    if (_props._className.empty())
-        return;
-    HWND hwndParent = reinterpret_cast<HWND>(_parent.handle());
+
+    HWND hwndParent = reinterpret_cast<HWND>(_parent->handle());
     if (hwndParent == NULL)
         return;
 
     auto rc = RECT();
     SetRect(&rc,
-            _props._p._x,
-            _props._p._y,
-            _props._p._cx,
-            _props._p._cy);
+            _props->_p._x,
+            _props->_p._y,
+            _props->_p._cx,
+            _props->_p._cy);
     MapDialogRect(hwndParent, &rc);
 
     auto hwnd = CreateWindowExW(exStyles(),
-                                toWide(_props._className).c_str(),
-                                toWide(_props._text).c_str(),
+                                toWide(className()).c_str(),
+                                toWide(_props->_text).c_str(),
                                 styles(),
                                 rc.left,
                                 rc.top,
                                 rc.right,
                                 rc.bottom,
                                 hwndParent,
-                                (HMENU)(UINT_PTR)_props._id,
+                                (HMENU)(UINT_PTR)_props->_id,
                                 GetModuleHandle(NULL), NULL);
     if (hwnd == NULL)
         return;
 
-    //if (pDlgData->hFont) hFont = pDlgData->hFont; else
-    HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
-
-    SendMessage(hwnd, WM_SETFONT, (WPARAM)hFont, FALSE);
-    _props._hwnd = hwnd;
+    SendMessage(hwnd, WM_SETFONT, (WPARAM)_state->hFont, FALSE);
+    _state->_hwnd = hwnd;
 }
 
-void Control::_dump()
+void Control::dump()
 {
-    if (_props._hwnd == NULL)
+    if (_state->_hwnd == NULL)
         return;
 
-    DestroyWindow(reinterpret_cast<HWND>(_props._hwnd));
-    _props._hwnd = nullptr;
+    DestroyWindow(_state->_hwnd);
+    _state->_hwnd = nullptr;
+}
+
+IEvent& Control::CommandEvent()
+{
+    return _commandEvent;
 }

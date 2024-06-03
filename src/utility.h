@@ -1,16 +1,22 @@
 #pragma once
 
+#include "defs.h"
 #include <string>
+
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 
 namespace dlgcpp
 {
-    typedef struct Position
-    {
-        int _x = 0;
-        int _y = 0;
-        int _cx = 0;
-        int _cy = 0;
-    } Position;
-
+    // utf8 to utf16
     extern std::wstring toWide(const std::string& text);
+    // utf16 to utf8
+    extern std::string toBytes(const wchar_t* str);
+    // units to pixels;
+    extern Position toPixels(HWND hwnd, const Position& p, bool menu = false);
+    // pixels to units
+    extern Position toUnits(HWND hwnd, const Position& p);
+    // font from string
+    extern HFONT makeFont(const Font& font);
 }

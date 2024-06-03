@@ -12,10 +12,19 @@
 
 #pragma once
 
-#include "dialog.h"
+#include "defs.h"
 #include "control.h"
+#include "dialog.h"
 
-namespace dlgcpp
-{
+#include "controls/button.h"
+#include "controls/custom.h"
+#include "controls/image.h"
+#include "controls/label.h"
+#include "controls/listbox.h"
+#include "controls/slider.h"
+#include "controls/textbox.h"
 
-}
+#include "dialogs/about.h"
+#include "dialogs/file.h"
+#include "dialogs/folder.h"
+#include "dialogs/splash.h"

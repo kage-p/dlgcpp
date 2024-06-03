@@ -2,26 +2,61 @@
 #include "demo.h"
 
 using namespace dlgcpp;
+using namespace dlgcpp::controls;
 
-DemoDialog::DemoDialog()
+DemoDialog::DemoDialog() : Dialog()
 {
     title("DLGCPP Demo Application");
 }
 
 DemoDialog::~DemoDialog()
 {
-
 }
 
 int main()
 {
-    DemoDialog dialog;
+    auto dlg = std::make_shared<DemoDialog>();
+    dlg->resize(355,150);
+    dlg->center();
 
-    auto label = dialog.label("Label", {10, 10, 80, 22});
-    auto textbox = dialog.textBox("Text", {95, 10, 150, 22});
-    auto button = dialog.button("OK", {10,35,80,25});
+    auto label = std::make_shared<Label>(dlg, "Label:", Position{10, 10, 50, 15});
+    dlg->add(label);
 
+    auto textbox = std::make_shared<TextBox>(dlg, "Text Entry", Position{65, 10, 120, 15});
+    textbox->colors(Color::Blue, Color::Orange);
+    dlg->add(textbox);
 
-    dialog.exec();
+    auto button1 = std::make_shared<Button>(dlg, "Add", Position{190,10,50,15});
+    button1->CommandEvent() += [textbox]()
+    {
+        auto text = textbox->text();
+        textbox->text(text + "X");
+    };
+    dlg->add(button1);
+
+    auto button2 = std::make_shared<Button>(dlg, "Remove", Position{245,10,50,15});
+    button2->CommandEvent() += [textbox]()
+    {
+        auto text = textbox->text();
+        textbox->text(text.substr(0,text.size()-1));
+    };
+    dlg->add(button2);
+
+    auto button3 = std::make_shared<Button>(dlg, "Info", Position{300,10,50,15});
+    button3->CommandEvent() += [dlg]()
+    {
+        dlg->message("DLGCPP Demo App!");
+    };
+    dlg->add(button3);
+
+    dlg->ClickEvent() += [dlg]()
+    {
+        if (dlg->color() == Color::Default)
+            dlg->color(Color::Magenta);
+        else
+            dlg->color(Color::Default);
+    };
+
+    dlg->exec();
     return 0;
 }
