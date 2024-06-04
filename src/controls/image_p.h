@@ -12,7 +12,7 @@ namespace dlgcpp
     {
         struct img_props
         {
-            std::string imageId;
+            ImageSource image;
             bool autoSize = false;
         };
 

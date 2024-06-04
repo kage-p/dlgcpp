@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <vector>
 
 namespace dlgcpp
 {
@@ -18,20 +19,9 @@ namespace dlgcpp
     class Event : public IEvent
     {
     public:
-
         //Event& operator+=(std::function<T> fn) override
-        Event& operator+=(std::function<void(void)> fn) override
-        {
-            _listeners.push_back(fn);
-            return *this; // return new value by reference
-        }
-
-        //void invoke(T)
-        void invoke() override
-        {
-            for (auto& f : _listeners)
-                f();
-        }
+        Event& operator+=(std::function<void(void)> fn) override;
+        void invoke() override;
 
     private:
         //std::vector<std::function<T>> _listeners;

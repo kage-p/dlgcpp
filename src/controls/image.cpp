@@ -1,6 +1,7 @@
 #include "image_p.h"
 #include "../utility.h"
 
+using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Image::Image(std::shared_ptr<IDialog> parent, const Position& p) :
@@ -28,14 +29,14 @@ void Image::autoSize(bool value)
     updateImage();
 }
 
-const std::string& Image::imageId() const
+const ImageSource& Image::image() const
 {
-    return _props->imageId;
+    return _props->image;
 }
 
-void Image::imageId(const std::string& image)
+void Image::image(const ImageSource& image)
 {
-    _props->imageId = image;
+    _props->image = image;
     updateImage();
 }
 
@@ -76,9 +77,9 @@ void Image::updateImage()
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    if (_props->imageId.empty())
+    if (_props->image.id.empty())
     {
-        sendMsg(STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
+        SendMessage(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
         return;
     }
 
@@ -90,11 +91,17 @@ void Image::updateImage()
     }
 
     auto hInstRes = GetModuleHandle(NULL);
-    _state->hImage = LoadImage(hInstRes, _props->imageId.c_str(), IMAGE_BITMAP, rc.right, rc.bottom, 0);
+    auto imageType = (_props->image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
+    _state->hImage = LoadImage(hInstRes,
+                               _props->image.id.c_str(),
+                               imageType,
+                               rc.right,
+                               rc.bottom,
+                               (_props->image.isFile ? LR_LOADFROMFILE : 0));
     if (_state->hImage == NULL)
         return;
 
-    sendMsg(STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)_state->hImage);
+    SendMessage(hwnd, STM_SETIMAGE, (WPARAM)imageType, (LPARAM)_state->hImage);
 
     if (_props->autoSize)
     {

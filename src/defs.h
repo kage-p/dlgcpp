@@ -83,4 +83,13 @@ namespace dlgcpp
         Text,
         Unavailable
     };
+
+    struct ImageSource
+    {
+        std::string id;
+        // image is an icon, else a bitmap
+        bool isIcon = false;
+        // id is a file, else a resource
+        bool isFile = false;
+    };
 }

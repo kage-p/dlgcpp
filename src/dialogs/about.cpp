@@ -1,4 +1,4 @@
-#include "about.h"
+#include "about_p.h"
 #include "../utility.h"
 #include <shellapi.h>
 
@@ -6,158 +6,172 @@ using namespace dlgcpp;
 using namespace dlgcpp::controls;
 using namespace dlgcpp::dialogs;
 
-AboutDialog::AboutDialog(std::shared_ptr<IDialog> parent)
-    : _parent(parent)
-{     
+AboutDialog::AboutDialog(std::shared_ptr<IDialog> parent) :
+    _props(new about_props())
+{
+    _props->parent = parent;
+}
+
+AboutDialog::~AboutDialog()
+{
+    delete _props;
 }
 
 const std::string& AboutDialog::title() const
 {
-    return _titleText;
+    return _props->titleText;
 }
 
 void AboutDialog::title(const std::string& value)
 {
-    _titleText = value;
+    _props->titleText = value;
 }
 
 const std::string& AboutDialog::appDetails() const
 {
-    return _appDetailsText;
+    return _props->appDetailsText;
 }
 
 void AboutDialog::appDetails(const std::string& value)
 {
-    _appDetailsText = value;
+    _props->appDetailsText = value;
 }
 
 const std::string& AboutDialog::description() const
 {
-    return _descriptionText;
+    return _props->descriptionText;
 }
 
 void AboutDialog::description(const std::string& value)
 {
-    _descriptionText = value;
+    _props->descriptionText = value;
 }
 
 const std::string& AboutDialog::homePageLink() const
 {
-    return _homePageLink;
+    return _props->homePageLink;
 }
 
 void AboutDialog::homePageLink(const std::string& value)
 {
-    _homePageLink = value;
+    _props->homePageLink = value;
 }
 
 const std::string& AboutDialog::releaseDate() const
 {
-    return _releaseDateText;
+    return _props->releaseDateText;
 }
 
 void AboutDialog::releaseDate(const std::string& value)
 {
-    _releaseDateText = value;
+    _props->releaseDateText = value;
 }
 
 const std::string& AboutDialog::logoBitmapId() const
 {
-    return _logoBitmapId;
+    return _props->logoBitmapId;
 }
 
 void AboutDialog::logoBitmapId(const std::string& value)
 {
-    _logoBitmapId = value;
+    _props->logoBitmapId = value;
 }
 
+const std::string& AboutDialog::logoIconId() const
+{
+    return _props->logoIconId;
+}
+
+void AboutDialog::logoIconId(const std::string& value)
+{
+    _props->logoIconId = value;
+}
 
 void AboutDialog::show()
 {
-    auto dlg = std::make_shared<Dialog>(_parent);
-    dlg->title(_titleText);
+    auto dlg = std::make_shared<Dialog>(_props->parent);
+    dlg->title(_props->titleText);
 
     // TODO: split into createInterface
-    auto hwnd = reinterpret_cast<HWND>(dlg->handle());
-
-    int lw = 0;
 
     // Add image height
-    int cyBmp = 0;
-    if (!_logoBitmapId.empty())
-        cyBmp = 50+15;
+    int cxLogoOffset = 0;
+    int cyLogoOffset = 0;
+    if (!_props->logoBitmapId.empty())
+        cyLogoOffset = 50+15;
 
     dlg->type(DialogType::Popup);
-    dlg->resize(310, 130 + cyBmp);
+    dlg->resize(310, 130 + cyLogoOffset);
     dlg->center();
 
-    if (!_logoBitmapId.empty())
+    if (!_props->logoBitmapId.empty())
     {
         // Use bitmap...
-        _logoImage = std::make_shared<Image>(dlg, Position{7, 7, 295, 65});
-        _logoImage->colors(Color::Black, Color::White);
-        _logoImage->imageId(_logoBitmapId);
-        dlg->add(_logoImage);
+        auto logoImage = std::make_shared<Image>(dlg, Position{7, 7, 295, 65});
+        logoImage->colors(Color::Black, Color::White);
+        logoImage->image(ImageSource{_props->logoBitmapId, false, false});
+        dlg->add(logoImage);
+    }
+    else if (!_props->logoIconId.empty())
+    {
+        // use application icon as alternativve
+        auto iconImage = std::make_shared<Image>(dlg, Position{7, 13, 5, 5});
+        iconImage->image(ImageSource{_props->logoIconId, true, false});
+        dlg->add(iconImage);
+        cxLogoOffset = iconImage->p()._x + iconImage->p()._cx;
     }
 
-    //if (lw)
-    //{
-    //   // Use icon...
-    //   dlgImage(hDlg, IDC_ABOUT_ICO, NULL, 7, 13+cyBmp, 5, 5, WS_CHILD | WS_VISIBLE | SS_ICON, 0);
-    //   dlgSend(hDlg, IDC_ABOUT_ICO, STM_SETICON, (WPARAM)hIconLogo, 0);
-    //}
+    auto appDetails = std::make_shared<Label>(dlg, _props->appDetailsText, Position{7, 15+cyLogoOffset, 295, 10});
+    appDetails->font(Font{"sans serif", 8, true});
+    dlg->add(appDetails);
 
-    _appDetails = std::make_shared<Label>(dlg, _appDetailsText, Position{7+lw, 15+cyBmp, 295-lw, 10});
-    _appDetails->font(Font{"sans serif", 8, true});
-    dlg->add(_appDetails);
-
-    if (!_releaseDateText.empty())
+    if (!_props->releaseDateText.empty())
     {
-        _releaseInfo = std::make_shared<Label>(dlg, _releaseDateText, Position{7+lw, 26+cyBmp, 295-lw, 10});
-        dlg->add(_releaseInfo);
+        auto releaseInfo = std::make_shared<Label>(dlg, _props->releaseDateText, Position{7+cxLogoOffset, 26+cyLogoOffset, 295-cxLogoOffset, 10});
+        dlg->add(releaseInfo);
     }
 
-    if (!_homePageLink.empty())
+    if (!_props->homePageLink.empty())
     {
-        _webLink = std::make_shared<Label>(dlg, _homePageLink, Position{7+lw, 36+cyBmp, 150, 12});
-        _webLink->colors(Color::Blue, Color::None);
-        _webLink->cursor(Cursor::Hand);
-        _webLink->font(Font{"MS Sans Serif", 8, false, true});
-        _webLink->autoSize(true);
-        _webLink->CommandEvent() +=
+        auto webLink = std::make_shared<Label>(dlg, _props->homePageLink, Position{7+cxLogoOffset, 36+cyLogoOffset, 150, 12});
+        webLink->colors(Color::Blue, Color::None);
+        webLink->cursor(Cursor::Hand);
+        webLink->font(Font{"MS Sans Serif", 8, false, true});
+        webLink->autoSize(true);
+        webLink->CommandEvent() +=
             [this,dlg]()
         {
             auto hwnd = reinterpret_cast<HWND>(dlg->handle());
-            ShellExecuteW(hwnd, L"open", toWide(_homePageLink).c_str(), NULL, NULL, SW_SHOWNORMAL);
+            ShellExecuteW(hwnd, L"open", toWide(_props->homePageLink).c_str(), NULL, NULL, SW_SHOWNORMAL);
         };
-        dlg->add(_webLink);
+        dlg->add(webLink);
     }
 
-    _description = std::make_shared<TextBox>(dlg, _descriptionText, Position{7, 49+cyBmp, 295, 50});
-    _description->readOnly(true);
-    _description->multiline(true);
-    _description->wrapText(true);
-    dlg->add(_description);
+    auto description = std::make_shared<TextBox>(dlg, _props->descriptionText, Position{7, 49+cyLogoOffset, 295, 50});
+    description->readOnly(true);
+    description->multiline(true);
+    description->wrapText(true);
+    dlg->add(description);
 
-    _sysInfoButton = std::make_shared<Button>(dlg, "&System Info...", Position{167, 104+cyBmp, 65, 20});
-    dlg->add(_sysInfoButton);
-    _sysInfoButton->CommandEvent() +=
+    auto sysInfoButton = std::make_shared<Button>(dlg, "&System Info...", Position{167, 104+cyLogoOffset, 65, 20});
+    sysInfoButton->CommandEvent() +=
         [dlg]()
     {
-            auto hwnd = reinterpret_cast<HWND>(dlg->handle());
-            ShellExecuteW(hwnd, L"open", L"MSINFO32.EXE", NULL, NULL, SW_SHOWNORMAL);
+        auto hwnd = reinterpret_cast<HWND>(dlg->handle());
+        ShellExecuteW(hwnd, L"open", L"MSINFO32.EXE", NULL, NULL, SW_SHOWNORMAL);
     };
+    dlg->add(sysInfoButton);
 
-    _closeButton = std::make_shared<Button>(dlg, "Close", Position{237, 104+cyBmp, 65, 20});
-    dlg->add(_closeButton);
-    _closeButton->CommandEvent() +=
+    auto closeButton = std::make_shared<Button>(dlg, "Close", Position{237, 104+cyLogoOffset, 65, 20});
+    closeButton->CommandEvent() +=
         [dlg]()
     {
         dlg->close();
     };
+    dlg->add(closeButton);
 
     dlg->visible(true);
-    _closeButton->setFocus();
+    closeButton->setFocus();
 
     dlg->exec();
     dlg.reset();

@@ -38,21 +38,22 @@ int main()
     button2->CommandEvent() += [textbox]()
     {
         auto text = textbox->text();
-        textbox->text(text.substr(0,text.size()-1));
+        text.pop_back();
+        textbox->text(text);
     };
     dlg->add(button2);
 
     auto button3 = std::make_shared<Button>(dlg, "Info", Position{300,10,50,15});
     button3->CommandEvent() += [dlg]()
     {
-        dlg->message("DLGCPP Demo App!");
+        dlg->message("Welcome to DLGCPP Demo App!", "DLGCPP Demo");
     };
     dlg->add(button3);
 
     dlg->ClickEvent() += [dlg]()
     {
         if (dlg->color() == Color::Default)
-            dlg->color(Color::Magenta);
+            dlg->color(Color::White);
         else
             dlg->color(Color::Default);
     };

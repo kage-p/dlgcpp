@@ -13,8 +13,8 @@ namespace dlgcpp
 
             bool autoSize() const;
             void autoSize(bool value);
-            const std::string& imageId() const;
-            void imageId(const std::string& image);
+            const ImageSource& image() const;
+            void image(const ImageSource& image);
 
         private:
             struct img_props* _props;

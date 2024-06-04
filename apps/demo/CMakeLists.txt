@@ -12,7 +12,6 @@ set(sources
 
 add_executable(${target} WIN32 ${sources} ${headers})
 
-#target_link_libraries(${target} comctl32.lib mpr.lib shlwapi.lib version.lib Ws2_32.lib)
 target_link_libraries(${target} libdlgcpp)
 
 target_include_directories(${target} PRIVATE "$<TARGET_PROPERTY:libdlgcpp,SOURCE_DIR>")

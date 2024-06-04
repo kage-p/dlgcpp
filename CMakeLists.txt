@@ -9,7 +9,7 @@ project(DLGCPP
     LANGUAGES CXX
 )
 
-option(DLGCPP_DEMO "Build DLGCPP Demo" OFF)
+option(DLGCPP_DEMO "Build DLGCPP Demo" ON)
 
 # ----- subprojects
 

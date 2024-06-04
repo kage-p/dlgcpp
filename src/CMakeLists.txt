@@ -28,6 +28,10 @@ set(headers
     dialogs/file.h
     dialogs/folder.h
     dialogs/splash.h
+    dialogs/about_p.h
+    dialogs/file_p.h
+    dialogs/folder_p.h
+    dialogs/splash_p.h
 )
 
 set(sources    

@@ -27,6 +27,7 @@ namespace dlgcpp
         {
         public:
             explicit FileDialog(std::shared_ptr<IDialog> parent = nullptr);
+            virtual ~FileDialog();
 
             // IFileDialog impl.
             const std::string& fileName() const override;
@@ -40,12 +41,7 @@ namespace dlgcpp
             bool save() override;
 
         private:
-            std::shared_ptr<IDialog> _parent;
-            std::string _fileName;
-            std::string _filters;
-            std::string _title;
-            int _filterIndex = 0;
-            int _extErr = 0;
+            struct file_props* _props;
 
             bool show(bool isSaveFile, unsigned int flags, const std::string& defaultTitle);
         };

@@ -25,6 +25,7 @@ namespace dlgcpp
         {
         public:
             explicit SplashDialog(std::shared_ptr<IDialog> parent = nullptr);
+            virtual ~SplashDialog();
 
             // ISplashDialog impl.
             const std::string& logoBitmapId() const override;
@@ -37,15 +38,7 @@ namespace dlgcpp
             void close() override;
 
         private:
-            struct
-            {
-                std::string logoBitmapId;
-                std::string message;
-                int timeout = 800;
-            } _props;
-
-            std::shared_ptr<IDialog> _parent;
-            std::shared_ptr<Dialog> _splashDialog;
+            struct splash_props* _props;
         };
     }
 }

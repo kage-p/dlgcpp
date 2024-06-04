@@ -1,48 +1,54 @@
-#include "file.h"
+#include "file_p.h"
 #include "../utility.h"
 #include <CommDlg.h>
 
 using namespace dlgcpp::dialogs;
 
 FileDialog::FileDialog(std::shared_ptr<IDialog> parent)
-    : _parent(parent)
+    : _props(new file_props())
 {
+    _props->parent = parent;
+}
+
+FileDialog::~FileDialog()
+{
+    delete _props;
 }
 
 const std::string& FileDialog::fileName() const
 {
-    return _fileName;
+    return _props->fileName;
 }
 
 void FileDialog::fileName(const std::string& value)
 {
-    _fileName = value;
+    _props->fileName = value;
 }
 
 const std::string& FileDialog::filters() const
 {
-    return _filters;
+    return _props->filters;
 }
 
 void FileDialog::filters(const std::string& value)
 {
-    _filters = value;
+    _props->filters = value;
 }
 
 const std::string& FileDialog::title() const
 {
-    return _title;
+    return _props->title;
 }
 
 void FileDialog::title(const std::string& value)
 {
-    _title = value;
+    _props->title = value;
 }
 
 bool FileDialog::create()
 {
     unsigned int flags = OFN_EXPLORER | OFN_ENABLESIZING | OFN_PATHMUSTEXIST | OFN_CREATEPROMPT | OFN_HIDEREADONLY | OFN_NOREADONLYRETURN;
-    std::string title = _title;
+    std::string title = _props->title;
     if (title.empty())
         title = "Create File";
     return show(false, flags, title);
@@ -52,7 +58,7 @@ bool FileDialog::open()
 {
     // TODO: support OFN_ALLOWMULTISELECT (open only)
     unsigned int flags = OFN_EXPLORER | OFN_ENABLESIZING | OFN_FILEMUSTEXIST;
-    std::string title = _title;
+    std::string title = _props->title;
     if (title.empty())
         title = "Open File";
     return show(false, flags, title);
@@ -61,7 +67,7 @@ bool FileDialog::open()
 bool FileDialog::save()
 {
     unsigned int flags = OFN_EXPLORER | OFN_ENABLESIZING | OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY | OFN_NOREADONLYRETURN;
-    std::string title = _title;
+    std::string title = _props->title;
     if (title.empty())
         title = "Save File";
     return show(true, flags, title);
@@ -71,11 +77,12 @@ bool FileDialog::show(bool isSaveFile,
                       unsigned int flags,
                       const std::string& title)
 {
-    _extErr = 0;
+    _props->extErr = 0;
 
     auto ofn = OPENFILENAMEW();
     ofn.lStructSize = sizeof(OPENFILENAMEW);
-    ofn.hwndOwner = reinterpret_cast<HWND>(_parent->handle());
+    if (_props->parent != nullptr)
+        ofn.hwndOwner = reinterpret_cast<HWND>(_props->parent->handle());
 
     ofn.Flags = flags;
 
@@ -83,14 +90,14 @@ bool FileDialog::show(bool isSaveFile,
     ofn.lpstrTitle = wstrTitle.c_str();
 
     std::wstring wstrFile(MAX_PATH, 0x0);
-    if (!_fileName.empty())
-        wstrFile.insert(0, toWide(_fileName));
+    if (!_props->fileName.empty())
+        wstrFile.insert(0, toWide(_props->fileName));
 
     ofn.lpstrFile = &wstrFile[0];
     ofn.nMaxFile = (DWORD)wstrFile.size();
 
     std::wstring wstrFilters(MAX_PATH, 0x0);
-    std::string filters = _filters;
+    std::string filters = _props->filters;
     if (!filters.empty())
     {
         filters += "|All Files (*.*)|*.*||";
@@ -98,7 +105,7 @@ bool FileDialog::show(bool isSaveFile,
         for (auto &c : wstrFilters) // null-splitter
             if (c == '|') c = 0;
         ofn.lpstrFilter = wstrFilters.c_str();
-        ofn.nFilterIndex = _filterIndex;
+        ofn.nFilterIndex = _props->filterIndex;
     }
 
     // TODO: support dir init and def ext (for create/save)
@@ -113,11 +120,11 @@ bool FileDialog::show(bool isSaveFile,
 
     if (r == FALSE)
     {
-        _extErr = CommDlgExtendedError();
+        _props->extErr = CommDlgExtendedError();
         return false;
     }
 
-    _fileName = toBytes(wstrFile.c_str());
-    _filterIndex = ofn.nFilterIndex;
+    _props->fileName = toBytes(wstrFile.c_str());
+    _props->filterIndex = ofn.nFilterIndex;
     return true;
 }
