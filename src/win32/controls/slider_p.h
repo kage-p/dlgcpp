@@ -13,7 +13,10 @@ namespace dlgcpp
     {
         struct slider_props
         {
-        
+            bool vertical = false;
+            int value = 0;
+            std::pair<int, int> range;
+            Color barColor = Color::Blue;
         };
     }
 }

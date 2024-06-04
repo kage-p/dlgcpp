@@ -3,9 +3,14 @@
 using namespace dlgcpp::controls;
 
 ListBox::ListBox(std::shared_ptr<IDialog> parent, const Position& p)
-    : Control(parent)
+    : Control(parent), _props(new listbox_props())
 {
     this->p(p);
+}
+
+ListBox::~ListBox()
+{
+    delete _props;
 }
 
 std::string ListBox::className() const
