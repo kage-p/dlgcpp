@@ -8,7 +8,6 @@ namespace dlgcpp
     class IDialog;
     class IChild;
     class IControl;
-    class IEvent;
 
     typedef struct Position
     {

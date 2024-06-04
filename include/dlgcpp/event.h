@@ -5,26 +5,32 @@
 
 namespace dlgcpp
 {
-    //template <typename T>
+    template <class... Args>
     class IEvent
     {
     public:
-        //virtual IEvent& operator+=(std::function<T> fn) = 0;
-        virtual IEvent& operator+=(std::function<void(void)> fn) = 0;
-        virtual void invoke() = 0;
+        virtual IEvent& operator+=(std::function<void(Args...args)> fn) = 0;
+        virtual void invoke(Args& ... args) = 0;
     };
 
-    //template <typename T>
-    //class Event : public IEvent<T>
-    class Event : public IEvent
+    // TODO: move to event_p.h
+    template <class... Args>
+    class Event : public IEvent<Args...>
     {
     public:
-        //Event& operator+=(std::function<T> fn) override
-        Event& operator+=(std::function<void(void)> fn) override;
-        void invoke() override;
+        Event& operator+=(std::function<void(Args...args)> fn) override
+        {
+            _listeners.push_back(fn);
+            return *this;
+        }
+
+        void invoke(Args& ... args) override
+        {
+            for (auto& f : _listeners)
+                f(args...);
+        };
 
     private:
-        //std::vector<std::function<T>> _listeners;
-        std::vector<std::function<void(void)>> _listeners;
+        std::vector<std::function<void(Args...args)>> _listeners;
     };
 }

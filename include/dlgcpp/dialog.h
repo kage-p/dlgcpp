@@ -51,13 +51,15 @@ namespace dlgcpp
         virtual void color(Color value) = 0;
         virtual Cursor cursor() const = 0;
         virtual void cursor(Cursor value) = 0;
+        virtual bool dropTarget() const = 0;
+        virtual void dropTarget(bool value) = 0;
         virtual void* handle() const = 0;
         virtual void* user() const = 0;
         virtual void user(void* value) = 0;
         virtual std::shared_ptr<IDialog> parent() = 0;
         virtual void close(int result = 0) = 0;
         virtual void message(const std::string& message, const std::string& title, DialogMessageType type) = 0;
-        virtual void timer(int timeout, std::function<void(void)> handler) = 0;
+        virtual void timer(int timeout) = 0;
 
         // child management
         virtual void add(std::shared_ptr<IChild> child) = 0;
@@ -65,7 +67,9 @@ namespace dlgcpp
         virtual std::vector<std::shared_ptr<IControl>> children() const = 0;
 
         // events
-        virtual IEvent& ClickEvent() = 0;
+        virtual IEvent<>& ClickEvent() = 0;
+        virtual IEvent<std::vector<std::string>>& DropEvent() = 0;
+        virtual IEvent<>& TimerEvent() = 0;
     };
 
     class Dialog : public IDialog, public std::enable_shared_from_this<Dialog>
@@ -92,6 +96,8 @@ namespace dlgcpp
         void color(Color value) override;
         Cursor cursor() const override;
         void cursor(Cursor value) override;
+        bool dropTarget() const override;
+        void dropTarget(bool value) override;
         const std::string& title() const override;
         void title(const std::string& value) override;
         void* handle() const override;
@@ -100,7 +106,7 @@ namespace dlgcpp
         std::shared_ptr<IDialog> parent() override;
         void close(int result = 0) override;
         void message(const std::string& message, const std::string& title = std::string(), DialogMessageType type = DialogMessageType::Information) override;
-        void timer(int timeout, std::function<void(void)> handler) override;
+        void timer(int timeout) override;
 
         // child management
         void add(std::shared_ptr<IChild> child) override;
@@ -108,7 +114,9 @@ namespace dlgcpp
         std::vector<std::shared_ptr<IControl>> children() const override;
 
         // events
-        IEvent& ClickEvent() override;
+        IEvent<>& ClickEvent() override;
+        IEvent<std::vector<std::string>>& DropEvent() override;
+        IEvent<>& TimerEvent() override;
 
     protected:
         std::shared_ptr<IChild> childFromId(int id);

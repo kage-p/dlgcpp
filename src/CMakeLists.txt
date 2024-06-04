@@ -24,7 +24,6 @@ set(headers
 set(sources    
     win32/control.cpp
     win32/dialog.cpp
-    win32/event.cpp
     win32/utility.cpp
     win32/controls/button.cpp
     win32/controls/custom.cpp

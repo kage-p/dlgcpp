@@ -84,9 +84,11 @@ void SplashDialog::show()
 
     if (_props->timeout > 0)
     {
-        dlg->timer(_props->timeout, [this](){
+        dlg->TimerEvent() += [this]()
+        {
             _props->splashDialog->close();
-        });
+        };
+        dlg->timer(_props->timeout);
     }
 }
 

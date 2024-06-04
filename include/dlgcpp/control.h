@@ -34,7 +34,7 @@ namespace dlgcpp
         virtual void setFocus() = 0;
 
         // events
-        virtual IEvent& CommandEvent() = 0;
+        virtual IEvent<>& CommandEvent() = 0;
     };
 
     class Control : public IChild,
@@ -71,7 +71,7 @@ namespace dlgcpp
         void setFocus() override;
 
         // events
-        IEvent& CommandEvent() override;
+        IEvent<>& CommandEvent() override;
 
     protected:
         explicit Control(std::shared_ptr<IDialog> parent);

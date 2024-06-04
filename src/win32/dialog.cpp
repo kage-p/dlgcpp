@@ -6,6 +6,7 @@
 #define NOMINMAX
 #include <Windows.h>
 #include <CommCtrl.h>
+#include <shellapi.h>
 
 using namespace dlgcpp;
 
@@ -339,15 +340,31 @@ void Dialog::message(const std::string& message, const std::string& title, Dialo
                 toWide(title).c_str(), flags);
 }
 
-void Dialog::timer(int timeout, std::function<void(void)> handler)
+void Dialog::timer(int timeout)
 {
     if ( _props->timer.id == 0)
         _props->timer.id = nextId();
 
     // if timeout is negative the timer is removed.
     _props->timer.timeout = timeout;
-    _props->timer.handler = handler;
     updateTimer();
+}
+
+bool Dialog::dropTarget() const
+{
+    return _props->dropTarget;
+}
+
+void Dialog::dropTarget(bool value)
+{
+    if (_props->dropTarget == value)
+        return;
+    _props->dropTarget = value;
+
+    if (_state->hwnd == NULL)
+        return;
+
+    DragAcceptFiles(_state->hwnd, _props->dropTarget);
 }
 
 void Dialog::updateTimer()
@@ -478,6 +495,7 @@ void Dialog::rebuild()
     SetProp(hwnd, "this", this);
     _state->hwnd = hwnd;
 
+    DragAcceptFiles(_state->hwnd, _props->dropTarget);
     updateTimer();
 }
 
@@ -608,12 +626,34 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
         }
         break;
 
+    case WM_DROPFILES:
+    {
+        // extract dropped files and invoke drop event
+        auto hDrop = (HDROP)wParam;
+        auto fileCount = (int)DragQueryFileW(hDrop, 0xFFFFFFFF, NULL, 0);
+        if (fileCount == 0)
+            return 0;
+
+        std::vector<std::string> files;
+        for (int i = 0; i < fileCount; i++)
+        {
+            std::wstring wfile(MAX_PATH, 0x0);
+            if (DragQueryFileW(hDrop, i, wfile.data(), wfile.size()) == 0)
+                continue;
+            files.push_back(toBytes(wfile.data()));
+        }
+        if (files.empty())
+            return 0;
+        _props->dropEvent.invoke(files);
+        break;
+    }
+
     case WM_TIMER:
     {
         auto timerId = (int)wParam;
         if (timerId > 0 && timerId == _props->timer.id)
         {
-            _props->timer.handler();
+            _props->timerEvent.invoke();
         }
         break;
     }
@@ -765,7 +805,17 @@ LRESULT Dialog::onColorCtl(HDC hdc, HWND hwndChild)
     return (LRESULT)hbrBack;
 }
 
-IEvent& Dialog::ClickEvent()
+IEvent<>& Dialog::ClickEvent()
 {
     return _props->clickEvent;
+}
+
+IEvent<std::vector<std::string>>& Dialog::DropEvent()
+{
+    return _props->dropEvent;
+}
+
+IEvent<>& Dialog::TimerEvent()
+{
+    return _props->timerEvent;
 }

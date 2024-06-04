@@ -14,6 +14,7 @@ namespace dlgcpp
         std::shared_ptr<IDialog> parent;
         bool enabled = true;
         bool visible = false;  // hidden by default
+        bool dropTarget = false;
         DialogType type = DialogType::Application;
         Position p;
         std::string text;
@@ -26,10 +27,11 @@ namespace dlgcpp
         {
             int id = 0;
             int timeout = 0;
-            std::function<void(void)> handler;
         } timer;
         void* user = nullptr;
-        Event clickEvent;
+        Event<> clickEvent;
+        Event<std::vector<std::string>> dropEvent;
+        Event<> timerEvent;
     };
 
     struct dlg_state

@@ -309,7 +309,7 @@ void Control::dump()
     _state->hwnd = nullptr;
 }
 
-IEvent& Control::CommandEvent()
+IEvent<>& Control::CommandEvent()
 {
     return _props->commandEvent;
 }
