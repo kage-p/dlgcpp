@@ -1,6 +1,6 @@
 #pragma once
 
-#include "file.h"
+#include "dlgcpp/dialogs/file.h"
 
 namespace dlgcpp
 {

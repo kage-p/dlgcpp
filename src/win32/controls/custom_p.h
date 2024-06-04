@@ -1,6 +1,6 @@
 #pragma once
 
-#include "custom.h"
+#include "dlgcpp/controls/custom.h"
 
 namespace dlgcpp
 {

@@ -1,4 +1,4 @@
-#include "event.h"
+#include "dlgcpp/event.h"
 
 using namespace dlgcpp;
 

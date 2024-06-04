@@ -1,6 +1,6 @@
 #pragma once
 
-#include "splash.h"
+#include "dlgcpp/dialogs/splash.h"
 
 namespace dlgcpp
 {

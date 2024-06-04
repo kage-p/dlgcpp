@@ -1,6 +1,6 @@
 #pragma once
 
-#include "textbox.h"
+#include "dlgcpp/controls/textbox.h"
 
 namespace dlgcpp
 {

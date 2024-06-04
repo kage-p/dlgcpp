@@ -1,9 +1,11 @@
-#include "slider.h"
+#include "p_slider.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h>
 #include <strsafe.h>
+
+#include <string>
 
 #define SLDR_MAX_TEXT 512
 typedef struct TSLDR_DATA {                    // Custom data for the control

@@ -1,6 +1,6 @@
 #include "control_p.h"
 #include "utility.h"
-#include "dialog.h"
+#include "dlgcpp/dialog.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX

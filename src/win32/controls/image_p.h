@@ -1,6 +1,6 @@
 #pragma once
 
-#include "image.h"
+#include "dlgcpp/controls/image.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN

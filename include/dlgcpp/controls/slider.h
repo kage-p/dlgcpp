@@ -1,8 +1,6 @@
 #pragma once
 #include "../control.h"
 
-#include "p_slider.h"
-
 namespace dlgcpp
 {
     namespace controls

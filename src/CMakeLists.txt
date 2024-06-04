@@ -2,60 +2,48 @@ cmake_minimum_required(VERSION 3.27)
 
 set(target libdlgcpp)
 
+if (WIN32)
 set(headers
-    dlgcpp.h
-    child.h
-    control.h
-    control_p.h
-    defs.h
-    dialog.h
-    dialog_p.h
-    event.h
-    utility.h
-    controls/button.h
-    controls/custom.h
-    controls/custom_p.h
-    controls/image.h
-    controls/image_p.h
-    controls/label.h
-    controls/label_p.h
-    controls/listbox.h
-    controls/slider.h
-    controls/textbox.h
-    controls/textbox_p.h
-    controls/p_slider.h
-    dialogs/about.h
-    dialogs/file.h
-    dialogs/folder.h
-    dialogs/splash.h
-    dialogs/about_p.h
-    dialogs/file_p.h
-    dialogs/folder_p.h
-    dialogs/splash_p.h
+    win32/control_p.h
+    win32/dialog_p.h
+    win32/utility.h
+    win32/controls/custom_p.h
+    win32/controls/image_p.h
+    win32/controls/label_p.h
+    win32/controls/textbox_p.h
+    win32/controls/p_slider.h
+    win32/dialogs/about_p.h
+    win32/dialogs/file_p.h
+    win32/dialogs/folder_p.h
+    win32/dialogs/splash_p.h
 )
 
 set(sources    
-    control.cpp
-    dialog.cpp
-    event.cpp
-    utility.cpp
-    controls/button.cpp
-    controls/custom.cpp
-    controls/image.cpp
-    controls/label.cpp
-    controls/listbox.cpp
-    controls/slider.cpp
-    controls/textbox.cpp
-    controls/p_slider.cpp
-    dialogs/about.cpp
-    dialogs/file.cpp
-    dialogs/folder.cpp
-    dialogs/splash.cpp
+    win32/control.cpp
+    win32/dialog.cpp
+    win32/event.cpp
+    win32/utility.cpp
+    win32/controls/button.cpp
+    win32/controls/custom.cpp
+    win32/controls/image.cpp
+    win32/controls/label.cpp
+    win32/controls/listbox.cpp
+    win32/controls/slider.cpp
+    win32/controls/textbox.cpp
+    win32/controls/p_slider.cpp
+    win32/dialogs/about.cpp
+    win32/dialogs/file.cpp
+    win32/dialogs/folder.cpp
+    win32/dialogs/splash.cpp
 )
+endif()
+
+# define other platforms here
 
 add_library(${target} STATIC ${sources} ${headers})
 
-target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+# consumers need the header target
+target_include_directories(${target} PUBLIC "$<TARGET_PROPERTY:dlgcpp,SOURCE_DIR>")
 
 if (MSVC)
     target_link_libraries(${target} PRIVATE comctl32.lib)

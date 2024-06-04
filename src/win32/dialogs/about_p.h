@@ -1,6 +1,6 @@
 #pragma once
 
-#include "about.h"
+#include "dlgcpp/dialogs/about.h"
 
 #include <string>
 

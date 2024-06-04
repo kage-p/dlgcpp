@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dlgcpp.h"
+#include "dlgcpp/dlgcpp.h"
 
 namespace dlgcpp
 {

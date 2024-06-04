@@ -1,6 +1,6 @@
 #pragma once
 
-#include "label.h"
+#include "dlgcpp/controls/label.h"
 
 namespace dlgcpp
 {

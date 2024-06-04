@@ -1,5 +1,5 @@
 
-#include "dlgcpp.h"
+#include "dlgcpp/dlgcpp.h"
 
 class DemoDialog : public dlgcpp::Dialog
 {

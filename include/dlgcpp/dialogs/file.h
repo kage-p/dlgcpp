@@ -1,6 +1,7 @@
 #pragma once
 
-#include "dlgcpp.h"
+#include "dlgcpp/dlgcpp.h"
+#pragma once
 
 #include <memory>
 #include <string>

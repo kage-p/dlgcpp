@@ -14,8 +14,6 @@ add_executable(${target} WIN32 ${sources} ${headers})
 
 target_link_libraries(${target} libdlgcpp)
 
-target_include_directories(${target} PRIVATE "$<TARGET_PROPERTY:libdlgcpp,SOURCE_DIR>")
-
 if (WIN32)
     target_link_options(${target} PRIVATE /ENTRY:mainCRTStartup)
 endif()

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "defs.h"
+#include "dlgcpp/defs.h"
 #include <string>
 
 #define NOMINMAX
