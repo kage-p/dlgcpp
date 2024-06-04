@@ -7,9 +7,12 @@ set(headers
     win32/control_p.h
     win32/dialog_p.h
     win32/utility.h
+    win32/controls/button_p.h
     win32/controls/custom_p.h
     win32/controls/image_p.h
     win32/controls/label_p.h
+    win32/controls/listbox_p.h
+    win32/controls/slider_p.h
     win32/controls/textbox_p.h
     win32/controls/p_slider.h
     win32/dialogs/about_p.h

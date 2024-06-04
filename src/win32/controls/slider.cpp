@@ -1,6 +1,4 @@
-#include "dlgcpp/controls/slider.h"
-#include "dlgcpp/dialog.h"
-#include "p_slider.h"
+#include "slider_p.h"
 
 using namespace dlgcpp::controls;
 

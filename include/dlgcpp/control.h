@@ -7,12 +7,6 @@
 #include <memory>
 #include <string>
 
-#ifdef _WIN32
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#endif
-
 namespace dlgcpp
 {
     class IControl
@@ -38,9 +32,6 @@ namespace dlgcpp
         virtual std::shared_ptr<IDialog> parent() = 0;
         virtual void redraw() = 0;
         virtual void setFocus() = 0;
-#ifdef _WIN32
-        virtual LRESULT sendMsg(UINT wMsg, WPARAM wParam = 0, LPARAM lParam = 0) = 0;
-#endif
 
         // events
         virtual IEvent& CommandEvent() = 0;
@@ -78,9 +69,7 @@ namespace dlgcpp
         std::shared_ptr<IDialog> parent() override;
         void redraw() override;
         void setFocus() override;
-#ifdef _WIN32
-        LRESULT sendMsg(UINT wMsg, WPARAM wParam = 0, LPARAM lParam = 0) override;
-#endif
+
         // events
         IEvent& CommandEvent() override;
 
@@ -89,7 +78,7 @@ namespace dlgcpp
         virtual ~Control();
         std::shared_ptr<Control> shared_ptr();
 
-        // overridable by subclass
+        // overridable by derived class
         virtual void rebuild();
         virtual void dump();
         virtual std::string className() const;
@@ -99,8 +88,5 @@ namespace dlgcpp
     private:
         struct ctl_props* _props;
         struct ctl_state* _state;
-
-        std::shared_ptr<IDialog> _parent;
-        Event _commandEvent;
     };
 }

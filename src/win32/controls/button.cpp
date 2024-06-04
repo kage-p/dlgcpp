@@ -1,4 +1,4 @@
-#include "dlgcpp/controls/button.h"
+#include "button_p.h"
 
 using namespace dlgcpp::controls;
 

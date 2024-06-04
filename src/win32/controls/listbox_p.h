@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dlgcpp/controls/custom.h"
+#include "dlgcpp/controls/listbox.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -10,9 +10,9 @@ namespace dlgcpp
 {
     namespace controls
     {
-        struct cus_props
+        struct listbox_props
         {
-            std::string className;
+        
         };
     }
 }

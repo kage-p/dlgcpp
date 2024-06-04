@@ -1,6 +1,7 @@
 #pragma once
 
-#include "dlgcpp/controls/custom.h"
+#include "dlgcpp/controls/slider.h"
+#include "p_slider.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -10,9 +11,9 @@ namespace dlgcpp
 {
     namespace controls
     {
-        struct cus_props
+        struct slider_props
         {
-            std::string className;
+        
         };
     }
 }

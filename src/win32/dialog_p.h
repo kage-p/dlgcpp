@@ -7,27 +7,34 @@
 
 namespace dlgcpp
 {
+    static const int DefaultStartId = 100;
+
     struct dlg_props
     {
-        bool _enabled = true;
-        bool _visible = false;  // hidden by default
-        DialogType _type = DialogType::Application;
-        Position _p;
-        std::string _text;
-        Color _backColor = Color::Default;
-        Cursor _cursor = Cursor::Default;
+        std::shared_ptr<IDialog> parent;
+        bool enabled = true;
+        bool visible = false;  // hidden by default
+        DialogType type = DialogType::Application;
+        Position p;
+        std::string text;
+        Color backColor = Color::Default;
+        Cursor cursor = Cursor::Default;
+        std::vector<std::shared_ptr<IChild>> children;
+        int nextId = DefaultStartId;
+        bool execRunning = false;
         struct
         {
             int id = 0;
             int timeout = 0;
             std::function<void(void)> handler;
-        } _timer;
-        void* _user = nullptr;
+        } timer;
+        void* user = nullptr;
+        Event clickEvent;
     };
 
     struct dlg_state
     {
-        HWND _hwnd = NULL;
-        HBRUSH _hbrBgColor = NULL;
+        HWND hwnd = NULL;
+        HBRUSH hbrBgColor = NULL;
     };
 }

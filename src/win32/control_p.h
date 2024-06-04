@@ -9,21 +9,23 @@ namespace dlgcpp
 {
     struct ctl_props
     {
-        bool _enabled = true;
-        bool _visible = true;
-        Position _p;
-        std::string _text;
-        Color _fgColor = Color::Default;
-        Color _bgColor = Color::Default;
-        Font _font;
-        Cursor _cursor = Cursor::Default;
-        int _id = -1;
-        void* _user = nullptr;
+        std::shared_ptr<IDialog> parent;        
+        bool enabled = true;
+        bool visible = true;
+        Position p;
+        std::string text;
+        Color fgColor = Color::Default;
+        Color bgColor = Color::Default;
+        Font font;
+        Cursor cursor = Cursor::Default;
+        int id = -1;
+        void* user = nullptr;
+        Event commandEvent;
     };
 
     struct ctl_state
     {
-        HWND _hwnd = NULL;
+        HWND hwnd = NULL;
         HFONT hFont = NULL;
         HBRUSH hbrBack = NULL;
     };

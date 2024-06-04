@@ -1,4 +1,4 @@
-#include "dlgcpp/controls/listbox.h"
+#include "listbox_p.h"
 
 using namespace dlgcpp::controls;
 

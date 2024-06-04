@@ -10,9 +10,9 @@
 #include "event.h"
 
 #ifdef _WIN32
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+    #define NOMINMAX
+    #define WIN32_LEAN_AND_MEAN
+    #include <Windows.h>
 #endif
 
 namespace dlgcpp
@@ -58,9 +58,7 @@ namespace dlgcpp
         virtual void close(int result = 0) = 0;
         virtual void message(const std::string& message, const std::string& title, DialogMessageType type) = 0;
         virtual void timer(int timeout, std::function<void(void)> handler) = 0;
-#ifdef _WIN32
-        virtual LRESULT sendMsg(UINT wMsg, WPARAM wParam = 0, LPARAM lParam = 0) = 0;
-#endif
+
         // child management
         virtual void add(std::shared_ptr<IChild> child) = 0;
         virtual void remove(std::shared_ptr<IChild> child) = 0;
@@ -108,18 +106,15 @@ namespace dlgcpp
         void add(std::shared_ptr<IChild> child) override;
         void remove(std::shared_ptr<IChild> child) override;
         std::vector<std::shared_ptr<IControl>> children() const override;
-#ifdef _WIN32
-        LRESULT sendMsg(UINT wMsg, WPARAM wParam = 0, LPARAM lParam = 0) override;
-#endif        
+
         // events
         IEvent& ClickEvent() override;
 
     protected:
         std::shared_ptr<IChild> childFromId(int id);
-        int nextId();
         void redraw();
 
-        // overridable by subclass
+        // overridable by derived class
         virtual void rebuild();
         virtual void dump();
         virtual unsigned int styles() const;
@@ -133,13 +128,7 @@ namespace dlgcpp
         struct dlg_props* _props;
         struct dlg_state* _state;
 
-        static const int DefaultStartId = 100;
-
-        std::shared_ptr<IDialog> _parent;
-        std::vector<std::shared_ptr<IChild>> _children;
-        bool _execRunning = false;
-        int _nextId = DefaultStartId;
-
+        int nextId();
         void updateTimer();
 #ifdef _WIN32
         static LRESULT CALLBACK staticWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
@@ -147,7 +136,5 @@ namespace dlgcpp
         LRESULT onColorDlg(HDC hdc);
         LRESULT onColorCtl(HDC hdc, HWND hwndChild);
 #endif
-        Event _clickEvent;
     };
-
 }
