@@ -10,11 +10,17 @@ namespace dlgcpp
 {
     namespace controls
     {
-        struct tb_props
+        struct textbox_props
         {
+            int maxChars = 0;
+            bool password = false;
             bool readOnly = false;
             bool multiline = false;
             bool wrapText = false;
+
+            HorizontalAlign horzAlign = HorizontalAlign::Left;
+
+            Event<> changedEvent;
         };
     }
 }

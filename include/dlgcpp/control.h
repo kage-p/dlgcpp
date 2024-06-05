@@ -33,8 +33,9 @@ namespace dlgcpp
         virtual void redraw() = 0;
         virtual void setFocus() = 0;
 
-        // events
-        virtual IEvent<>& CommandEvent() = 0;
+        virtual IEvent<>& ClickEvent() = 0;
+        virtual IEvent<>& DoubleClickEvent() = 0;
+        virtual IEvent<bool>& FocusEvent() = 0;
     };
 
     class Control : public IChild,
@@ -47,6 +48,7 @@ namespace dlgcpp
         void id(int value) override;
         std::shared_ptr<IControl> control() override;
         struct ctl_state state() override;
+        void notify(struct dlg_message&) override;
 
         // IControl impl.
         bool enabled() const override;
@@ -70,8 +72,9 @@ namespace dlgcpp
         void redraw() override;
         void setFocus() override;
 
-        // events
-        IEvent<>& CommandEvent() override;
+        IEvent<>& ClickEvent() override;
+        IEvent<>& DoubleClickEvent() override;
+        IEvent<bool>& FocusEvent() override;
 
     protected:
         explicit Control(std::shared_ptr<IDialog> parent);

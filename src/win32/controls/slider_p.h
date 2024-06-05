@@ -17,6 +17,7 @@ namespace dlgcpp
             int value = 0;
             std::pair<int, int> range;
             Color barColor = Color::Blue;
+            Event<> changedEvent;
         };
     }
 }

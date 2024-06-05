@@ -47,6 +47,8 @@ namespace dlgcpp
         virtual void type(DialogType value) = 0;
         virtual const std::string& title() const = 0;
         virtual void title(const std::string& value) = 0;
+        virtual const ImageSource& image() const = 0;
+        virtual void image(const ImageSource& image) = 0;
         virtual Color color() const = 0;
         virtual void color(Color value) = 0;
         virtual Cursor cursor() const = 0;
@@ -68,7 +70,10 @@ namespace dlgcpp
 
         // events
         virtual IEvent<>& ClickEvent() = 0;
+        virtual IEvent<>& DoubleClickEvent() = 0;
         virtual IEvent<std::vector<std::string>>& DropEvent() = 0;
+        virtual IEvent<>& MoveEvent() = 0;
+        virtual IEvent<>& SizeEvent() = 0;
         virtual IEvent<>& TimerEvent() = 0;
     };
 
@@ -100,6 +105,8 @@ namespace dlgcpp
         void dropTarget(bool value) override;
         const std::string& title() const override;
         void title(const std::string& value) override;
+        const ImageSource& image() const override;
+        void image(const ImageSource& image) override;
         void* handle() const override;
         void* user() const override;
         void user(void* value) override;
@@ -115,7 +122,10 @@ namespace dlgcpp
 
         // events
         IEvent<>& ClickEvent() override;
+        IEvent<>& DoubleClickEvent() override;
         IEvent<std::vector<std::string>>& DropEvent() override;
+        IEvent<>& MoveEvent() override;
+        IEvent<>& SizeEvent() override;
         IEvent<>& TimerEvent() override;
 
     protected:
@@ -137,6 +147,7 @@ namespace dlgcpp
         struct dlg_state* _state;
 
         int nextId();
+        void updateImage();
         void updateTimer();
 #ifdef _WIN32
         static LRESULT CALLBACK staticWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);

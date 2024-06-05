@@ -9,6 +9,9 @@ namespace dlgcpp
         struct lbl_props
         {
             bool autoSize = false;
+            bool elipsis = false;
+            HorizontalAlign horzAlign = HorizontalAlign::Left;
+            VerticalAlign vertAlign = VerticalAlign::Top;
         };
     }
 }

@@ -138,7 +138,7 @@ void AboutDialog::show()
         webLink->cursor(Cursor::Hand);
         webLink->font(Font{"MS Sans Serif", 8, false, true});
         webLink->autoSize(true);
-        webLink->CommandEvent() +=
+        webLink->ClickEvent() +=
             [this,dlg]()
         {
             auto hwnd = reinterpret_cast<HWND>(dlg->handle());
@@ -154,7 +154,7 @@ void AboutDialog::show()
     dlg->add(description);
 
     auto sysInfoButton = std::make_shared<Button>(dlg, "&System Info...", Position{167, 104+cyLogoOffset, 65, 20});
-    sysInfoButton->CommandEvent() +=
+    sysInfoButton->ClickEvent() +=
         [dlg]()
     {
         auto hwnd = reinterpret_cast<HWND>(dlg->handle());
@@ -163,7 +163,7 @@ void AboutDialog::show()
     dlg->add(sysInfoButton);
 
     auto closeButton = std::make_shared<Button>(dlg, "Close", Position{237, 104+cyLogoOffset, 65, 20});
-    closeButton->CommandEvent() +=
+    closeButton->ClickEvent() +=
         [dlg]()
     {
         dlg->close();

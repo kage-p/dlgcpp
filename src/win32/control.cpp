@@ -70,6 +70,11 @@ ctl_state Control::state()
     return *_state;
 }
 
+void Control::notify(struct dlgcpp::dlg_message&)
+{
+    // no default action
+}
+
 bool Control::enabled() const
 {
     return _props->enabled;
@@ -309,7 +314,17 @@ void Control::dump()
     _state->hwnd = nullptr;
 }
 
-IEvent<>& Control::CommandEvent()
+IEvent<>& Control::ClickEvent()
 {
-    return _props->commandEvent;
+    return _props->clickEvent;
+}
+
+IEvent<>& Control::DoubleClickEvent()
+{
+    return _props->dblClickEvent;
+}
+
+IEvent<bool>& Control::FocusEvent()
+{
+    return _props->focusEvent;
 }

@@ -12,7 +12,8 @@ namespace dlgcpp
     {
         struct button_props
         {
-        
+            HorizontalAlign horzAlign = HorizontalAlign::Center;
+            VerticalAlign vertAlign = VerticalAlign::Center;
         };
     }
 }

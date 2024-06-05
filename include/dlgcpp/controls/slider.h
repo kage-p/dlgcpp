@@ -22,11 +22,14 @@ namespace dlgcpp
             Color barColor() const;
             void barColor(Color value);
 
+            IEvent<>& ChangedEvent();
+
         private:
             struct slider_props* _props;
             void rebuild() override;
             std::string className() const override;
             unsigned int exStyles() const override;
+            void notify(struct dlg_message&) override;
         };
     }
 }

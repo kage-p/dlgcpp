@@ -63,11 +63,18 @@ namespace dlgcpp
         bool symbolType = false;
     } Font;
 
-    enum class TextAlign
+    enum class HorizontalAlign
     {
         Left = 0,
         Center,
         Right
+    };
+
+    enum class VerticalAlign
+    {
+        Top = 0,
+        Center,
+        Bottom
     };
 
     enum class Cursor

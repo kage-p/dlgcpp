@@ -17,7 +17,8 @@ namespace dlgcpp
         bool dropTarget = false;
         DialogType type = DialogType::Application;
         Position p;
-        std::string text;
+        std::string title;
+        ImageSource image;
         Color backColor = Color::Default;
         Cursor cursor = Cursor::Default;
         std::vector<std::shared_ptr<IChild>> children;
@@ -30,7 +31,11 @@ namespace dlgcpp
         } timer;
         void* user = nullptr;
         Event<> clickEvent;
+        Event<> dblClickEvent;
         Event<std::vector<std::string>> dropEvent;
+        Event<> focusEvent;
+        Event<> moveEvent;
+        Event<> sizeEvent;
         Event<> timerEvent;
     };
 
@@ -38,5 +43,6 @@ namespace dlgcpp
     {
         HWND hwnd = NULL;
         HBRUSH hbrBgColor = NULL;
+        HGDIOBJ hImage = NULL;
     };
 }

@@ -11,19 +11,31 @@ namespace dlgcpp
             explicit TextBox(std::shared_ptr<IDialog> parent, const std::string& text = std::string(), const Position& p = Position());
             ~TextBox() override;
 
+            int maxChars() const;
+            void maxChars(int value);
+            bool password() const;
+            void password(bool value);
             bool readOnly() const;
             void readOnly(bool value);
             bool multiline() const;
             void multiline(bool value);
             bool wrapText() const;
             void wrapText(bool value);
+            HorizontalAlign horizontalAlignment() const;
+            void horizontalAlignment(HorizontalAlign value);
+
+            IEvent<>& ChangedEvent();
 
         private:
-            struct tb_props* _props;
+            struct textbox_props* _props;
 
+            void rebuild() override;
             std::string className() const override;
             unsigned int styles() const override;
             unsigned int exStyles() const override;
+            void notify(struct dlg_message&) override;
+
+            void readInput();
         };
     }
 }

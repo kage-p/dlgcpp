@@ -10,7 +10,7 @@ namespace dlgcpp
     {
     public:
         virtual IEvent& operator+=(std::function<void(Args...args)> fn) = 0;
-        virtual void invoke(Args& ... args) = 0;
+        virtual void invoke(Args ... args) = 0;
     };
 
     // TODO: move to event_p.h
@@ -24,7 +24,7 @@ namespace dlgcpp
             return *this;
         }
 
-        void invoke(Args& ... args) override
+        void invoke(Args ... args) override
         {
             for (auto& f : _listeners)
                 f(args...);

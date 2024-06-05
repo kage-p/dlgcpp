@@ -1,4 +1,5 @@
 #include "slider_p.h"
+#include "../dlgmsg.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -41,6 +42,23 @@ std::string Slider::className() const
 unsigned int Slider::exStyles() const
 {
     return Control::exStyles() | WS_EX_STATICEDGE;
+}
+
+IEvent<>& Slider::ChangedEvent()
+{
+    return _props->changedEvent;
+}
+
+void Slider::notify(struct dlg_message& msg)
+{
+    if (msg.wMsg == WM_HSCROLL)
+    {
+        ChangedEvent().invoke();
+    }
+    else if (msg.wMsg == WM_VSCROLL)
+    {
+        ChangedEvent().invoke();
+    }
 }
 
 bool Slider::vertical() const

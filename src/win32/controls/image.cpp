@@ -1,4 +1,5 @@
 #include "image_p.h"
+#include "../dlgmsg.h"
 #include "../utility.h"
 
 using namespace dlgcpp;
@@ -16,6 +17,21 @@ Image::~Image()
 {
     delete _props;
     delete _state;
+}
+
+void Image::notify(struct dlg_message& msg)
+{
+    if (msg.wMsg == WM_COMMAND)
+    {
+        if (HIWORD(msg.wParam) == STN_CLICKED)
+        {
+            ClickEvent().invoke();
+        }
+        else if (HIWORD(msg.wParam) == STN_DBLCLK)
+        {
+            DoubleClickEvent().invoke();
+        }
+    }
 }
 
 bool Image::autoSize() const

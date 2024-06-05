@@ -20,7 +20,10 @@ namespace dlgcpp
         Cursor cursor = Cursor::Default;
         int id = -1;
         void* user = nullptr;
-        Event<> commandEvent;
+
+        Event<> clickEvent;
+        Event<> dblClickEvent;
+        Event<bool> focusEvent;
     };
 
     struct ctl_state

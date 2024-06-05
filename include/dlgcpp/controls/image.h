@@ -23,6 +23,7 @@ namespace dlgcpp
             void rebuild() override;
             unsigned int styles() const override;
             unsigned int exStyles() const override;
+            void notify(struct dlg_message&) override;
 
             void updateImage();
         };

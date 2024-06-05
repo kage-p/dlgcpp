@@ -14,5 +14,6 @@ namespace dlgcpp
         virtual void id(int value) = 0;
         virtual std::shared_ptr<IControl> control() = 0;
         virtual struct ctl_state state() = 0;
+        virtual void notify(struct dlg_message&) = 0;
     };
 }

@@ -6,6 +6,7 @@ if (WIN32)
 set(headers
     win32/control_p.h
     win32/dialog_p.h
+    win32/dlgmsg.h
     win32/utility.h
     win32/controls/button_p.h
     win32/controls/custom_p.h

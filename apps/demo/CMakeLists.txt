@@ -10,10 +10,16 @@ set(sources
     demo.cpp
 )
 
-add_executable(${target} WIN32 ${sources} ${headers})
+if (WIN32)
+   enable_language("RC")
+   set(other
+       win32/demo.rc)
+endif()
+
+add_executable(${target}  ${sources} ${headers} ${other})
 
 target_link_libraries(${target} libdlgcpp)
 
-if (WIN32)
-    target_link_options(${target} PRIVATE /ENTRY:mainCRTStartup)
+if (MSVC)
+    target_link_options(${target} PRIVATE /manifest:NO /ENTRY:mainCRTStartup)
 endif()

@@ -49,7 +49,9 @@ Position dlgcpp::toPixels(HWND hwnd, const Position& p, bool menu)
             p._y + p._cy);
 
     MapDialogRect(hwnd, &rc);
-    AdjustWindowRect(&rc, GetWindowLong(hwnd, GWL_STYLE), menu);
+
+    DWORD style = GetWindowLong(hwnd, GWL_STYLE);
+    AdjustWindowRect(&rc, style, menu);
 
     return Position{0,0, rc.right-rc.left, rc.bottom-rc.top};
 }

@@ -12,7 +12,8 @@ namespace dlgcpp
     {
         struct listbox_props
         {
-        
+            Event<> selChangedEvent;
+            Event<> selCancelEvent;
         };
     }
 }

@@ -1,4 +1,5 @@
 #include "dialog_p.h"
+#include "dlgmsg.h"
 #include "control_p.h"
 #include "utility.h"
 
@@ -235,19 +236,68 @@ void Dialog::type(DialogType value)
 
 const std::string& Dialog::title() const
 {
-    return _props->text;
+    return _props->title;
 }
 
 void Dialog::title(const std::string& value)
 {
-    if (_props->text == value)
+    if (_props->title == value)
         return;
-    _props->text = value;
+    _props->title = value;
     if (_state->hwnd == NULL)
         return;
 
     SetWindowTextW(_state->hwnd,
-                   toWide(_props->text).c_str());
+                   toWide(_props->title).c_str());
+}
+
+const ImageSource& Dialog::image() const
+{
+    return _props->image;
+}
+
+void Dialog::image(const ImageSource& image)
+{
+    // must be an icon
+    if (!image.isIcon)
+        return;
+
+    _props->image = image;
+    updateImage();
+}
+
+void Dialog::updateImage()
+{
+    if (_state->hImage != NULL)
+    {
+        DeleteObject(_state->hImage);
+        _state->hImage = NULL;
+    }
+
+    if (handle() == nullptr)
+        return;
+    auto hwnd = reinterpret_cast<HWND>(handle());
+
+    if (_props->image.id.empty())
+    {
+        SendMessage(hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)NULL);
+        SendMessage(hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)NULL);
+        return;
+    }
+
+    auto hInstRes = GetModuleHandle(NULL);
+    auto imageType = (_props->image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
+    _state->hImage = LoadImage(hInstRes,
+                               _props->image.id.c_str(),
+                               imageType,
+                               0,
+                               0,
+                               LR_DEFAULTSIZE | (_props->image.isFile ? LR_LOADFROMFILE : 0));
+    if (_state->hImage == NULL)
+        return;
+
+    SendMessage(hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)_state->hImage);
+    SendMessage(hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)_state->hImage);
 }
 
 Color Dialog::color() const
@@ -406,6 +456,8 @@ void Dialog::remove(std::shared_ptr<IChild> child)
     auto it = std::find(_props->children.begin(), _props->children.end(), child);
     if (it == _props->children.end())
         return;
+    // this will dispose of the child control
+    child->id(0);
     _props->children.erase(it);
 }
 
@@ -437,7 +489,7 @@ void Dialog::rebuild()
     unsigned short fontSize = 8; // Pointsize
     std::wstring text;
 
-    text = toWide(_props->text);
+    text = toWide(_props->title);
     size_t cbCaption = text.size();
     size_t cbFont = fontFace.size();
 
@@ -495,8 +547,20 @@ void Dialog::rebuild()
     SetProp(hwnd, "this", this);
     _state->hwnd = hwnd;
 
+    for (auto& c : _props->children)
+    {
+        // ideally it supports rebuild
+        //c->rebuild();
+        c->id(c->id());
+    }
+
     DragAcceptFiles(_state->hwnd, _props->dropTarget);
+    updateImage();
     updateTimer();
+
+    // the dialog does not erase the background automatically
+    if (_props->visible)
+        redraw();
 }
 
 void Dialog::dump()
@@ -575,9 +639,56 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
         {
             auto child = childFromId(id);
             if (child != nullptr)
-                child->control()->CommandEvent().invoke();
+            {
+                // wrap message and send to child for processing
+                // a result code is supported.
+                auto msg = dlg_message{wMsg, wParam, lParam};
+                child->notify(msg);
+                return msg.result;
+            }
+            //else if (id == IDOK)
+                // TODO: Confirm event
             else if (id == IDCANCEL)
+                // TODO: Close event
                 close();
+        }
+        break;
+    }
+
+    case WM_NOTIFY:
+    {
+        auto pNmHdr = (NMHDR*)lParam;
+        if (pNmHdr->idFrom != 0)
+        {
+            auto child = childFromId(pNmHdr->idFrom);
+            if (child != nullptr)
+            {
+                // wrap message and send to child for processing
+                // a result code is supported.
+                auto msg = dlg_message{wMsg, wParam, lParam};
+                child->notify(msg);
+                return msg.result;
+            }
+        }
+        break;
+    }
+
+    case WM_HSCROLL:
+    case WM_VSCROLL:
+    {
+        auto hwnd = (HWND)lParam;
+        if (hwnd != NULL)
+        {
+            auto id = (int)GetDlgCtrlID(hwnd);
+            auto child = childFromId(id);
+            if (child != nullptr)
+            {
+                // wrap message and send to child for processing
+                // a result code is supported.
+                auto msg = dlg_message{wMsg, wParam, lParam};
+                child->notify(msg);
+                return msg.result;
+            }
         }
         break;
     }
@@ -588,6 +699,7 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
         auto pos = toUnits(_state->hwnd, Position{(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), 0, 0});
         _props->p._x = pos._x;
         _props->p._y = pos._y;
+        MoveEvent().invoke();
         break;
     }
 
@@ -597,12 +709,20 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
         auto pos = toUnits(_state->hwnd, Position{0, 0, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)});
         _props->p._cx = pos._cx;
         _props->p._cy = pos._cy;
+        SizeEvent().invoke();
         break;
     }
 
     case WM_LBUTTONDOWN:
     {
         ClickEvent().invoke();
+        break;
+    }
+
+    case WM_LBUTTONDBLCLK:
+    {
+        DoubleClickEvent().invoke();
+        break;
     }
 
     case WM_SETCURSOR:
@@ -638,13 +758,13 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
         for (int i = 0; i < fileCount; i++)
         {
             std::wstring wfile(MAX_PATH, 0x0);
-            if (DragQueryFileW(hDrop, i, wfile.data(), wfile.size()) == 0)
+            if (DragQueryFileW(hDrop, i, &wfile[0], wfile.size()) == 0)
                 continue;
             files.push_back(toBytes(wfile.data()));
         }
         if (files.empty())
             return 0;
-        _props->dropEvent.invoke(files);
+        DropEvent().invoke(files);
         break;
     }
 
@@ -653,7 +773,7 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
         auto timerId = (int)wParam;
         if (timerId > 0 && timerId == _props->timer.id)
         {
-            _props->timerEvent.invoke();
+            TimerEvent().invoke();
         }
         break;
     }
@@ -810,9 +930,24 @@ IEvent<>& Dialog::ClickEvent()
     return _props->clickEvent;
 }
 
+IEvent<>& Dialog::DoubleClickEvent()
+{
+    return _props->dblClickEvent;
+}
+
 IEvent<std::vector<std::string>>& Dialog::DropEvent()
 {
     return _props->dropEvent;
+}
+
+IEvent<>& Dialog::MoveEvent()
+{
+    return _props->moveEvent;
+}
+
+IEvent<>& Dialog::SizeEvent()
+{
+    return _props->sizeEvent;
 }
 
 IEvent<>& Dialog::TimerEvent()
