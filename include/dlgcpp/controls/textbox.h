@@ -32,7 +32,6 @@ namespace dlgcpp
             void rebuild() override;
             std::string className() const override;
             unsigned int styles() const override;
-            unsigned int exStyles() const override;
             void notify(struct dlg_message&) override;
 
             void readInput();

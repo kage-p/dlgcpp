@@ -13,6 +13,7 @@ namespace dlgcpp
         bool enabled = true;
         bool visible = true;
         Position p;
+        BorderStyle borderStyle = BorderStyle::None;
         std::string text;
         Color fgColor = Color::Default;
         Color bgColor = Color::Default;

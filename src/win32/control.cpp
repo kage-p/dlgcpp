@@ -140,6 +140,20 @@ void Control::p(const Position& p)
     SetWindowPos(_state->hwnd, 0, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER);
 }
 
+BorderStyle Control::border() const
+{
+    return _props->borderStyle;
+}
+
+void Control::border(BorderStyle value)
+{
+    if (_props->borderStyle == value)
+        return;
+    _props->borderStyle = value;
+
+    rebuild();
+}
+
 const std::string& Control::text() const
 {
     return _props->text;
@@ -248,7 +262,24 @@ unsigned int Control::styles() const
 
 unsigned int Control::exStyles() const
 {
-    return 0;
+    unsigned int styles = 0;
+
+    switch (_props->borderStyle)
+    {
+    case BorderStyle::Raised:
+        styles |= WS_EX_DLGMODALFRAME;
+        break;
+    case BorderStyle::Thin:
+        styles |= WS_EX_STATICEDGE;
+        break;
+    case BorderStyle::Sunken:
+        styles |= WS_EX_CLIENTEDGE;
+        break;
+    case BorderStyle::None:
+        break;
+    }
+
+    return styles;
 }
 
 void Control::redraw()

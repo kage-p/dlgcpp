@@ -617,6 +617,8 @@ unsigned int Dialog::exStyles() const
     if (_props->type == DialogType::Tool)
         styles |= WS_EX_TOOLWINDOW;
 
+    // WS_EX_CONTEXTHELP
+
     return styles;
 }
 

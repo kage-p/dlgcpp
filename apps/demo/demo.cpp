@@ -27,7 +27,6 @@ int main()
     dlg->add(textbox);
 
     auto button1 = std::make_shared<Button>(dlg, "Add", Position{190,10,50,15});
-    button1->colors(Color::Magenta,Color::Yellow);
     button1->ClickEvent() += [textbox]()
     {
         auto text = textbox->text();

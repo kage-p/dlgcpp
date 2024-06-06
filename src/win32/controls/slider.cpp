@@ -10,6 +10,7 @@ Slider::Slider(std::shared_ptr<IDialog> parent, const std::string& text, const P
     sldRegister();
     this->text(text);
     this->p(p);
+    this->border(BorderStyle::Thin);
 }
 
 Slider::~Slider()
@@ -37,11 +38,6 @@ void Slider::rebuild()
 std::string Slider::className() const
 {
     return SLDR_CLASS;
-}
-
-unsigned int Slider::exStyles() const
-{
-    return Control::exStyles() | WS_EX_STATICEDGE;
 }
 
 IEvent<>& Slider::ChangedEvent()

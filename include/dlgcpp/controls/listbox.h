@@ -17,7 +17,6 @@ namespace dlgcpp
         private:
             struct listbox_props* _props;
             std::string className() const override;
-            unsigned int exStyles() const override;
             void notify(struct dlg_message&) override;
         };
     }

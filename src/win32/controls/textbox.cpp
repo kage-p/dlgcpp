@@ -13,6 +13,7 @@ TextBox::TextBox(std::shared_ptr<IDialog> parent,
 {
     this->text(text);
     this->p(p);
+    this->border(BorderStyle::Sunken);
 }
 
 TextBox::~TextBox()
@@ -61,11 +62,6 @@ unsigned int TextBox::styles() const
     }
 
     return styles;
-}
-
-unsigned int TextBox::exStyles() const
-{
-    return Control::exStyles() | WS_EX_CLIENTEDGE;
 }
 
 IEvent<>& TextBox::ChangedEvent()

@@ -90,6 +90,14 @@ namespace dlgcpp
         Unavailable
     };
 
+    enum class BorderStyle
+    {
+        None = 0,
+        Thin,
+        Sunken,
+        Raised
+    };
+
     struct ImageSource
     {
         std::string id;

@@ -11,6 +11,7 @@ Image::Image(std::shared_ptr<IDialog> parent, const Position& p) :
     _state(new img_state())
 {
     this->p(p);
+    this->border(BorderStyle::Thin);
 }
 
 Image::~Image()
@@ -72,13 +73,6 @@ unsigned int Image::styles() const
         styles |= SS_REALSIZEIMAGE;
 
     return styles;
-}
-
-unsigned int Image::exStyles() const
-{
-    auto styles = Control::exStyles();
-    styles = styles & ~WS_TABSTOP;
-    return styles | WS_EX_STATICEDGE;
 }
 
 void Image::updateImage()
