@@ -695,6 +695,26 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
         break;
     }
 
+    case WM_DRAWITEM:
+    case WM_MEASUREITEM:
+    {
+        auto hwnd = (HWND)wParam;
+        if (hwnd != NULL)
+        {
+            auto id = (int)GetDlgCtrlID(hwnd);
+            auto child = childFromId(id);
+            if (child != nullptr)
+            {
+                // wrap message and send to child for processing
+                // a result code is supported.
+                auto msg = dlg_message{wMsg, wParam, lParam};
+                child->notify(msg);
+                return msg.result;
+            }
+        }
+        break;
+    }
+
     case WM_MOVE:
     {
         // translate using mapped value and store
@@ -920,11 +940,8 @@ LRESULT Dialog::onColorCtl(HDC hdc, HWND hwndChild)
         return (LRESULT)child->state().hbrBack;
     }
 
-    auto hbrBack = (HBRUSH)_state->hbrBgColor;
-    auto lb = LOGBRUSH();
-    GetObject(hbrBack, sizeof(LOGBRUSH), &lb);
-    SetBkColor(hdc, lb.lbColor);
-    return (LRESULT)hbrBack;
+    // no colors
+    return 0;
 }
 
 IEvent<>& Dialog::ClickEvent()
