@@ -14,6 +14,8 @@ namespace dlgcpp
 
             int currentIndex() const;
             void currentIndex(int value);
+            const std::vector<int>& currentIndexes() const;
+            void currentIndexes(const std::vector<int>& indexes);
             bool highlight() const;
             void highlight(bool value);
             bool multiselect() const;
@@ -34,6 +36,7 @@ namespace dlgcpp
             unsigned int styles() const override;
 
             void readSelection();
+            void updateSelection();
             void updateItems();
         };
     }

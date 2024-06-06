@@ -2,6 +2,7 @@
 
 #include "dlgcpp/controls/listbox.h"
 #include "../event_p.h"
+#include <vector>
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -18,6 +19,7 @@ namespace dlgcpp
             bool sorted = true;
             std::vector<std::string> items;
             int currentIndex = -1;
+            std::vector<int> currentIndexes;
             Event<> selChangedEvent;
             Event<> selCancelEvent;
         };

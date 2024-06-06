@@ -58,28 +58,18 @@ void ListBox::notify(struct dlg_message& msg)
             FocusEvent().invoke(false);
         }
     }
-}
-
-void ListBox::readSelection()
-{
-    // if the control input has been changed by the user, save the content
-    if (handle() == nullptr)
-        return;
-
-    auto hwnd = reinterpret_cast<HWND>(handle());
-    auto index = (int)SendMessage(hwnd, LB_GETCURSEL, 0, 0);
-
-    if (index != _props->currentIndex)
+    else if (msg.wMsg == WM_NOTIFY)
     {
-        currentIndex(index);
-        SelChangedEvent().invoke();
+        //#######
     }
+
 }
 
 void ListBox::rebuild()
 {
     Control::rebuild();
     updateItems();
+    updateSelection();
 }
 
 unsigned int ListBox::styles() const
@@ -101,11 +91,15 @@ unsigned int ListBox::styles() const
 
 int ListBox::currentIndex() const
 {
+    if (_props->multiselect)
+        return -1;
     return _props->currentIndex;
 }
 
 void ListBox::currentIndex(int value)
 {
+    if (_props->multiselect)
+        return;
     if (_props->currentIndex == value)
         return;
 
@@ -116,6 +110,97 @@ void ListBox::currentIndex(int value)
     auto hwnd = reinterpret_cast<HWND>(handle());
 
     SendMessage(hwnd, LB_SETCURSEL, (WPARAM)_props->currentIndex, 0);
+}
+
+const std::vector<int>& ListBox::currentIndexes() const
+{
+    static const std::vector<int> empty;
+    if (!_props->multiselect)
+        return empty;
+    return _props->currentIndexes;
+}
+
+void ListBox::currentIndexes(const std::vector<int>& indexes)
+{
+    if (!_props->multiselect)
+        return;
+    if (_props->currentIndexes == indexes)
+        return;
+
+    _props->currentIndexes.clear();
+    for (int index : indexes)
+    {
+        // skip invalid
+        if (_props->items.empty() ||
+            index < 0 ||
+            index > (int)_props->items.size())
+            continue;
+
+        // skip duplicates
+        if (std::find(_props->currentIndexes.begin(),
+                      _props->currentIndexes.end(),
+                      index) != _props->currentIndexes.end())
+            continue;
+
+        _props->currentIndexes.push_back(index);
+    }
+
+    updateSelection();
+}
+
+void ListBox::readSelection()
+{
+    // if the control input has been changed by the user, save the content
+    if (handle() == nullptr)
+        return;
+
+    auto hwnd = reinterpret_cast<HWND>(handle());
+
+    if (_props->multiselect)
+    {
+        _props->currentIndexes.clear();
+        _props->currentIndexes.resize(_props->items.size());
+        auto count = (int)SendMessage(hwnd,
+                                       LB_GETSELITEMS,
+                                       (WPARAM)_props->currentIndexes.size(),
+                                       (LPARAM)&_props->currentIndexes[0]);
+        if (count < 1)
+            _props->currentIndexes.clear();
+        else
+            _props->currentIndexes.resize(count);
+    }
+    else
+    {
+        auto index = (int)SendMessage(hwnd, LB_GETCURSEL, 0, 0);
+
+        if (index != _props->currentIndex)
+        {
+            currentIndex(index);
+            SelChangedEvent().invoke();
+        }
+    }
+}
+
+void ListBox::updateSelection()
+{
+    if (handle() == nullptr)
+        return;
+
+    auto hwnd = reinterpret_cast<HWND>(handle());
+    if (_props->multiselect)
+    {
+        for (int index = 0; index < (int)_props->items.size(); index++)
+        {
+            bool selected = std::find(_props->currentIndexes.begin(),
+                                      _props->currentIndexes.end(),
+                                      index) != _props->currentIndexes.end();
+            SendMessage(hwnd, LB_SETSEL, selected, index);
+        }
+    }
+    else
+    {
+        SendMessage(hwnd, LB_SETCURSEL, (WPARAM)_props->currentIndex, 0);
+    }
 }
 
 bool ListBox::highlight() const
@@ -169,6 +254,7 @@ void ListBox::items(const std::vector<std::string>& items)
 {
     _props->items = items;
     updateItems();
+    updateSelection();
 }
 
 void ListBox::updateItems()
@@ -182,5 +268,4 @@ void ListBox::updateItems()
     {
         SendMessageW(hwnd, LB_ADDSTRING, 0, (LPARAM)toWide(item).c_str());
     }
-    readSelection();
 }
