@@ -1,5 +1,6 @@
 #pragma once
 #include "../control.h"
+#include <vector>
 
 namespace dlgcpp
 {
@@ -11,13 +12,29 @@ namespace dlgcpp
             explicit ListBox(std::shared_ptr<IDialog> parent, const Position& p = Position());
             ~ListBox() override;
 
+            int currentIndex() const;
+            void currentIndex(int value);
+            bool highlight() const;
+            void highlight(bool value);
+            bool multiselect() const;
+            void multiselect(bool value);
+            bool sorted() const;
+            void sorted(bool value);
+            const std::vector<std::string>& items() const;
+            void items(const std::vector<std::string>& items);
+
             IEvent<>& SelChangedEvent();
             IEvent<>& SelCancelEvent();
 
         private:
             struct listbox_props* _props;
+            void rebuild() override;
             std::string className() const override;
             void notify(struct dlg_message&) override;
+            unsigned int styles() const override;
+
+            void readSelection();
+            void updateItems();
         };
     }
 }

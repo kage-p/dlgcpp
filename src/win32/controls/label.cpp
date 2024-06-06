@@ -24,11 +24,13 @@ unsigned int Label::styles() const
 {
     auto styles = Control::styles();
     styles = styles & ~WS_TABSTOP;
+    styles |= SS_NOPREFIX | SS_NOTIFY;
 
     switch (_props->horzAlign)
     {
     case HorizontalAlign::Left:
         styles |= SS_LEFT;
+        //styles |= SS_LEFTNOWORDWRAP;
         break;
     case HorizontalAlign::Center:
         styles |= SS_CENTER;
@@ -54,7 +56,7 @@ unsigned int Label::styles() const
     if (_props->elipsis)
         styles |= SS_ENDELLIPSIS;
 
-    return styles | SS_NOPREFIX | SS_NOTIFY;
+    return styles;
 }
 
 void Label::p(const Position& p)
@@ -127,8 +129,8 @@ void Label::updateAutoSize()
     auto hwndParent = reinterpret_cast<HWND>(parent()->handle());
     Position pos = Control::p();
     Position newPos = toUnits(hwndParent, Position{0,0,szl.cx,szl.cy});
-    pos._cx = newPos._cx;
-    pos._cy = newPos._cy;
+    pos._cx = newPos._cx + 1;
+    pos._cy = newPos._cy + 1;
     Control::p(pos);
 }
 

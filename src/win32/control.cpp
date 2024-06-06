@@ -110,17 +110,7 @@ void Control::visible(bool value)
 
 const Position& Control::p() const
 {
-    //if (_state->_hwnd == NULL)
-        return _props->p;
-
-    // auto hwndParent = reinterpret_cast<HWND>(_parent->handle());
-
-    // auto rc = RECT();
-    // GetWindowRect(_state->_hwnd, &rc);
-    // MapWindowPoints(HWND_DESKTOP, hwndParent, (LPPOINT)&rc, 2);
-    // MapDialogRect(hwndParent, &rc);
-
-    // return Position{rc.left,rc.top,rc.right-rc.left,rc.bottom-rc.top};
+    return _props->p;
 }
 
 void Control::p(const Position& p)
@@ -163,9 +153,21 @@ void Control::text(const std::string& value)
 {
     if (_props->text == value)
         return;
+
     _props->text = value;
     if (_state->hwnd == NULL)
         return;
+
+    // only sync the text when it has changed
+    auto cbText = (size_t)GetWindowTextLengthW(_state->hwnd);
+    if (_props->text.size() == cbText)
+    {
+        cbText++;
+        std::wstring buf(cbText, 0);
+        GetWindowTextW(_state->hwnd, &buf[0], cbText);
+        if (_props->text == toBytes(buf.c_str()))
+            return;
+    }
 
     SetWindowTextW(_state->hwnd,
                    toWide(_props->text).c_str());
@@ -178,8 +180,23 @@ std::pair<Color, Color> Control::colors() const
 
 void Control::colors(Color fgColor, Color bgColor)
 {
-    _props->fgColor = fgColor;
-    _props->bgColor = bgColor;
+    bool changed = false;
+
+    // foreground 'None' is not supported
+    if (fgColor != Color::None &&
+        _props->fgColor != fgColor)
+    {
+        _props->fgColor = fgColor;
+        changed = true;
+    }
+    if (bgColor != fgColor)
+    {
+        _props->bgColor = bgColor;
+        changed = true;
+    }
+
+    if (!changed)
+        return;
 
     if (_state->hbrBack != NULL)
     {

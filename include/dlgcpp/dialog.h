@@ -130,7 +130,7 @@ namespace dlgcpp
 
     protected:
         std::shared_ptr<IChild> childFromId(int id);
-        void redraw();
+        void redraw(bool drawChildren = false);
 
         // overridable by derived class
         virtual void rebuild();

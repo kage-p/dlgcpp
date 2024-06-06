@@ -7,6 +7,7 @@ set(headers
     win32/control_p.h
     win32/dialog_p.h
     win32/dlgmsg.h
+    win32/event_p.h
     win32/utility.h
     win32/controls/button_p.h
     win32/controls/custom_p.h
@@ -15,7 +16,7 @@ set(headers
     win32/controls/listbox_p.h
     win32/controls/slider_p.h
     win32/controls/textbox_p.h
-    win32/controls/p_slider.h
+    win32/controls/slider_imp.h
     win32/dialogs/about_p.h
     win32/dialogs/file_p.h
     win32/dialogs/folder_p.h
@@ -33,7 +34,7 @@ set(sources
     win32/controls/listbox.cpp
     win32/controls/slider.cpp
     win32/controls/textbox.cpp
-    win32/controls/p_slider.cpp
+    win32/controls/slider_imp.cpp
     win32/dialogs/about.cpp
     win32/dialogs/file.cpp
     win32/dialogs/folder.cpp

@@ -1,4 +1,4 @@
-#include "p_slider.h"
+#include "slider_imp.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX

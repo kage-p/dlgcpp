@@ -318,12 +318,11 @@ void Dialog::color(Color value)
     }
 
     // if using default, keep null
-    if (value == Color::None)
-        _state->hbrBgColor = (HBRUSH)GetStockObject(HOLLOW_BRUSH);
-    else if (value != Color::Default)
+    if (value != Color::None &&
+        value != Color::Default)
         _state->hbrBgColor = CreateSolidBrush((COLORREF)_props->backColor);
 
-    redraw();
+    redraw(true);
 }
 
 Cursor Dialog::cursor() const
@@ -472,12 +471,15 @@ std::shared_ptr<IChild> Dialog::childFromId(int id)
     return nullptr;
 }
 
-void Dialog::redraw()
+void Dialog::redraw(bool drawChildren)
 {
     if (_state->hwnd == NULL)
         return;
 
-    RedrawWindow(_state->hwnd, NULL, 0, RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW);
+    RedrawWindow(_state->hwnd,
+                 NULL,
+                 0,
+                 RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW | (drawChildren ? RDW_ALLCHILDREN : 0) );
 }
 
 void Dialog::rebuild()
@@ -560,7 +562,7 @@ void Dialog::rebuild()
 
     // the dialog does not erase the background automatically
     if (_props->visible)
-        redraw();
+        redraw(true);
 }
 
 void Dialog::dump()
@@ -578,7 +580,7 @@ void Dialog::dump()
 unsigned int Dialog::styles() const
 {
     // not using DS_CENTER as center() is provided for this.
-    unsigned int styles = DS_SETFONT | DS_SETFOREGROUND | DS_3DLOOK;
+    unsigned int styles = DS_SETFONT | DS_SETFOREGROUND | DS_3DLOOK | WS_CLIPCHILDREN;
 
     switch (_props->type)
     {
@@ -865,15 +867,32 @@ LRESULT Dialog::onSetCursor(HWND hwndChild)
 
 LRESULT Dialog::onColorDlg(HDC hdc)
 {
-    if (_state->hbrBgColor == NULL)
-        return 0;
+    // always return a brush
+    bool usingSysDefault = false;
+    if (_props->backColor == Color::Default)
+    {
+        usingSysDefault = true;
+    }
+    else if (_props->backColor == Color::None)
+    {
+        if (_props->parent != nullptr)
+        {
+            // use parent brush; the message will call this same function for the parent.
+            auto hwndParent = reinterpret_cast<HWND>(_props->parent->handle());
+            return SendMessage(hwndParent, WM_CTLCOLORDLG, (WPARAM)hdc, (LPARAM)hwndParent);
+        }
+        usingSysDefault = true;
+    }
 
-    // set back color of DC for controls with no background
-    auto hbrBack = (HBRUSH)_state->hbrBgColor;
-    auto lb = LOGBRUSH();
-    GetObject(hbrBack, sizeof(LOGBRUSH), &lb);
-    SetBkColor(hdc, lb.lbColor);
-    return (LRESULT)hbrBack;
+    if (usingSysDefault)
+    {
+        // use system default
+        SetBkColor(hdc, GetSysColor(COLOR_BTNFACE));
+        return (LRESULT)GetSysColorBrush(COLOR_BTNFACE);
+    }
+
+    SetBkColor(hdc, (COLORREF)_props->backColor);
+    return (LRESULT)_state->hbrBgColor;
 }
 
 LRESULT Dialog::onColorCtl(HDC hdc, HWND hwndChild)
@@ -895,18 +914,16 @@ LRESULT Dialog::onColorCtl(HDC hdc, HWND hwndChild)
     auto fgColor = colors.first;
     auto bgColor = colors.second;
 
-    if (fgColor != Color::None && fgColor != Color::Default)
+    if (fgColor == Color::Default &&
+        bgColor == Color::Default)
+        // not using colors
+        return 0;
+
+    if (fgColor != Color::Default)
     {
         SetTextColor(hdc, (COLORREF)fgColor);
 
-        // If bgcolor not set with fgcolor, return a system color.
-        if (bgColor == Color::None)
-        {
-            // Attempt transparency. This works with themes.
-            SetBkMode(hdc, TRANSPARENT);
-            return (LRESULT)GetStockObject(HOLLOW_BRUSH);
-        }
-
+        // foreground only color requires a background
         if (bgColor == Color::Default)
         {
             // using system default
@@ -933,15 +950,15 @@ LRESULT Dialog::onColorCtl(HDC hdc, HWND hwndChild)
         }
     }
 
-    // the child manages the background brush
-    if (child->state().hbrBack != NULL)
+    if (bgColor == Color::None)
     {
-        SetBkColor(hdc, (COLORREF)bgColor);
-        return (LRESULT)child->state().hbrBack;
+        // use parent brush
+        return onColorDlg(hdc);
     }
 
-    // no colors
-    return 0;
+    // the child manages the background brush
+    SetBkColor(hdc, (COLORREF)bgColor);
+    return (LRESULT)child->state().hbrBack;
 }
 
 IEvent<>& Dialog::ClickEvent()

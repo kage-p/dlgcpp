@@ -1,7 +1,8 @@
 #pragma once
 
 #include "dlgcpp/controls/slider.h"
-#include "p_slider.h"
+#include "slider_imp.h"
+#include "../event_p.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN

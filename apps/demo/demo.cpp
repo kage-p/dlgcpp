@@ -12,60 +12,95 @@ int main()
 
     auto dlg = std::make_shared<Dialog>();
     dlg->title("DLGCPP Demo Application");
+    dlg->type(DialogType::Popup);
     dlg->image(ImageSource{"#100", true, false});
     dlg->color(Color::White);
-    dlg->resize(355,150);
+    dlg->resize(360,230);
     dlg->center();
 
-    auto label = std::make_shared<Label>(dlg, "Label:", Position{10, 10, 50, 15});
-    label->horizontalAlignment(HorizontalAlign::Right);
-    label->verticalAlignment(VerticalAlign::Center);
-    dlg->add(label);
+    auto lblEntry = std::make_shared<Label>(dlg, "Entry:", Position{10, 10, 50, 15});
+    lblEntry->colors(Color::Gray, Color::None);
+    lblEntry->horizontalAlignment(HorizontalAlign::Right);
+    lblEntry->verticalAlignment(VerticalAlign::Center);
+    dlg->add(lblEntry);
 
-    auto textbox = std::make_shared<TextBox>(dlg, "Text Entry", Position{65, 10, 120, 15});
-    textbox->colors(Color::Blue, Color::Orange);
-    dlg->add(textbox);
+    auto txtEntry = std::make_shared<TextBox>(dlg, "Text Entry", Position{65, 10, 120, 15});
+    txtEntry->colors(Color::Blue, Color::Orange);
+    dlg->add(txtEntry);
 
-    auto button1 = std::make_shared<Button>(dlg, "Add", Position{190,10,50,15});
-    button1->ClickEvent() += [textbox]()
+    auto btnAdd = std::make_shared<Button>(dlg, "Add", Position{190,10,50,15});
+    dlg->add(btnAdd);
+
+    auto btnRemove = std::make_shared<Button>(dlg, "Remove", Position{245,10,50,15});
+    dlg->add(btnRemove);
+
+    auto btnInfo = std::make_shared<Button>(dlg, "Info", Position{300,10,50,15});
+    dlg->add(btnInfo);
+
+    auto lstItems = std::make_shared<ListBox>(dlg, Position{10,30,340,180});
+    lstItems->colors(Color::Black, Color::None);
+    dlg->add(lstItems);
+
+    auto lblPosition = std::make_shared<Label>(dlg, "", Position{10,215,0,0});
+    lblPosition->colors(Color::Gray, Color::None);
+    lblPosition->autoSize(true);
+    dlg->add(lblPosition);
+
+    btnAdd->ClickEvent() += [txtEntry,lstItems]()
     {
-        auto text = textbox->text();
-        textbox->text(text + "X");
+        auto items = lstItems->items();
+        items.push_back(txtEntry->text());
+        lstItems->items(items);
     };
-    dlg->add(button1);
 
-    auto button2 = std::make_shared<Button>(dlg, "Remove", Position{245,10,50,15});
-    button2->ClickEvent() += [textbox]()
+    btnRemove->ClickEvent() += [txtEntry,lstItems]()
     {
-        auto text = textbox->text();
-        if (text.empty())
+        auto items = lstItems->items();
+        if (items.empty() || lstItems->currentIndex() < 0)
             return;
-        text.pop_back();
-        textbox->text(text);
-    };
-    dlg->add(button2);
 
-    auto button3 = std::make_shared<Button>(dlg, "Info", Position{300,10,50,15});
-    button3->ClickEvent() += [dlg]()
+        items.erase(items.begin() + lstItems->currentIndex());
+        lstItems->items(items);
+    };
+
+    btnInfo->ClickEvent() += [dlg]()
     {
         dlg->message("Welcome to DLGCPP Demo App!", "DLGCPP Demo");
     };
-    dlg->add(button3);
+
+    lstItems->SelChangedEvent() += [dlg,lstItems,txtEntry,lblPosition]()
+    {
+        if (lstItems->currentIndex() < 0)
+            lblPosition->text("No selection");
+        else
+            lblPosition->text("Selected item: " + std::to_string(lstItems->currentIndex()));
+
+        auto items = lstItems->items();
+        if (items.empty() || lstItems->currentIndex() < 0)
+            return;
+
+        txtEntry->text(items.at(lstItems->currentIndex()));
+    };
 
     dlg->ClickEvent() += [dlg]()
     {
-        // change the frame
-        if (dlg->type() != DialogType::Application)
+        if (dlg->color() != Color::White)
         {
-            dlg->type(DialogType::Application);
             dlg->color(Color::White);
         }
         else
         {
-            dlg->type(DialogType::Tool);
             dlg->color(Color::Blue);
         }
     };
+
+    // add some items
+    btnAdd->ClickEvent().invoke();
+    btnAdd->ClickEvent().invoke();
+    btnAdd->ClickEvent().invoke();
+    btnAdd->ClickEvent().invoke();
+    btnAdd->ClickEvent().invoke();
+    lstItems->SelChangedEvent().invoke();
 
     dlg->exec();
     return 0;

@@ -96,12 +96,11 @@ void TextBox::readInput()
         return;
 
     auto hwnd = reinterpret_cast<HWND>(handle());
-    auto cb = (size_t)GetWindowTextLength(hwnd) + 1;
+    auto cb = (size_t)GetWindowTextLengthW(hwnd) + 1;
     std::wstring buf(cb, 0);
     GetWindowTextW(hwnd, &buf[0], cb);
     text(toBytes(buf.c_str()));
 }
-
 
 HorizontalAlign TextBox::horizontalAlignment() const
 {
@@ -163,7 +162,11 @@ void TextBox::readOnly(bool value)
     if (_props->readOnly == value)
         return;
     _props->readOnly = value;
-    rebuild();
+
+    if (handle() == nullptr)
+        return;
+    auto hwnd = reinterpret_cast<HWND>(handle());
+    SendMessage(hwnd, EM_SETREADONLY, (WPARAM)_props->readOnly, 0);
 }
 
 bool TextBox::multiline() const

@@ -1,5 +1,6 @@
 #pragma once
 #include "dlgcpp/control.h"
+#include "event_p.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN

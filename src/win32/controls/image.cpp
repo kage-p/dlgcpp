@@ -35,28 +35,6 @@ void Image::notify(struct dlg_message& msg)
     }
 }
 
-bool Image::autoSize() const
-{
-    return _props->autoSize;
-}
-
-void Image::autoSize(bool value)
-{
-    _props->autoSize = value;
-    updateImage();
-}
-
-const ImageSource& Image::image() const
-{
-    return _props->image;
-}
-
-void Image::image(const ImageSource& image)
-{
-    _props->image = image;
-    updateImage();
-}
-
 void Image::rebuild()
 {
     Control::rebuild();
@@ -121,4 +99,26 @@ void Image::updateImage()
         auto pos = toUnits(GetParent(hwnd), Position{0,0,rc.right,rc.bottom});
         Control::p( Position{p()._x, p()._y, pos._cx, pos._cy} );
     }
+}
+
+bool Image::autoSize() const
+{
+    return _props->autoSize;
+}
+
+void Image::autoSize(bool value)
+{
+    _props->autoSize = value;
+    updateImage();
+}
+
+const ImageSource& Image::image() const
+{
+    return _props->image;
+}
+
+void Image::image(const ImageSource& image)
+{
+    _props->image = image;
+    updateImage();
 }
