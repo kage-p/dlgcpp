@@ -8,7 +8,7 @@ namespace dlgcpp
         class Slider : public dlgcpp::Control
         {
         public:
-            explicit Slider(std::shared_ptr<IDialog> parent, const std::string& text = std::string(), const Position& p = Position());
+            explicit Slider(const std::string& text = std::string(), const Position& p = Position());
             ~Slider() override;
 
             bool vertical() const;
@@ -28,7 +28,7 @@ namespace dlgcpp
             struct slider_props* _props;
             void rebuild() override;
             std::string className() const override;
-            void notify(struct dlg_message&) override;
+            void notify(dlg_message&) override;
         };
     }
 }

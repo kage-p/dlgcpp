@@ -9,7 +9,7 @@ namespace dlgcpp
         class ListBox : public dlgcpp::Control
         {
         public:
-            explicit ListBox(std::shared_ptr<IDialog> parent, const Position& p = Position());
+            explicit ListBox(const Position& p = Position());
             ~ListBox() override;
 
             int currentIndex() const;
@@ -32,7 +32,7 @@ namespace dlgcpp
             struct listbox_props* _props;
             void rebuild() override;
             std::string className() const override;
-            void notify(struct dlg_message&) override;
+            void notify(dlg_message&) override;
             unsigned int styles() const override;
 
             void readSelection();

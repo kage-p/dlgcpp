@@ -107,7 +107,7 @@ void AboutDialog::show()
     if (!_props->logoBitmapId.empty())
     {
         // Use bitmap...
-        auto logoImage = std::make_shared<Image>(dlg, Position{7, 7, 295, 65});
+        auto logoImage = std::make_shared<Image>(Position{7, 7, 295, 65});
         logoImage->colors(Color::Black, Color::White);
         logoImage->image(ImageSource{_props->logoBitmapId, false, false});
         dlg->add(logoImage);
@@ -115,25 +115,25 @@ void AboutDialog::show()
     else if (!_props->logoIconId.empty())
     {
         // use application icon as alternativve
-        auto iconImage = std::make_shared<Image>(dlg, Position{7, 13, 5, 5});
+        auto iconImage = std::make_shared<Image>(Position{7, 13, 5, 5});
         iconImage->image(ImageSource{_props->logoIconId, true, false});
         dlg->add(iconImage);
         cxLogoOffset = iconImage->p()._x + iconImage->p()._cx;
     }
 
-    auto appDetails = std::make_shared<Label>(dlg, _props->appDetailsText, Position{7, 15+cyLogoOffset, 295, 10});
+    auto appDetails = std::make_shared<Label>(_props->appDetailsText, Position{7, 15+cyLogoOffset, 295, 10});
     appDetails->font(Font{"sans serif", 8, true});
     dlg->add(appDetails);
 
     if (!_props->releaseDateText.empty())
     {
-        auto releaseInfo = std::make_shared<Label>(dlg, _props->releaseDateText, Position{7+cxLogoOffset, 26+cyLogoOffset, 295-cxLogoOffset, 10});
+        auto releaseInfo = std::make_shared<Label>(_props->releaseDateText, Position{7+cxLogoOffset, 26+cyLogoOffset, 295-cxLogoOffset, 10});
         dlg->add(releaseInfo);
     }
 
     if (!_props->homePageLink.empty())
     {
-        auto webLink = std::make_shared<Label>(dlg, _props->homePageLink, Position{7+cxLogoOffset, 36+cyLogoOffset, 150, 12});
+        auto webLink = std::make_shared<Label>(_props->homePageLink, Position{7+cxLogoOffset, 36+cyLogoOffset, 150, 12});
         webLink->colors(Color::Blue, Color::None);
         webLink->cursor(Cursor::Hand);
         webLink->font(Font{"MS Sans Serif", 8, false, true});
@@ -147,13 +147,13 @@ void AboutDialog::show()
         dlg->add(webLink);
     }
 
-    auto description = std::make_shared<TextBox>(dlg, _props->descriptionText, Position{7, 49+cyLogoOffset, 295, 50});
+    auto description = std::make_shared<TextBox>(_props->descriptionText, Position{7, 49+cyLogoOffset, 295, 50});
     description->readOnly(true);
     description->multiline(true);
     description->wrapText(true);
     dlg->add(description);
 
-    auto sysInfoButton = std::make_shared<Button>(dlg, "&System Info...", Position{167, 104+cyLogoOffset, 65, 20});
+    auto sysInfoButton = std::make_shared<Button>("&System Info...", Position{167, 104+cyLogoOffset, 65, 20});
     sysInfoButton->ClickEvent() +=
         [dlg]()
     {
@@ -162,7 +162,7 @@ void AboutDialog::show()
     };
     dlg->add(sysInfoButton);
 
-    auto closeButton = std::make_shared<Button>(dlg, "Close", Position{237, 104+cyLogoOffset, 65, 20});
+    auto closeButton = std::make_shared<Button>("Close", Position{237, 104+cyLogoOffset, 65, 20});
     closeButton->ClickEvent() +=
         [dlg]()
     {

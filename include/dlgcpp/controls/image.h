@@ -8,7 +8,7 @@ namespace dlgcpp
         class Image : public dlgcpp::Control
         {
         public:
-            explicit Image(std::shared_ptr<IDialog> parent, const Position& p = Position());
+            explicit Image(const Position& p = Position());
             ~Image() override;
 
             bool autoSize() const;
@@ -22,7 +22,7 @@ namespace dlgcpp
 
             void rebuild() override;
             unsigned int styles() const override;
-            void notify(struct dlg_message&) override;
+            void notify(dlg_message&) override;
 
             void updateImage();
         };

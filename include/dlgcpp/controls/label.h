@@ -9,7 +9,7 @@ namespace dlgcpp
         class Label : public dlgcpp::Control
         {
         public:
-            explicit Label(std::shared_ptr<IDialog> parent, const std::string& text = std::string(), const Position& p = Position());
+            explicit Label(const std::string& text = std::string(), const Position& p = Position());
             ~Label() override;
 
             void p(const Position& p) override;
@@ -28,7 +28,7 @@ namespace dlgcpp
             struct lbl_props* _props;
 
             unsigned int styles() const override;
-            void notify(struct dlg_message&) override;
+            void notify(dlg_message&) override;
 
             void updateAutoSize();
         };

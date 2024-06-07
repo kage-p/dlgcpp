@@ -4,8 +4,9 @@
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-Button::Button(std::shared_ptr<IDialog> parent, const std::string& text, const Position& p)
-    : Control(parent), _props(new button_props())
+Button::Button(const std::string& text, const Position& p) :
+    Control(),
+    _props(new button_props())
 {
     this->text(text);
     this->p(p);
@@ -54,7 +55,7 @@ unsigned int Button::styles() const
     return styles | BS_NOTIFY;
 }
 
-void Button::notify(struct dlg_message& msg)
+void Button::notify(dlg_message& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {

@@ -32,27 +32,26 @@ Dialog::~Dialog()
 {
     dump();
 
-    // clean handles
+    if (_state->hMenu != NULL)
+    {
+        DestroyMenu(_state->hMenu);
+        _state->hMenu = NULL;
+    }
+
     if (_state->hbrBgColor != NULL)
     {
         DeleteObject(_state->hbrBgColor);
         _state->hbrBgColor = NULL;
     }
 
+    if (_state->hImage != NULL)
+    {
+        DeleteObject(_state->hImage);
+        _state->hImage = NULL;
+    }
+
     delete _props;
     delete _state;
-}
-
-std::shared_ptr<Dialog> Dialog::shared_ptr()
-{
-    try
-    {
-        return shared_from_this();
-    }
-    catch (const std::exception&)
-    {
-        return nullptr;
-    }
 }
 
 int Dialog::nextId()
@@ -300,6 +299,36 @@ void Dialog::updateImage()
     SendMessage(hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)_state->hImage);
 }
 
+std::shared_ptr<IMenu> Dialog::menu() const
+{
+    return _props->menu->menu();
+}
+
+void Dialog::menu(std::shared_ptr<IChildMenu> menu)
+{
+    if (_props->menu == menu)
+        return;
+
+    if (_state->hMenu != NULL)
+    {
+        DestroyMenu(_state->hMenu);
+        _state->hMenu = NULL;
+    }
+
+    if (_state->hwnd == NULL)
+        return;
+    SetMenu(_state->hwnd, NULL);
+
+    _props->menu = menu;
+
+    if (_props->menu != nullptr)
+    {
+        // the menu will assign itself to the dialog
+        _props->menu->id(MenuStartId);
+        _props->menu->parent(shared_from_this());
+    }
+}
+
 Color Dialog::color() const
 {
     return _props->backColor;
@@ -435,11 +464,10 @@ void Dialog::updateTimer()
     }
 }
 
-void Dialog::add(std::shared_ptr<IChild> child)
+void Dialog::add(std::shared_ptr<IChildControl> child)
 {
     if (child == nullptr ||
-        child->control() == nullptr ||
-        child->control()->parent() != shared_ptr())
+        child->parent() != nullptr)
         return;
 
     auto it = std::find(_props->children.begin(), _props->children.end(), child);
@@ -447,20 +475,22 @@ void Dialog::add(std::shared_ptr<IChild> child)
         return;
     _props->children.push_back(child);
 
+    child->parent(shared_from_this());
     child->id(nextId());
 }
 
-void Dialog::remove(std::shared_ptr<IChild> child)
+void Dialog::remove(std::shared_ptr<IChildControl> child)
 {
     auto it = std::find(_props->children.begin(), _props->children.end(), child);
     if (it == _props->children.end())
         return;
     // this will dispose of the child control
     child->id(0);
+    child->parent(nullptr);
     _props->children.erase(it);
 }
 
-std::shared_ptr<IChild> Dialog::childFromId(int id)
+std::shared_ptr<IChildControl> Dialog::childFromId(int id)
 {
     if (id == 0)
         return nullptr;
@@ -560,6 +590,9 @@ void Dialog::rebuild()
     updateImage();
     updateTimer();
 
+    if (_props->menu != nullptr)
+        SetMenu(_state->hwnd, _state->hMenu);
+
     // the dialog does not erase the background automatically
     if (_props->visible)
         redraw(true);
@@ -641,6 +674,26 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
         auto id = (int)LOWORD(wParam);
         if (id != 0)
         {
+            if (lParam == 0)
+            {
+                if (HIWORD(wParam) == 0)
+                {
+                    // menu item
+                    if (_props->menu != nullptr)
+                    {
+                        auto msg = dlg_message{wMsg, wParam, lParam};
+                        _props->menu->notify(msg);
+                        return msg.result;
+                    }
+                }
+                else if (HIWORD(wParam) == 0)
+                {
+                    // accelerator
+
+                }
+                return 0;
+            }
+
             auto child = childFromId(id);
             if (child != nullptr)
             {

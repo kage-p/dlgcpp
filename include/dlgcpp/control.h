@@ -31,7 +31,7 @@ namespace dlgcpp
         virtual void* handle() const = 0;
         virtual void* user() const = 0;
         virtual void user(void* value) = 0;
-        virtual std::shared_ptr<IDialog> parent() = 0;
+        virtual std::shared_ptr<IDialog> parent() const = 0;
         virtual void redraw() = 0;
         virtual void setFocus() = 0;
 
@@ -40,17 +40,19 @@ namespace dlgcpp
         virtual IEvent<bool>& FocusEvent() = 0;
     };
 
-    class Control : public IChild,
+    class Control : public IChildControl,
                     public IControl,
                     public std::enable_shared_from_this<Control>
     {
     public:
-        // IChild impl.
+        // IChildControl impl.
+        std::shared_ptr<IDialog> parent() const override;
+        void parent(std::shared_ptr<IDialog>) override;
         int id() const override;
         void id(int value) override;
         std::shared_ptr<IControl> control() override;
         struct ctl_state state() override;
-        void notify(struct dlg_message&) override;
+        void notify(dlg_message&) override;
 
         // IControl impl.
         bool enabled() const override;
@@ -72,7 +74,6 @@ namespace dlgcpp
         void* handle() const override;
         void* user() const override;
         void user(void* value) override;
-        std::shared_ptr<IDialog> parent() override;
         void redraw() override;
         void setFocus() override;
 
@@ -81,9 +82,8 @@ namespace dlgcpp
         IEvent<bool>& FocusEvent() override;
 
     protected:
-        explicit Control(std::shared_ptr<IDialog> parent);
+        explicit Control();
         virtual ~Control();
-        std::shared_ptr<Control> shared_ptr();
 
         // overridable by derived class
         virtual void rebuild();

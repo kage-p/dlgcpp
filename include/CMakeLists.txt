@@ -9,6 +9,7 @@ set(headers
     dlgcpp/defs.h
     dlgcpp/dialog.h
     dlgcpp/event.h
+    dlgcpp/menu.h
     dlgcpp/controls/button.h
     dlgcpp/controls/custom.h
     dlgcpp/controls/image.h

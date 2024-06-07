@@ -15,6 +15,7 @@
 #include "defs.h"
 #include "control.h"
 #include "dialog.h"
+#include "menu.h"
 
 #include "controls/button.h"
 #include "controls/custom.h"

@@ -5,8 +5,8 @@
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-Image::Image(std::shared_ptr<IDialog> parent, const Position& p) :
-    Control(parent),
+Image::Image(const Position& p) :
+    Control(),
     _props(new img_props()),
     _state(new img_state())
 {
@@ -20,7 +20,7 @@ Image::~Image()
     delete _state;
 }
 
-void Image::notify(struct dlg_message& msg)
+void Image::notify(dlg_message& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {

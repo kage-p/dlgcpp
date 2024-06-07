@@ -5,8 +5,9 @@
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-ListBox::ListBox(std::shared_ptr<IDialog> parent, const Position& p)
-    : Control(parent), _props(new listbox_props())
+ListBox::ListBox(const Position& p) :
+    Control(),
+    _props(new listbox_props())
 {
     this->p(p);
     this->border(BorderStyle::Sunken);
@@ -32,7 +33,7 @@ std::string ListBox::className() const
     return "LISTBOX";
 }
 
-void ListBox::notify(struct dlg_message& msg)
+void ListBox::notify(dlg_message& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {
@@ -58,11 +59,6 @@ void ListBox::notify(struct dlg_message& msg)
             FocusEvent().invoke(false);
         }
     }
-    else if (msg.wMsg == WM_NOTIFY)
-    {
-        //#######
-    }
-
 }
 
 void ListBox::rebuild()
@@ -264,6 +260,8 @@ void ListBox::updateItems()
     auto hwnd = reinterpret_cast<HWND>(handle());
 
     SendMessage(hwnd, LB_RESETCONTENT, 0, 0);
+    readSelection(); // remove the selection
+
     for (const auto& item : _props->items)
     {
         SendMessageW(hwnd, LB_ADDSTRING, 0, (LPARAM)toWide(item).c_str());

@@ -40,7 +40,7 @@ User interfaces can be quickly constructed using standard C++ method calls, as s
         dlg->resize(500,250);
         dlg->center();
     -
-        auto label = std::make_shared<Label>(dlg, "Hello DLGCPP!", Position{10, 10, 100, 15});
+        auto label = std::make_shared<Label>("Hello DLGCPP!", Position{10, 10, 100, 15});
         label->colors(Color::Blue, Color::White);
         dlg->add(label);
     -
@@ -48,7 +48,7 @@ User interfaces can be quickly constructed using standard C++ method calls, as s
         return 0;
     }
 
-The first group of statements initiate a dialog box window, sizing and centering it. The second group creates a text label and adds color customisation. The final exec() statement displays the modal dialog box and starts a message (event) processing loop, which continues to execute until the dialog is closed..
+The first group of statements initiate a dialog box window, sizing and centering it. The second group creates a text label with color customisation, and then adds this to the parent dialog. The final exec() statement displays the modal dialog box and starts a message (event) processing loop, which continues to execute until the dialog is closed..
 
 Consumers are required to allocate all DLGCPP classes using shared_ptr. Controls are added to a dialog using the simple dlg->add(control) statement which also invokes the creation function. A reference to the control's shared_ptr is stored within the parent so it does not have to be stored elsewhere.
 

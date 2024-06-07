@@ -8,7 +8,7 @@ namespace dlgcpp
         class Custom : public dlgcpp::Control
         {
         public:
-            explicit Custom(std::shared_ptr<IDialog> parent, const std::string& className, const Position& p = Position());
+            explicit Custom(const std::string& className, const Position& p = Position());
             ~Custom() override;
 
         private:

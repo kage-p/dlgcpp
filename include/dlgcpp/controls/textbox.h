@@ -8,7 +8,7 @@ namespace dlgcpp
         class TextBox : public dlgcpp::Control
         {
         public:
-            explicit TextBox(std::shared_ptr<IDialog> parent, const std::string& text = std::string(), const Position& p = Position());
+            explicit TextBox(const std::string& text = std::string(), const Position& p = Position());
             ~TextBox() override;
 
             int maxChars() const;
@@ -32,7 +32,7 @@ namespace dlgcpp
             void rebuild() override;
             std::string className() const override;
             unsigned int styles() const override;
-            void notify(struct dlg_message&) override;
+            void notify(dlg_message&) override;
 
             void readInput();
         };

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -8,6 +7,7 @@
 #include "defs.h"
 #include "child.h"
 #include "event.h"
+#include "menu.h"
 
 #ifdef _WIN32
     #define NOMINMAX
@@ -49,6 +49,8 @@ namespace dlgcpp
         virtual void title(const std::string& value) = 0;
         virtual const ImageSource& image() const = 0;
         virtual void image(const ImageSource& image) = 0;
+        virtual std::shared_ptr<IMenu> menu() const = 0;
+        virtual void menu(std::shared_ptr<IChildMenu> menu) = 0;
         virtual Color color() const = 0;
         virtual void color(Color value) = 0;
         virtual Cursor cursor() const = 0;
@@ -64,8 +66,8 @@ namespace dlgcpp
         virtual void timer(int timeout) = 0;
 
         // child management
-        virtual void add(std::shared_ptr<IChild> child) = 0;
-        virtual void remove(std::shared_ptr<IChild> child) = 0;
+        virtual void add(std::shared_ptr<IChildControl> child) = 0;
+        virtual void remove(std::shared_ptr<IChildControl> child) = 0;
         virtual std::vector<std::shared_ptr<IControl>> children() const = 0;
 
         // events
@@ -82,7 +84,6 @@ namespace dlgcpp
     public:
         explicit Dialog(std::shared_ptr<IDialog> parent = nullptr);
         virtual ~Dialog();
-        std::shared_ptr<Dialog> shared_ptr();
         int exec();
         void quit(int result = 0);
 
@@ -107,6 +108,8 @@ namespace dlgcpp
         void title(const std::string& value) override;
         const ImageSource& image() const override;
         void image(const ImageSource& image) override;
+        virtual std::shared_ptr<IMenu> menu() const override;
+        virtual void menu(std::shared_ptr<IChildMenu> menu) override;
         void* handle() const override;
         void* user() const override;
         void user(void* value) override;
@@ -116,8 +119,8 @@ namespace dlgcpp
         void timer(int timeout) override;
 
         // child management
-        void add(std::shared_ptr<IChild> child) override;
-        void remove(std::shared_ptr<IChild> child) override;
+        void add(std::shared_ptr<IChildControl> child) override;
+        void remove(std::shared_ptr<IChildControl> child) override;
         std::vector<std::shared_ptr<IControl>> children() const override;
 
         // events
@@ -129,7 +132,7 @@ namespace dlgcpp
         IEvent<>& TimerEvent() override;
 
     protected:
-        std::shared_ptr<IChild> childFromId(int id);
+        std::shared_ptr<IChildControl> childFromId(int id);
         void redraw(bool drawChildren = false);
 
         // overridable by derived class

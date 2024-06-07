@@ -2,10 +2,9 @@
 
 using namespace dlgcpp::controls;
 
-Custom::Custom(std::shared_ptr<IDialog> parent,
-               const std::string& className,
+Custom::Custom(const std::string& className,
                const Position& p) :
-    Control(parent),
+    Control(),
     _props(new cus_props())
 {
     _props->className = className;

@@ -56,7 +56,7 @@ void SplashDialog::show()
     _props->splashDialog = dlg;
     dlg->type(DialogType::Frameless);
 
-    auto logoImage = std::make_shared<Image>(dlg, Position{0, 0, 0, 0});
+    auto logoImage = std::make_shared<Image>(Position{0, 0, 0, 0});
     logoImage->colors(Color::Black, Color::White);
     logoImage->autoSize(true);
     logoImage->image(ImageSource{_props->logoBitmapId,false,false});
@@ -66,7 +66,7 @@ void SplashDialog::show()
 
     if (!_props->message.empty())
     {
-        auto messageLabel = std::make_shared<Label>(dlg, _props->message, Position{3,pos._cy-15,pos._cx-6,12});
+        auto messageLabel = std::make_shared<Label>(_props->message, Position{3,pos._cy-15,pos._cx-6,12});
         messageLabel->font(Font{"sans serif", 8, true});
         messageLabel->colors(Color::LtGray, Color::Blue);
         dlg->add(messageLabel);

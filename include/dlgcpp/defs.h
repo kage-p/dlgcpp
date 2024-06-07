@@ -6,8 +6,9 @@ namespace dlgcpp
 {
     // forwards
     class IDialog;
-    class IChild;
+    class IMenu;
     class IControl;
+    struct dlg_message;
 
     typedef struct Position
     {

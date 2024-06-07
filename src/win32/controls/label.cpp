@@ -5,10 +5,9 @@
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-Label::Label(std::shared_ptr<IDialog> parent,
-             const std::string& text,
+Label::Label(const std::string& text,
              const Position& p) :
-    Control(parent),
+    Control(),
     _props(new lbl_props())
 {
     this->text(text);
@@ -65,7 +64,7 @@ void Label::p(const Position& p)
     updateAutoSize();
 }
 
-void Label::notify(struct dlg_message& msg)
+void Label::notify(dlg_message& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {

@@ -8,7 +8,7 @@ namespace dlgcpp
         class Button : public dlgcpp::Control
         {
         public:
-            explicit Button(std::shared_ptr<IDialog> parent, const std::string& text = std::string(), const Position& p = Position());
+            explicit Button(const std::string& text = std::string(), const Position& p = Position());
             ~Button() override;
 
             HorizontalAlign horizontalAlignment() const;
@@ -21,7 +21,7 @@ namespace dlgcpp
 
             std::string className() const override;
             unsigned int styles() const override;
-            void notify(struct dlg_message&) override;
+            void notify(dlg_message&) override;
         };
     }
 }

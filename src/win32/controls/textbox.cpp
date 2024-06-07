@@ -5,10 +5,9 @@
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-TextBox::TextBox(std::shared_ptr<IDialog> parent,
-                 const std::string& text,
-                 const Position& p)
-    : Control(parent),
+TextBox::TextBox(const std::string& text,
+                 const Position& p) :
+    Control(),
     _props(new textbox_props())
 {
     this->text(text);
@@ -69,7 +68,7 @@ IEvent<>& TextBox::ChangedEvent()
     return _props->changedEvent;
 }
 
-void TextBox::notify(struct dlg_message& msg)
+void TextBox::notify(dlg_message& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {

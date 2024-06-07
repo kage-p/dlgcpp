@@ -4,8 +4,9 @@
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-Slider::Slider(std::shared_ptr<IDialog> parent, const std::string& text, const Position& p)
-    : Control(parent), _props(new slider_props())
+Slider::Slider(const std::string& text, const Position& p) :
+    Control(),
+    _props(new slider_props())
 {
     sldRegister();
     this->text(text);
@@ -45,7 +46,7 @@ IEvent<>& Slider::ChangedEvent()
     return _props->changedEvent;
 }
 
-void Slider::notify(struct dlg_message& msg)
+void Slider::notify(dlg_message& msg)
 {
     if (msg.wMsg == WM_HSCROLL)
     {

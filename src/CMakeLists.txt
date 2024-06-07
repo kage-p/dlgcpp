@@ -8,6 +8,7 @@ set(headers
     win32/dialog_p.h
     win32/dlgmsg.h
     win32/event_p.h
+    win32/menu_p.h
     win32/utility.h
     win32/controls/button_p.h
     win32/controls/custom_p.h
@@ -26,6 +27,7 @@ set(headers
 set(sources    
     win32/control.cpp
     win32/dialog.cpp
+    win32/menu.cpp
     win32/utility.cpp
     win32/controls/button.cpp
     win32/controls/custom.cpp

@@ -9,13 +9,10 @@
 using namespace dlgcpp;
 
 
-Control::Control(std::shared_ptr<IDialog> parent) :
+Control::Control() :
     _props(new ctl_props()),
     _state(new ctl_state())
 {
-    _props->parent = parent;
-    _props->p._cx = 0;
-    _props->p._cy = 0;
     _state->hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
     // TODO: translate and store system font
@@ -37,16 +34,17 @@ Control::~Control()
     delete _state;
 }
 
-std::shared_ptr<Control> Control::shared_ptr()
+std::shared_ptr<IDialog> Control::parent() const
 {
-    try
-    {
-        return shared_from_this();
-    }
-    catch (const std::exception&)
-    {
-        return nullptr;
-    }
+    return _props->parent;
+}
+
+void Control::parent(std::shared_ptr<IDialog> parent)
+{
+    if (_props->parent == parent)
+        return;
+    _props->parent = parent;
+    rebuild();
 }
 
 int Control::id() const
@@ -117,9 +115,10 @@ void Control::p(const Position& p)
 {
     _props->p = p;
 
+    if (_props->parent == nullptr)
+        return;
     if (_state->hwnd == NULL)
         return;
-
     auto hwndParent = reinterpret_cast<HWND>(_props->parent->handle());
 
     // Convert units to pixels
@@ -257,11 +256,6 @@ void Control::user(void* value)
     _props->user = value;
 }
 
-std::shared_ptr<IDialog> Control::parent()
-{
-    return _props->parent;
-}
-
 std::string Control::className() const
 {
     return "STATIC";
@@ -320,6 +314,9 @@ void Control::rebuild()
     dump();
 
     // safety checks
+    if (_props->parent == nullptr)
+        return;
+
     if (_props->id < 1)
         return;
 

@@ -8,7 +8,8 @@
 
 namespace dlgcpp
 {
-    static const int DefaultStartId = 100;
+    static const int ChildStartId = 100;
+    static const int MenuStartId = 10000;
 
     struct dlg_props
     {
@@ -20,10 +21,11 @@ namespace dlgcpp
         Position p;
         std::string title;
         ImageSource image;
+        std::shared_ptr<IChildMenu> menu;
         Color backColor = Color::Default;
         Cursor cursor = Cursor::Default;
-        std::vector<std::shared_ptr<IChild>> children;
-        int nextId = DefaultStartId;
+        std::vector<std::shared_ptr<IChildControl>> children;
+        int nextId = ChildStartId;
         bool execRunning = false;
         struct
         {
@@ -43,6 +45,7 @@ namespace dlgcpp
     struct dlg_state
     {
         HWND hwnd = NULL;
+        HMENU hMenu = NULL;
         HBRUSH hbrBgColor = NULL;
         HGDIOBJ hImage = NULL;
     };
