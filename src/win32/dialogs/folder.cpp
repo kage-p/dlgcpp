@@ -85,7 +85,9 @@ bool FolderDialog::show(unsigned int flags)
 {
 
     auto bi = BROWSEINFOW();
-    bi.lpszTitle = toWide(_props->message).c_str();
+
+    auto titleBuf = toWide(_props->message);
+    bi.lpszTitle = titleBuf.c_str();
 
     if (_props->parent != nullptr)
         bi.hwndOwner = reinterpret_cast<HWND>(_props->parent->handle());
