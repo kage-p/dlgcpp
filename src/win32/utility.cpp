@@ -53,7 +53,7 @@ Position dlgcpp::toPixels(HWND hwnd, const Position& p, bool menu)
     DWORD style = GetWindowLong(hwnd, GWL_STYLE);
     AdjustWindowRect(&rc, style, menu);
 
-    return Position{0,0, rc.right-rc.left, rc.bottom-rc.top};
+    return Position{rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top};
 }
 
 Position dlgcpp::toUnits(HWND hwnd, const Position& p)

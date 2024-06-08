@@ -7,7 +7,7 @@ namespace dlgcpp
 {
     // private interfaces to support access to these members only from the parent.
 
-    class IChildNN //#####
+    class IChild
     {
     public:
         virtual std::shared_ptr<IDialog> parent() const = 0;
@@ -19,7 +19,7 @@ namespace dlgcpp
         virtual void notify(dlg_message&) = 0;
     };
 
-    class IChildControl : public IChildNN
+    class IChildControl : public IChild
     {
     public:
         virtual std::shared_ptr<IControl> control() = 0;
@@ -29,13 +29,13 @@ namespace dlgcpp
         virtual struct ctl_state state() = 0;
     };
 
-    class IChildDialog : public IChildNN
+    class IChildDialog : public IChild
     {
     public:
         virtual std::shared_ptr<IDialog> dialog() = 0;
     };
 
-    class IChildMenu : public IChildNN
+    class IChildMenu : public IChild
     {
     public:
         virtual std::shared_ptr<IMenu> menu() = 0;
