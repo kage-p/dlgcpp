@@ -886,11 +886,11 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
     case WM_MOVE:
     {
         // translate using mapped value and store
-        auto hwndTranslate = _state->hwnd; //###### (_props->id > 0 ? _state->hwnd : (HWND)HWND_DESKTOP);
         Point pos((int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
 
         DLGCPP_CMSG("WM_MOVE: x = " << pos.x() << " y = " << pos.y() << " title = " + _props->title);
 
+        auto hwndTranslate = _state->hwnd;
         toUnits(hwndTranslate, pos);
         _props->p.x(pos.x());
         _props->p.y(pos.y());
