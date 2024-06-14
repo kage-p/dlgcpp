@@ -7,7 +7,7 @@ void controls_image_demo(ISharedDialog parent)
 {
     auto dlg = std::make_shared<Dialog>(DialogType::Application, parent);
     dlg->title("Image control demo");
-    dlg->resize({250,175});
+    dlg->resize({250,210});
     dlg->center();
 
     auto icon = std::make_shared<Image>(Position{10, 10, 0, 0});
@@ -15,7 +15,7 @@ void controls_image_demo(ISharedDialog parent)
     icon->image(ImageSource{"#100", true});
     dlg->add(icon);
 
-    auto bitmap = std::make_shared<Image>(Position{10, 40, 200, 120});
+    auto bitmap = std::make_shared<Image>(Position{10, 40, 230, 160});
     bitmap->autoSize(false);
     bitmap->image(ImageSource{"#100", false});
     dlg->add(bitmap);

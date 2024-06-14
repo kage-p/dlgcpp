@@ -14,6 +14,7 @@ namespace dlgcpp
         {
             ImageSource image;
             bool autoSize = false;
+            bool centered = false;
         };
 
         struct img_state

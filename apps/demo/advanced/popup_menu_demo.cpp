@@ -10,9 +10,9 @@ void advanced_popup_menu_demo(ISharedDialog parent)
     dlg->resize({300,200});
     dlg->center();
 
-    auto label = std::make_shared<Label>("Right click anywhere on dialog...", Position{10,10,0,0});
-    label->autoSize(true);
-    dlg->add(label);
+    auto note = std::make_shared<Label>("Right click anywhere on dialog...", Position{10,10,0,0});
+    note->autoSize(true);
+    dlg->add(note);
 
     auto menu = std::make_shared<Menu>();
     std::shared_ptr<IMenuItem> item;

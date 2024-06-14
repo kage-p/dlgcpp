@@ -13,6 +13,8 @@ namespace dlgcpp
 
             bool autoSize() const;
             void autoSize(bool value);
+            bool centered() const;
+            void centered(bool value);
             const ImageSource& image() const;
             void image(const ImageSource& image);
 

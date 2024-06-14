@@ -34,7 +34,6 @@ void dialogs_tool_demo(ISharedDialog parent)
     dlg->title("Modeless Tool Demo");
     dlg->move({parent->p().x()+parent->p().width(), parent->p().y()});
     dlg->resize({80,parent->p().height()});
-    //dlg->center();
 
     dlg->visible(true);
 }

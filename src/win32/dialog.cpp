@@ -251,8 +251,8 @@ void Dialog::center()
     auto screenSize = Size(GetSystemMetrics(SM_CXSCREEN),GetSystemMetrics(SM_CYSCREEN));
     toUnits(HWND_DESKTOP, screenSize);
 
-    Point p((screenSize.width() - (_props->p.width())) / 2,
-            (screenSize.height() - (_props->p.height())) / 2);
+    Point p((screenSize.width() / 2) - (_props->p.width() / 2),
+            (screenSize.height() / 2) - (_props->p.height() / 2));
 
     move(p);
 }
@@ -886,29 +886,35 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
     case WM_MOVE:
     {
         // translate using mapped value and store
-        Point pos((int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
+        Point posPx((int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
+        Point posDu(posPx);
+        toUnits(_state->hwnd, posDu);
 
-        DLGCPP_CMSG("WM_MOVE: x = " << pos.x() << " y = " << pos.y() << " title = " + _props->title);
+        DLGCPP_CMSG("WM_MOVE: " <<
+                    "x = "  << posDu.x() << " (" << posPx.x() << ") " <<
+                    "y = " << posDu.y() << " (" << posPx.y() << ") " <<
+                    "title = " + _props->title);
 
-        auto hwndTranslate = _state->hwnd;
-        toUnits(hwndTranslate, pos);
-        _props->p.x(pos.x());
-        _props->p.y(pos.y());
+        _props->p.x(posDu.x());
+        _props->p.y(posDu.y());
         MoveEvent().invoke(shared_from_this());
-
         break;
     }
 
     case WM_SIZE:
     {
         // translate using mapped value and store
-        Size size({(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)});
+        Size sizePx({(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)});
+        Size sizeDu(sizePx);
+        toUnits(_state->hwnd, sizeDu);
 
-        DLGCPP_CMSG("WM_SIZE: width = " << size.width() << " height = " << size.height() << " title = " + _props->title);
+        DLGCPP_CMSG("WM_SIZE: " <<
+                    "width = "  << sizeDu.width() << " (" << sizePx.width() << ") " <<
+                    "height = " << sizeDu.height() << " (" << sizePx.height() << ") " <<
+                    "title = " + _props->title);
 
-        toUnits(_state->hwnd, size);
-        _props->p.width(size.width());
-        _props->p.height(size.height());
+        _props->p.width(sizeDu.width());
+        _props->p.height(sizeDu.height());
         SizeEvent().invoke(shared_from_this());
         break;
     }

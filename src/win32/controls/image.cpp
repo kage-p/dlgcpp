@@ -47,8 +47,11 @@ void Image::rebuild()
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    auto imageType = (_props->image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
-    SendMessage(hwnd, STM_SETIMAGE, (WPARAM)imageType, (LPARAM)_state->hImage);
+    if (_state->hImage != NULL)
+    {
+        auto imageType = (_props->image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
+        SendMessage(hwnd, STM_SETIMAGE, (WPARAM)imageType, (LPARAM)_state->hImage);
+    }
 }
 
 unsigned int Image::styles() const
@@ -63,7 +66,19 @@ unsigned int Image::styles() const
         styles |= SS_BITMAP;
 
     if (_props->autoSize)
+    {
+        // use actual image size
         styles |= SS_REALSIZEIMAGE;
+    }
+    else
+    {
+        if (_props->centered)
+            // center image in control; image may be clipped to fit
+            styles |= SS_CENTERIMAGE;
+        else
+            // use control size; stretch/reduce image to fit
+            styles |= SS_REALSIZECONTROL;
+    }
 
     return styles;
 }
@@ -80,9 +95,8 @@ void Image::updateImage()
     if (!_props->autoSize)
     {
         // image is same size as control
-        auto px = toPixels(NULL,
-                           p().size());
-        imgSizePx = px.size();
+        imgSizePx = p().size();
+        toPixels(HWND_DESKTOP, imgSizePx);
     }
 
     _state->hImage = loadImage(_props->image, imgSizePx);
@@ -94,12 +108,7 @@ void Image::updateImage()
         Control::resize(imgSizeDu);
     }
 
-    if (handle() == nullptr)
-        return;
-    auto hwnd = reinterpret_cast<HWND>(handle());
-
-    auto imageType = (_props->image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
-    SendMessage(hwnd, STM_SETIMAGE, (WPARAM)imageType, (LPARAM)_state->hImage);
+    rebuild();
 }
 
 bool Image::autoSize() const
@@ -113,6 +122,19 @@ void Image::autoSize(bool value)
         return;
     _props->autoSize = value;
     updateImage();
+}
+
+bool Image::centered() const
+{
+    return _props->centered;
+}
+
+void Image::centered(bool value)
+{
+    if (_props->centered == value)
+        return;
+    _props->centered = value;
+    rebuild();
 }
 
 const ImageSource& Image::image() const
