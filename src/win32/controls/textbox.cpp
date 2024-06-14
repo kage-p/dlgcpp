@@ -7,11 +7,9 @@ using namespace dlgcpp::controls;
 
 TextBox::TextBox(const std::string& text,
                  const Position& p) :
-    Control(),
+    Control(text, p),
     _props(new textbox_props())
 {
-    this->text(text);
-    this->p(p);
     this->border(BorderStyle::Sunken);
 }
 
@@ -42,9 +40,14 @@ unsigned int TextBox::styles() const
         styles |= ES_PASSWORD;
     if (_props->readOnly)
         styles |= ES_READONLY;
+
     if (_props->multiline)
-        styles |= ES_MULTILINE | ES_AUTOVSCROLL | WS_VSCROLL;
-    if (!_props->wrapText)
+    {
+        styles |= ES_MULTILINE | ES_WANTRETURN | ES_AUTOVSCROLL | WS_VSCROLL;
+        if (!_props->wrapText)
+            styles |= ES_AUTOHSCROLL | WS_HSCROLL;
+    }
+    else
         styles |= ES_AUTOHSCROLL;
 
     switch (_props->horzAlign)
@@ -63,7 +66,7 @@ unsigned int TextBox::styles() const
     return styles;
 }
 
-IEvent<>& TextBox::ChangedEvent()
+IEvent<ISharedControl>& TextBox::ChangedEvent()
 {
     return _props->changedEvent;
 }
@@ -75,15 +78,15 @@ void TextBox::notify(dlg_message& msg)
         if (HIWORD(msg.wParam) == EN_CHANGE)
         {
             readInput();
-            ChangedEvent().invoke();
+            ChangedEvent().invoke(shared_from_this());
         }
         else if (HIWORD(msg.wParam) == EN_SETFOCUS)
         {
-            FocusEvent().invoke(true);
+            FocusEvent().invoke(shared_from_this(), true);
         }
         else if (HIWORD(msg.wParam) == EN_KILLFOCUS)
         {
-            FocusEvent().invoke(false);
+            FocusEvent().invoke(shared_from_this(), false);
         }
     }
 }

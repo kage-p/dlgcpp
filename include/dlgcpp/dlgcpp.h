@@ -18,6 +18,8 @@
 #include "menu.h"
 
 #include "controls/button.h"
+#include "controls/checkbox.h"
+#include "controls/combobox.h"
 #include "controls/custom.h"
 #include "controls/image.h"
 #include "controls/label.h"
@@ -28,4 +30,6 @@
 #include "dialogs/about.h"
 #include "dialogs/file.h"
 #include "dialogs/folder.h"
+#include "dialogs/message.h"
+#include "dialogs/property.h"
 #include "dialogs/splash.h"

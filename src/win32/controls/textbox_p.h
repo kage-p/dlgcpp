@@ -21,7 +21,7 @@ namespace dlgcpp
 
             HorizontalAlign horzAlign = HorizontalAlign::Left;
 
-            Event<> changedEvent;
+            Event<ISharedControl> changedEvent;
         };
     }
 }

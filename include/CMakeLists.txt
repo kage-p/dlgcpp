@@ -11,6 +11,8 @@ set(headers
     dlgcpp/event.h
     dlgcpp/menu.h
     dlgcpp/controls/button.h
+    dlgcpp/controls/checkbox.h
+    dlgcpp/controls/combobox.h
     dlgcpp/controls/custom.h
     dlgcpp/controls/image.h
     dlgcpp/controls/label.h
@@ -20,6 +22,8 @@ set(headers
     dlgcpp/dialogs/about.h
     dlgcpp/dialogs/file.h
     dlgcpp/dialogs/folder.h
+    dlgcpp/dialogs/message.h
+    dlgcpp/dialogs/property.h
     dlgcpp/dialogs/splash.h
 )
 

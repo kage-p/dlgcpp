@@ -17,22 +17,21 @@ Menu::Menu() :
 
 Menu::~Menu()
 {
-    dump();
+    destruct();
     delete _props;
     delete _state;
 }
 
-std::shared_ptr<IDialog> Menu::parent() const
+ISharedDialog Menu::parent() const
 {
     return _props->parent;
 }
 
-void Menu::parent(std::shared_ptr<IDialog> parent)
+void Menu::parent(ISharedDialog parent)
 {
     if (_props->parent == parent)
         return;
     _props->parent = parent;
-    rebuild();
 }
 
 int Menu::id() const
@@ -43,7 +42,6 @@ int Menu::id() const
 void Menu::id(int value)
 {
     _props->startId = value;
-    rebuild();
 }
 
 std::shared_ptr<IMenu> Menu::menu()
@@ -62,11 +60,11 @@ void Menu::notify(dlg_message& msg)
         auto id = (int)LOWORD(msg.wParam);
         auto item = _state->idMap[id];
         if (item != nullptr)
-            item->Clicked().invoke();
+            item->ClickEvent().invoke(item);
     }
 }
 
-void Menu::add(std::shared_ptr<IMenuItem> item)
+void Menu::add(ISharedMenuItem item)
 {
     auto it = std::find(_props->items.begin(),
                         _props->items.end(),
@@ -76,7 +74,7 @@ void Menu::add(std::shared_ptr<IMenuItem> item)
     _props->items.push_back(item);
 }
 
-void Menu::remove(std::shared_ptr<IMenuItem> item)
+void Menu::remove(ISharedMenuItem item)
 {
     auto it = std::find(_props->items.begin(),
                         _props->items.end(),
@@ -91,15 +89,15 @@ void Menu::clear()
     _props->items.clear();
 }
 
-const std::vector<std::shared_ptr<IMenuItem>>& Menu::items() const
+const std::vector<ISharedMenuItem>& Menu::items() const
 {
     return _props->items;
 }
 
 void createMenuItems(HMENU hMenu,
-                     const std::vector<std::shared_ptr<IMenuItem>>& items,
+                     const std::vector<ISharedMenuItem>& items,
                      int& nextItemId,
-                     std::map<int, std::shared_ptr<IMenuItem>>& idMap)
+                     std::map<int, ISharedMenuItem>& idMap)
 {
     int index = 0;
 
@@ -110,12 +108,25 @@ void createMenuItems(HMENU hMenu,
         if (!item->separator())
             text = toWide(item->text());
 
+        UINT stateFlags = 0;
+        if (item->checked())
+            stateFlags |= MFS_CHECKED;
+
+        if (item->defaultItem())
+            stateFlags |= MFS_DEFAULT;
+
+        if (!item->enabled())
+            stateFlags |= MFS_GRAYED;
+        else
+            stateFlags |= MFS_ENABLED;
+
         auto mi = MENUITEMINFOW();
         mi.cbSize = sizeof(MENUITEMINFOW);
         mi.fType = !item->separator() ? MFT_STRING : MFT_SEPARATOR;
-        mi.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STRING;
+        mi.fMask = MIIM_ID | MIIM_FTYPE | MIIM_STATE | MIIM_STRING;
         mi.wID = ++nextItemId;
         mi.dwTypeData = (LPWSTR)&text[0];
+        mi.fState = stateFlags;
         mi.cch = text.size();
 
         idMap[nextItemId] = item;
@@ -139,11 +150,7 @@ void createMenuItems(HMENU hMenu,
 
 void Menu::rebuild()
 {
-    dump();
-
-    int id = _props->startId;
-    if (id < 1)
-        return;
+    destruct();
 
     bool isPopUp = (_props->parent == nullptr);
     if (isPopUp)
@@ -151,18 +158,19 @@ void Menu::rebuild()
     else
         _state->hMenu = CreateMenu();
 
+    int id = _props->startId;
     createMenuItems(_state->hMenu, _props->items, id, _state->idMap);
 
     if (!isPopUp)
     {
         // self-assign to parent
         HWND hwndParent = reinterpret_cast<HWND>(_props->parent->handle());
-        SetMenu(hwndParent, _state->hMenu);
+        if (hwndParent != NULL)
+            SetMenu(hwndParent, _state->hMenu);
     }
-
 }
 
-void Menu::dump()
+void Menu::destruct()
 {
     if (_state->hMenu != NULL)
     {
@@ -172,10 +180,10 @@ void Menu::dump()
     _state->idMap.clear();
 }
 
-void Menu::popup(int x, int y)
+void Menu::popup(ISharedDialog parent, const Point& coords)
 {
     if (_props->parent != nullptr)
-        // cannot use if has parent
+        // cannot use if has parent/owner window
         return;
 
     if (_state->hMenu == NULL)
@@ -185,10 +193,28 @@ void Menu::popup(int x, int y)
             return;
     }
 
-    auto id = (int)TrackPopupMenu(_state->hMenu, TPM_LEFTBUTTON | TPM_RETURNCMD, x, y, 0, HWND_DESKTOP, NULL);
+    auto hwndParent = (HWND)parent->handle();
+
+    // coordinates must be in pixels
+    Point pxCoords(coords);
+    toPixels(hwndParent, pxCoords);
+
+    auto pt = POINT{pxCoords.x(), pxCoords.y()};
+    MapWindowPoints(hwndParent, HWND_DESKTOP, &pt, 1);
+
+    auto id = (int)TrackPopupMenu(_state->hMenu,
+                                   TPM_LEFTBUTTON | TPM_NONOTIFY | TPM_RETURNCMD,
+                                   pt.x,
+                                   pt.y,
+                                   0,
+                                   hwndParent,
+                                   NULL);
+    if (id == 0)
+        return;
+
     auto item = _state->idMap[id];
     if (item != nullptr)
-        item->Clicked().invoke();
+        item->ClickEvent().invoke(item);
 }
 
 
@@ -208,9 +234,50 @@ const std::string& MenuItem::text() const
     return _props->text;
 }
 
-void MenuItem::text(const std::string& text)
+void MenuItem::text(const std::string& value)
 {
-    _props->text = text;
+    if (_props->text == value)
+        return;
+    _props->text = value;
+    _props->dirty = true;
+}
+
+bool MenuItem::enabled() const
+{
+    return _props->enabled;
+}
+
+void MenuItem::enabled(bool value)
+{
+    if (_props->enabled == value)
+        return;
+    _props->enabled = value;
+    _props->dirty = true;
+}
+
+bool MenuItem::checked() const
+{
+    return _props->checked;
+}
+
+void MenuItem::checked(bool value)
+{
+    if (_props->checked == value)
+        return;
+    _props->checked = value;
+}
+
+bool MenuItem::defaultItem() const
+{
+    return _props->defaultItem;
+}
+
+void MenuItem::defaultItem(bool value)
+{
+    if (_props->defaultItem == value)
+        return;
+    _props->defaultItem = value;
+    _props->dirty = true;
 }
 
 bool MenuItem::separator() const
@@ -223,9 +290,10 @@ void MenuItem::seperator(bool value)
     if (_props->separator == value)
         return;
     _props->separator = value;
+    _props->dirty = true;
 }
 
-void MenuItem::add(std::shared_ptr<IMenuItem> item)
+void MenuItem::add(ISharedMenuItem item)
 {
     auto it = std::find(_props->items.begin(),
                         _props->items.end(),
@@ -235,7 +303,7 @@ void MenuItem::add(std::shared_ptr<IMenuItem> item)
     _props->items.push_back(item);
 }
 
-void MenuItem::remove(std::shared_ptr<IMenuItem> item)
+void MenuItem::remove(ISharedMenuItem item)
 {
     auto it = std::find(_props->items.begin(),
                         _props->items.end(),
@@ -250,12 +318,12 @@ void MenuItem::clear()
     _props->items.clear();
 }
 
-const std::vector<std::shared_ptr<IMenuItem>>& MenuItem::items() const
+const std::vector<ISharedMenuItem>& MenuItem::items() const
 {
     return _props->items;
 }
 
-IEvent<>& MenuItem::Clicked()
+IEvent<ISharedMenuItem>& MenuItem::ClickEvent()
 {
-    return _props->clickedEvent;
+    return _props->clickEvent;
 }

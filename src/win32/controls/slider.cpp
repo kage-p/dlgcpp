@@ -5,12 +5,10 @@ using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Slider::Slider(const std::string& text, const Position& p) :
-    Control(),
+    Control(text, p),
     _props(new slider_props())
 {
     sldRegister();
-    this->text(text);
-    this->p(p);
     this->border(BorderStyle::Thin);
 }
 
@@ -41,7 +39,7 @@ std::string Slider::className() const
     return SLDR_CLASS;
 }
 
-IEvent<>& Slider::ChangedEvent()
+IEvent<ISharedControl>& Slider::ChangedEvent()
 {
     return _props->changedEvent;
 }
@@ -50,11 +48,13 @@ void Slider::notify(dlg_message& msg)
 {
     if (msg.wMsg == WM_HSCROLL)
     {
-        ChangedEvent().invoke();
+        value((int)msg.wParam);
+        ChangedEvent().invoke(shared_from_this());
     }
     else if (msg.wMsg == WM_VSCROLL)
     {
-        ChangedEvent().invoke();
+        value((int)msg.wParam);
+        ChangedEvent().invoke(shared_from_this());
     }
 }
 

@@ -24,7 +24,7 @@ namespace dlgcpp
             HorizontalAlign horizontalAlignment() const;
             void horizontalAlignment(HorizontalAlign value);
 
-            IEvent<>& ChangedEvent();
+            IEvent<ISharedControl>& ChangedEvent();
 
         private:
             struct textbox_props* _props;

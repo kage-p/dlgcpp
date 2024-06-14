@@ -16,9 +16,9 @@ namespace dlgcpp
         {
             bool vertical = false;
             int value = 0;
-            std::pair<int, int> range;
+            std::pair<int, int> range = {0,100};
             Color barColor = Color::Blue;
-            Event<> changedEvent;
+            Event<ISharedControl> changedEvent;
         };
     }
 }

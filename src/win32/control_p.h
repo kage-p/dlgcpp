@@ -10,7 +10,7 @@ namespace dlgcpp
 {
     struct ctl_props
     {
-        std::shared_ptr<IDialog> parent;        
+        ISharedDialog parent;
         bool enabled = true;
         bool visible = true;
         Position p;
@@ -23,9 +23,9 @@ namespace dlgcpp
         int id = -1;
         void* user = nullptr;
 
-        Event<> clickEvent;
-        Event<> dblClickEvent;
-        Event<bool> focusEvent;
+        Event<ISharedControl> clickEvent;
+        Event<ISharedControl> dblClickEvent;
+        Event<ISharedControl, bool> focusEvent;
     };
 
     struct ctl_state

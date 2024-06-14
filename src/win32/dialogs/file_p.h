@@ -8,7 +8,7 @@ namespace dlgcpp
     {
         struct file_props
         {
-            std::shared_ptr<IDialog> parent;
+            ISharedDialog parent;
             std::string fileName;
             std::string filters;
             std::string title;

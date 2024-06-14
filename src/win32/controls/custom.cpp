@@ -4,11 +4,10 @@ using namespace dlgcpp::controls;
 
 Custom::Custom(const std::string& className,
                const Position& p) :
-    Control(),
+    Control(std::string(), p),
     _props(new cus_props())
 {
     _props->className = className;
-    this->p(p);
 }
 
 Custom::~Custom()

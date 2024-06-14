@@ -25,8 +25,8 @@ namespace dlgcpp
             const std::vector<std::string>& items() const;
             void items(const std::vector<std::string>& items);
 
-            IEvent<>& SelChangedEvent();
-            IEvent<>& SelCancelEvent();
+            IEvent<ISharedControl>& SelChangedEvent();
+            IEvent<ISharedControl>& SelCancelEvent();
 
         private:
             struct listbox_props* _props;

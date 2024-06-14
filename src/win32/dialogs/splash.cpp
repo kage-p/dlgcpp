@@ -4,7 +4,7 @@ using namespace dlgcpp;
 using namespace dlgcpp::controls;
 using namespace dlgcpp::dialogs;
 
-SplashDialog::SplashDialog(std::shared_ptr<IDialog> parent)
+SplashDialog::SplashDialog(ISharedDialog parent)
     : _props(new splash_props())
 {
     _props->parent = parent;
@@ -12,6 +12,8 @@ SplashDialog::SplashDialog(std::shared_ptr<IDialog> parent)
 
 SplashDialog::~SplashDialog()
 {
+    // remove the modeless dialog
+    _props->splashDialog.reset();
     delete _props;
 }
 
@@ -52,9 +54,8 @@ void SplashDialog::show()
     if (_props->logoBitmapId.empty())
         return;
 
-    auto dlg = std::make_shared<Dialog>(_props->parent);
+    auto dlg = std::make_shared<Dialog>(DialogType::Frameless, _props->parent);
     _props->splashDialog = dlg;
-    dlg->type(DialogType::Frameless);
 
     auto logoImage = std::make_shared<Image>(Position{0, 0, 0, 0});
     logoImage->colors(Color::Black, Color::White);
@@ -62,31 +63,34 @@ void SplashDialog::show()
     logoImage->image(ImageSource{_props->logoBitmapId,false,false});
     dlg->add(logoImage);
 
-    auto pos = logoImage->p();
+    auto imageSize = logoImage->p().size();
 
     if (!_props->message.empty())
     {
-        auto messageLabel = std::make_shared<Label>(_props->message, Position{3,pos._cy-15,pos._cx-6,12});
+        auto msgPos = Position{3, imageSize.width() - 15, imageSize.height() - 6 , 12};
+        auto messageLabel = std::make_shared<Label>(_props->message, msgPos);
         messageLabel->font(Font{"sans serif", 8, true});
-        messageLabel->colors(Color::LtGray, Color::Blue);
+        messageLabel->colors(Color::LtGray, Color::None);
+        messageLabel->autoSize(true);
         dlg->add(messageLabel);
         BringWindowToTop((HWND)messageLabel->handle());
     }
 
-    dlg->resize(pos._cx, pos._cy);
+    dlg->resize(imageSize);
     dlg->center();
     dlg->visible(true);
     SetWindowPos((HWND)dlg->handle(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
-    dlg->ClickEvent() += [this](){
-        _props->splashDialog->close();
+    logoImage->ClickEvent() += [](ISharedControl ctl)
+    {
+        ctl->parent()->close();
     };
 
     if (_props->timeout > 0)
     {
-        dlg->TimerEvent() += [this]()
+        dlg->TimerEvent() += [](ISharedDialog dlg)
         {
-            _props->splashDialog->close();
+            dlg->close();
         };
         dlg->timer(_props->timeout);
     }

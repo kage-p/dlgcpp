@@ -19,6 +19,7 @@ namespace dlgcpp
         private:
             struct button_props* _props;
 
+            void rebuild() override;
             std::string className() const override;
             unsigned int styles() const override;
             void notify(dlg_message&) override;

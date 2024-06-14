@@ -10,13 +10,14 @@ namespace dlgcpp
     class IChild
     {
     public:
-        virtual std::shared_ptr<IDialog> parent() const = 0;
-        virtual void parent(std::shared_ptr<IDialog>) = 0;
+        virtual ISharedDialog parent() const = 0;
+        virtual void parent(ISharedDialog) = 0;
 
         virtual int id() const = 0;
         virtual void id(int value) = 0;
 
         virtual void notify(dlg_message&) = 0;
+        virtual void rebuild() = 0;
     };
 
     class IChildControl : public IChild
@@ -32,7 +33,7 @@ namespace dlgcpp
     class IChildDialog : public IChild
     {
     public:
-        virtual std::shared_ptr<IDialog> dialog() = 0;
+        virtual ISharedDialog dialog() = 0;
     };
 
     class IChildMenu : public IChild

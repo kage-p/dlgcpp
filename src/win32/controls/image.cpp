@@ -6,16 +6,20 @@ using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Image::Image(const Position& p) :
-    Control(),
+    Control(std::string(), p),
     _props(new img_props()),
     _state(new img_state())
 {
-    this->p(p);
-    this->border(BorderStyle::Thin);
 }
 
 Image::~Image()
 {
+    if (_state->hImage != NULL)
+    {
+        DeleteObject(_state->hImage);
+        _state->hImage = NULL;
+    }
+
     delete _props;
     delete _state;
 }
@@ -26,11 +30,11 @@ void Image::notify(dlg_message& msg)
     {
         if (HIWORD(msg.wParam) == STN_CLICKED)
         {
-            ClickEvent().invoke();
+            ClickEvent().invoke(shared_from_this());
         }
         else if (HIWORD(msg.wParam) == STN_DBLCLK)
         {
-            DoubleClickEvent().invoke();
+            DoubleClickEvent().invoke(shared_from_this());
         }
     }
 }
@@ -38,14 +42,25 @@ void Image::notify(dlg_message& msg)
 void Image::rebuild()
 {
     Control::rebuild();
-    updateImage();
+
+    if (handle() == nullptr)
+        return;
+    auto hwnd = reinterpret_cast<HWND>(handle());
+
+    auto imageType = (_props->image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
+    SendMessage(hwnd, STM_SETIMAGE, (WPARAM)imageType, (LPARAM)_state->hImage);
 }
 
 unsigned int Image::styles() const
 {
     auto styles = Control::styles();
     styles = styles & ~WS_TABSTOP;
-    styles |= SS_BITMAP | SS_NOTIFY;
+    styles |= SS_NOTIFY;
+
+    if (_props->image.isIcon)
+        styles |= SS_ICON;
+    else
+        styles |= SS_BITMAP;
 
     if (_props->autoSize)
         styles |= SS_REALSIZEIMAGE;
@@ -61,44 +76,30 @@ void Image::updateImage()
         _state->hImage = NULL;
     }
 
+    Size imgSizePx;
+    if (!_props->autoSize)
+    {
+        // image is same size as control
+        auto px = toPixels(NULL,
+                           p().size());
+        imgSizePx = px.size();
+    }
+
+    _state->hImage = loadImage(_props->image, imgSizePx);
+    if (_props->autoSize)
+    {
+        // resize the control to fit the image
+        Size imgSizeDu(imgSizePx);
+        toUnits(HWND_DESKTOP, imgSizeDu);
+        Control::resize(imgSizeDu);
+    }
+
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    if (_props->image.id.empty())
-    {
-        SendMessage(hwnd, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)NULL);
-        return;
-    }
-
-    auto rc = RECT();
-    if (!_props->autoSize)
-    {
-        SetRect(&rc, 0, 0, p()._cx, p()._cy);
-        MapDialogRect(GetParent(hwnd), &rc);
-    }
-
-    auto hInstRes = GetModuleHandle(NULL);
     auto imageType = (_props->image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
-    _state->hImage = LoadImage(hInstRes,
-                               _props->image.id.c_str(),
-                               imageType,
-                               rc.right,
-                               rc.bottom,
-                               (_props->image.isFile ? LR_LOADFROMFILE : 0));
-    if (_state->hImage == NULL)
-        return;
-
     SendMessage(hwnd, STM_SETIMAGE, (WPARAM)imageType, (LPARAM)_state->hImage);
-
-    if (_props->autoSize)
-    {
-        // size around image
-        auto rc = RECT();
-        GetClientRect(hwnd, &rc);
-        auto pos = toUnits(GetParent(hwnd), Position{0,0,rc.right,rc.bottom});
-        Control::p( Position{p()._x, p()._y, pos._cx, pos._cy} );
-    }
 }
 
 bool Image::autoSize() const
@@ -108,6 +109,8 @@ bool Image::autoSize() const
 
 void Image::autoSize(bool value)
 {
+    if (_props->autoSize == value)
+        return;
     _props->autoSize = value;
     updateImage();
 }

@@ -8,7 +8,7 @@ namespace dlgcpp
     {
         struct splash_props
         {
-            std::shared_ptr<IDialog> parent;
+            ISharedDialog parent;
             std::string logoBitmapId;
             std::string message;
             int timeout = 800;

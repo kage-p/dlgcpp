@@ -6,10 +6,9 @@ using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 ListBox::ListBox(const Position& p) :
-    Control(),
+    Control(std::string(), p),
     _props(new listbox_props())
 {
-    this->p(p);
     this->border(BorderStyle::Sunken);
 }
 
@@ -18,12 +17,12 @@ ListBox::~ListBox()
     delete _props;
 }
 
-IEvent<>& ListBox::SelChangedEvent()
+IEvent<ISharedControl>& ListBox::SelChangedEvent()
 {
     return _props->selChangedEvent;
 }
 
-IEvent<>& ListBox::SelCancelEvent()
+IEvent<ISharedControl>& ListBox::SelCancelEvent()
 {
     return _props->selCancelEvent;
 }
@@ -44,19 +43,19 @@ void ListBox::notify(dlg_message& msg)
         else if (HIWORD(msg.wParam) == LBN_SELCANCEL)
         {
             readSelection();
-            SelCancelEvent().invoke();
+            SelCancelEvent().invoke(shared_from_this());
         }
         else if (HIWORD(msg.wParam) == LBN_DBLCLK)
         {
-            DoubleClickEvent().invoke();
+            DoubleClickEvent().invoke(shared_from_this());
         }
         else if (HIWORD(msg.wParam) == LBN_SETFOCUS)
         {
-            FocusEvent().invoke(true);
+            FocusEvent().invoke(shared_from_this(), true);
         }
         else if (HIWORD(msg.wParam) == LBN_KILLFOCUS)
         {
-            FocusEvent().invoke(false);
+            FocusEvent().invoke(shared_from_this(), false);
         }
     }
 }
@@ -100,6 +99,12 @@ void ListBox::currentIndex(int value)
         return;
 
     _props->currentIndex = value;
+
+    // TODO: override text()
+    if (_props->currentIndex < _props->items.size())
+        text(_props->items.at(_props->currentIndex));
+    else
+        text(std::string());
 
     if (handle() == nullptr)
         return;
@@ -172,7 +177,7 @@ void ListBox::readSelection()
         if (index != _props->currentIndex)
         {
             currentIndex(index);
-            SelChangedEvent().invoke();
+            SelChangedEvent().invoke(shared_from_this());
         }
     }
 }

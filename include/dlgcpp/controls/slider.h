@@ -22,7 +22,7 @@ namespace dlgcpp
             Color barColor() const;
             void barColor(Color value);
 
-            IEvent<>& ChangedEvent();
+            IEvent<ISharedControl>& ChangedEvent();
 
         private:
             struct slider_props* _props;

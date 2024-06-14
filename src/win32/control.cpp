@@ -9,10 +9,12 @@
 using namespace dlgcpp;
 
 
-Control::Control() :
+Control::Control(const std::string& text, const Position& p) :
     _props(new ctl_props()),
     _state(new ctl_state())
 {
+    _props->p = p;
+    _props->text = text;
     _state->hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
     // TODO: translate and store system font
@@ -23,7 +25,7 @@ Control::Control() :
 
 Control::~Control()
 {
-    dump();
+    destruct();
 
     if (_state->hFont != nullptr)
         DeleteObject(_state->hFont);
@@ -34,17 +36,16 @@ Control::~Control()
     delete _state;
 }
 
-std::shared_ptr<IDialog> Control::parent() const
+ISharedDialog Control::parent() const
 {
     return _props->parent;
 }
 
-void Control::parent(std::shared_ptr<IDialog> parent)
+void Control::parent(ISharedDialog parent)
 {
     if (_props->parent == parent)
         return;
     _props->parent = parent;
-    rebuild();
 }
 
 int Control::id() const
@@ -55,7 +56,6 @@ int Control::id() const
 void Control::id(int value)
 {
     _props->id = value;
-    rebuild();
 }
 
 std::shared_ptr<IControl> Control::control()
@@ -122,11 +122,53 @@ void Control::p(const Position& p)
     auto hwndParent = reinterpret_cast<HWND>(_props->parent->handle());
 
     // Convert units to pixels
-    auto rc = RECT();
-    SetRect(&rc, p._x, p._y, p._cx, p._cy);
-    MapDialogRect(hwndParent, &rc);
+    auto px = toPixels(hwndParent, p);
 
-    SetWindowPos(_state->hwnd, 0, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER);
+    SetWindowPos(_state->hwnd,
+                 0,
+                 px.x(),
+                 px.y(),
+                 px.width(),
+                 px.height(),
+                 SWP_NOZORDER);
+}
+
+void Control::move(const Point& point)
+{
+    _props->p.x(point.x());
+    _props->p.y(point.y());
+
+    if (_state->hwnd == NULL)
+        return;
+
+    auto px = toPixels(GetParent(_state->hwnd), _props->p);
+
+    SetWindowPos(_state->hwnd,
+                 0,
+                 px.x(),
+                 px.y(),
+                 0,
+                 0,
+                 SWP_NOZORDER | SWP_NOSIZE);
+}
+
+void Control::resize(const Size& size)
+{
+    _props->p.width(size.width());
+    _props->p.height(size.height());
+
+    if (_state->hwnd == NULL)
+        return;
+
+    auto px = toPixels(GetParent(_state->hwnd), _props->p);
+
+    SetWindowPos(_state->hwnd,
+                 0,
+                 0,
+                 0,
+                 px.width(),
+                 px.height(),
+                 SWP_NOZORDER | SWP_NOMOVE);
 }
 
 BorderStyle Control::border() const
@@ -311,7 +353,7 @@ void Control::setFocus()
 
 void Control::rebuild()
 {
-    dump();
+    destruct();
 
     // safety checks
     if (_props->parent == nullptr)
@@ -324,22 +366,16 @@ void Control::rebuild()
     if (hwndParent == NULL)
         return;
 
-    auto rc = RECT();
-    SetRect(&rc,
-            _props->p._x,
-            _props->p._y,
-            _props->p._cx,
-            _props->p._cy);
-    MapDialogRect(hwndParent, &rc);
+    auto p = toPixels(hwndParent, _props->p);
 
     auto hwnd = CreateWindowExW(exStyles(),
                                 toWide(className()).c_str(),
                                 toWide(_props->text).c_str(),
                                 styles(),
-                                rc.left,
-                                rc.top,
-                                rc.right,
-                                rc.bottom,
+                                p.x(),
+                                p.y(),
+                                p.width(),
+                                p.height(),
                                 hwndParent,
                                 (HMENU)(UINT_PTR)_props->id,
                                 GetModuleHandle(NULL), NULL);
@@ -350,7 +386,7 @@ void Control::rebuild()
     _state->hwnd = hwnd;
 }
 
-void Control::dump()
+void Control::destruct()
 {
     if (_state->hwnd == NULL)
         return;
@@ -359,17 +395,17 @@ void Control::dump()
     _state->hwnd = nullptr;
 }
 
-IEvent<>& Control::ClickEvent()
+IEvent<ISharedControl>& Control::ClickEvent()
 {
     return _props->clickEvent;
 }
 
-IEvent<>& Control::DoubleClickEvent()
+IEvent<ISharedControl>& Control::DoubleClickEvent()
 {
     return _props->dblClickEvent;
 }
 
-IEvent<bool>& Control::FocusEvent()
+IEvent<ISharedControl, bool>& Control::FocusEvent()
 {
     return _props->focusEvent;
 }

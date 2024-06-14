@@ -37,7 +37,7 @@ User interfaces can be quickly constructed using standard C++ method calls, as s
     int main()
     {
         auto dlg = std::make_shared<Dialog>();
-        dlg->resize(500,250);
+        dlg->resize({500,250});
         dlg->center();
     -
         auto label = std::make_shared<Label>("Hello DLGCPP!", Position{10, 10, 100, 15});

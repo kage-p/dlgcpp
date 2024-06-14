@@ -29,7 +29,7 @@ namespace dlgcpp
         class AboutDialog : public IAboutDialog
         {
         public:
-            explicit AboutDialog(std::shared_ptr<IDialog> parent = nullptr);
+            explicit AboutDialog(ISharedDialog parent = nullptr);
             virtual ~AboutDialog();
 
             // IAboutDialog impl.
