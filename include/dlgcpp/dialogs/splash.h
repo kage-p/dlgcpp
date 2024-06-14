@@ -2,8 +2,6 @@
 
 #include "dlgcpp/dlgcpp.h"
 
-#include <string>
-
 namespace dlgcpp
 {
     namespace dialogs
@@ -24,7 +22,7 @@ namespace dlgcpp
         class SplashDialog : public ISplashDialog
         {
         public:
-            explicit SplashDialog(std::shared_ptr<IDialog> parent = nullptr);
+            explicit SplashDialog(ISharedDialog parent = nullptr);
             virtual ~SplashDialog();
 
             // ISplashDialog impl.

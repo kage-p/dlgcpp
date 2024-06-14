@@ -5,16 +5,23 @@ using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Button::Button(const std::string& text, const Position& p) :
-    Control(),
+    Control(text, p),
     _props(new button_props())
 {
-    this->text(text);
-    this->p(p);
 }
 
 Button::~Button()
 {
     delete _props;
+}
+
+void Button::rebuild()
+{
+    Control::rebuild();
+
+    if (handle() == nullptr)
+        return;
+    //auto hwnd = reinterpret_cast<HWND>(handle());
 }
 
 std::string Button::className() const
@@ -25,6 +32,8 @@ std::string Button::className() const
 unsigned int Button::styles() const
 {
     auto styles = Control::styles();
+
+    styles |= BS_PUSHBUTTON | BS_NOTIFY;
 
     switch (_props->horzAlign)
     {
@@ -52,7 +61,7 @@ unsigned int Button::styles() const
         break;
     }
 
-    return styles | BS_NOTIFY;
+    return styles;
 }
 
 void Button::notify(dlg_message& msg)
@@ -61,19 +70,19 @@ void Button::notify(dlg_message& msg)
     {
         if (HIWORD(msg.wParam) == BN_CLICKED)
         {
-            ClickEvent().invoke();
+            ClickEvent().invoke(shared_from_this());
         }
         else if (HIWORD(msg.wParam) == BN_DBLCLK)
         {
-            DoubleClickEvent().invoke();
+            DoubleClickEvent().invoke(shared_from_this());
         }
         else if (HIWORD(msg.wParam) == BN_SETFOCUS)
         {
-            FocusEvent().invoke(true);
+            FocusEvent().invoke(shared_from_this(), true);
         }
         else if (HIWORD(msg.wParam) == BN_KILLFOCUS)
         {
-            FocusEvent().invoke(false);
+            FocusEvent().invoke(shared_from_this(), false);
         }
     }
 }

@@ -17,19 +17,21 @@
 
 namespace dlgcpp
 {
-    enum class DialogMessageType
-    {
-        Information = 0,
-        Warning,
-        Error
-    };
-
     enum class DialogType
     {
         Application,
         Popup,
         Frameless,
         Tool
+    };
+
+    enum class DialogState
+    {
+        // TODO: impl
+        Hidden = 0,
+        Normal,
+        Minimized,
+        Maximized
     };
 
     class IDialog
@@ -40,12 +42,13 @@ namespace dlgcpp
         virtual bool visible() const = 0;
         virtual void visible(bool value) = 0;
         virtual const Position& p() const = 0;
-        virtual void move(int x, int y) = 0;
-        virtual void resize(int width, int height) = 0;
+        virtual void move(const Point& point) = 0;
+        virtual void resize(const Size& size) = 0;
         virtual void center() = 0;
         virtual DialogType type() const = 0;
-        virtual void type(DialogType value) = 0;
-        virtual const std::string& title() const = 0;
+        virtual bool showHelp() const = 0;
+        virtual void showHelp(bool value) = 0;
+        virtual const std::string& title() const = 0;        
         virtual void title(const std::string& value) = 0;
         virtual const ImageSource& image() const = 0;
         virtual void image(const ImageSource& image) = 0;
@@ -60,32 +63,47 @@ namespace dlgcpp
         virtual void* handle() const = 0;
         virtual void* user() const = 0;
         virtual void user(void* value) = 0;
-        virtual std::shared_ptr<IDialog> parent() = 0;
+        virtual ISharedDialog parent() = 0;
         virtual void close(int result = 0) = 0;
-        virtual void message(const std::string& message, const std::string& title, DialogMessageType type) = 0;
+        virtual void message(const std::string& message, const std::string& title = std::string()) = 0;
         virtual void timer(int timeout) = 0;
 
         // child management
         virtual void add(std::shared_ptr<IChildControl> child) = 0;
         virtual void remove(std::shared_ptr<IChildControl> child) = 0;
-        virtual std::vector<std::shared_ptr<IControl>> children() const = 0;
+        virtual std::vector<std::shared_ptr<IControl>> controls() const = 0;
+        virtual void add(std::shared_ptr<IChildDialog> child) = 0;
+        virtual void remove(std::shared_ptr<IChildDialog> child) = 0;
+        virtual std::vector<ISharedDialog> dialogs() const = 0;
 
         // events
-        virtual IEvent<>& ClickEvent() = 0;
-        virtual IEvent<>& DoubleClickEvent() = 0;
-        virtual IEvent<std::vector<std::string>>& DropEvent() = 0;
-        virtual IEvent<>& MoveEvent() = 0;
-        virtual IEvent<>& SizeEvent() = 0;
-        virtual IEvent<>& TimerEvent() = 0;
+        virtual IEvent<ISharedDialog, MouseButton, Point>& ClickEvent() = 0;
+        virtual IEvent<ISharedDialog, MouseButton, Point>& DoubleClickEvent() = 0;
+        virtual IEvent<ISharedDialog, std::vector<std::string>>& DropEvent() = 0;
+        virtual IEvent<ISharedDialog>& HelpEvent() = 0;
+        virtual IEvent<ISharedDialog>& MoveEvent() = 0;
+        virtual IEvent<ISharedDialog>& SizeEvent() = 0;
+        virtual IEvent<ISharedDialog>& TimerEvent() = 0;
     };
 
-    class Dialog : public IDialog, public std::enable_shared_from_this<Dialog>
+    class Dialog : public IChildDialog,
+                   public IDialog,
+                   public std::enable_shared_from_this<Dialog>
     {
     public:
-        explicit Dialog(std::shared_ptr<IDialog> parent = nullptr);
+        explicit Dialog(DialogType type = DialogType::Application,
+                        ISharedDialog parent = nullptr);
         virtual ~Dialog();
         int exec();
-        void quit(int result = 0);
+
+        // IChildDialog impl.
+        ISharedDialog parent() const override;
+        void parent(ISharedDialog) override;
+        int id() const override;
+        void id(int value) override;
+        ISharedDialog dialog() override;
+        void notify(dlg_message&) override;
+        void rebuild() override;
 
         // IDialog impl.
         bool enabled() const override;
@@ -93,11 +111,12 @@ namespace dlgcpp
         bool visible() const override;
         void visible(bool value) override;
         const Position& p() const override;
-        void move(int x, int y) override;
-        void resize(int width, int height) override;
+        void move(const Point& point) override;
+        void resize(const Size& size) override;
         void center() override;
         DialogType type() const override;
-        void type(DialogType value) override;
+        bool showHelp() const override;
+        void showHelp(bool value) override;
         Color color() const override;
         void color(Color value) override;
         Cursor cursor() const override;
@@ -113,47 +132,48 @@ namespace dlgcpp
         void* handle() const override;
         void* user() const override;
         void user(void* value) override;
-        std::shared_ptr<IDialog> parent() override;
+        ISharedDialog parent() override;
         void close(int result = 0) override;
-        void message(const std::string& message, const std::string& title = std::string(), DialogMessageType type = DialogMessageType::Information) override;
+        void message(const std::string& message, const std::string& title = std::string()) override;
         void timer(int timeout) override;
 
         // child management
         void add(std::shared_ptr<IChildControl> child) override;
         void remove(std::shared_ptr<IChildControl> child) override;
-        std::vector<std::shared_ptr<IControl>> children() const override;
+        std::vector<std::shared_ptr<IControl>> controls() const override;
+        void add(std::shared_ptr<IChildDialog> child) override;
+        void remove(std::shared_ptr<IChildDialog> child) override;
+        std::vector<ISharedDialog> dialogs() const override;
 
         // events
-        IEvent<>& ClickEvent() override;
-        IEvent<>& DoubleClickEvent() override;
-        IEvent<std::vector<std::string>>& DropEvent() override;
-        IEvent<>& MoveEvent() override;
-        IEvent<>& SizeEvent() override;
-        IEvent<>& TimerEvent() override;
+        IEvent<ISharedDialog, MouseButton, Point>& ClickEvent() override;
+        IEvent<ISharedDialog, MouseButton, Point>& DoubleClickEvent() override;
+        IEvent<ISharedDialog, std::vector<std::string>>& DropEvent() override;
+        IEvent<ISharedDialog>& HelpEvent() override;
+        IEvent<ISharedDialog>& MoveEvent() override;
+        IEvent<ISharedDialog>& SizeEvent() override;
+        IEvent<ISharedDialog>& TimerEvent() override;
 
     protected:
-        std::shared_ptr<IChildControl> childFromId(int id);
+        std::shared_ptr<IChildControl> controlFromId(int id);
         void redraw(bool drawChildren = false);
 
         // overridable by derived class
-        virtual void rebuild();
-        virtual void dump();
         virtual unsigned int styles() const;
         virtual unsigned int exStyles() const;
-#ifdef _WIN32
-        // window procedure
-        virtual LRESULT defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
-#endif
 
     private:
         struct dlg_props* _props;
         struct dlg_state* _state;
 
+        void destruct();
         int nextId();
+        void quit(int result = 0);
         void updateImage();
         void updateTimer();
+
 #ifdef _WIN32
-        static LRESULT CALLBACK staticWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
+        // TODO: replace these with internal impl.
         LRESULT onSetCursor(HWND hwndChild);
         LRESULT onColorDlg(HDC hdc);
         LRESULT onColorCtl(HDC hdc, HWND hwndChild);

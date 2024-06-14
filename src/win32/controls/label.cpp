@@ -7,16 +7,20 @@ using namespace dlgcpp::controls;
 
 Label::Label(const std::string& text,
              const Position& p) :
-    Control(),
+    Control(text, p),
     _props(new lbl_props())
 {
-    this->text(text);
-    this->p(p);
 }
 
 Label::~Label()
 {
     delete _props;
+}
+
+void Label::rebuild()
+{
+    Control::rebuild();
+    updateAutoSize();
 }
 
 unsigned int Label::styles() const
@@ -70,11 +74,11 @@ void Label::notify(dlg_message& msg)
     {
         if (HIWORD(msg.wParam) == STN_CLICKED)
         {
-            ClickEvent().invoke();
+            ClickEvent().invoke(shared_from_this());
         }
         else if (HIWORD(msg.wParam) == STN_DBLCLK)
         {
-            DoubleClickEvent().invoke();
+            DoubleClickEvent().invoke(shared_from_this());
         }
     }
 }
@@ -106,7 +110,7 @@ void Label::autoSize(bool value)
 
 void Label::updateAutoSize()
 {
-    if (handle() == nullptr)
+    if (parent() == nullptr)
         return;
     if (!_props->autoSize)
         return;
@@ -126,11 +130,9 @@ void Label::updateAutoSize()
     DeleteObject(hFont);
 
     auto hwndParent = reinterpret_cast<HWND>(parent()->handle());
-    Position pos = Control::p();
-    Position newPos = toUnits(hwndParent, Position{0,0,szl.cx,szl.cy});
-    pos._cx = newPos._cx + 1;
-    pos._cy = newPos._cy + 1;
-    Control::p(pos);
+    Size size(szl.cx + 1, szl.cy + 1);
+    toUnits(hwndParent, size);
+    Control::resize(size);
 }
 
 bool Label::elipsis() const

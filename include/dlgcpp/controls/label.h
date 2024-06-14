@@ -27,6 +27,7 @@ namespace dlgcpp
         private:
             struct lbl_props* _props;
 
+            void rebuild() override;
             unsigned int styles() const override;
             void notify(dlg_message&) override;
 

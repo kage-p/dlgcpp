@@ -1,6 +1,16 @@
 #pragma once
 
+#include <memory>
 #include <string>
+
+#ifdef DLGCPP_DEBUG
+#include <iostream>
+#define DLGCPP_CMSG(m_args) std::cout << m_args << std::endl
+#define DLGCPP_CERR(m_args) std::cerr << m_args << std::endl
+#else
+#define DLGCPP_CMSG(m_args)
+#define DLGCPP_CERR(m_args)
+#endif
 
 namespace dlgcpp
 {
@@ -10,13 +20,77 @@ namespace dlgcpp
     class IControl;
     struct dlg_message;
 
-    typedef struct Position
+    typedef std::shared_ptr<IDialog> ISharedDialog;
+    typedef std::shared_ptr<IControl> ISharedControl;
+
+    class Point
     {
+    public:
+        Point(int x = 0, int y = 0);
+        Point(const Point&);
+        Point& operator=(const Point& other) = default;
+
+        int x() const;
+        void x(int value);
+        int y() const;
+        void y(int value);
+
+    private:
         int _x = 0;
         int _y = 0;
-        int _cx = 0;
-        int _cy = 0;
-    } Position;
+    };
+
+    class Size
+    {
+    public:
+        Size(int w = 0, int h = 0);
+        Size(const Size&);
+        Size& operator=(const Size& other) = default;
+
+        int width() const;
+        void width(int value);
+        int height() const;
+        void height(int value);
+        bool empty() const;
+
+    private:
+        int _width = 0;
+        int _height = 0;
+    };
+
+    class Position : public Point, public Size
+    {
+    public:
+        Position(int x = 0, int y = 0, int w = 0, int h = 0);
+        Position(const Position&);
+        Position(const Point&);
+        Position(const Size&);
+        Position& operator=(const Position& other) = default;
+        const Point& point() const { return *this; }
+        const Size& size() const { return *this; }
+    };
+
+    enum class HorizontalAlign
+    {
+        Left = 0,
+        Center,
+        Right
+    };
+
+    enum class VerticalAlign
+    {
+        Top = 0,
+        Center,
+        Bottom
+    };
+
+    enum class BorderStyle
+    {
+        None = 0,
+        Thin,
+        Sunken,
+        Raised
+    };
 
     enum class Color : unsigned long
     {
@@ -64,20 +138,6 @@ namespace dlgcpp
         bool symbolType = false;
     } Font;
 
-    enum class HorizontalAlign
-    {
-        Left = 0,
-        Center,
-        Right
-    };
-
-    enum class VerticalAlign
-    {
-        Top = 0,
-        Center,
-        Bottom
-    };
-
     enum class Cursor
     {
         Default = 0,
@@ -91,14 +151,6 @@ namespace dlgcpp
         Unavailable
     };
 
-    enum class BorderStyle
-    {
-        None = 0,
-        Thin,
-        Sunken,
-        Raised
-    };
-
     struct ImageSource
     {
         std::string id;
@@ -106,5 +158,12 @@ namespace dlgcpp
         bool isIcon = false;
         // id is a file, else a resource
         bool isFile = false;
+    };
+
+    enum class MouseButton
+    {
+        Left = 0,
+        Right,
+        Middle
     };
 }

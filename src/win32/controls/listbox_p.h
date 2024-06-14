@@ -20,8 +20,8 @@ namespace dlgcpp
             std::vector<std::string> items;
             int currentIndex = -1;
             std::vector<int> currentIndexes;
-            Event<> selChangedEvent;
-            Event<> selCancelEvent;
+            Event<ISharedControl> selChangedEvent;
+            Event<ISharedControl> selCancelEvent;
         };
     }
 }

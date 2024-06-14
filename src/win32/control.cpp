@@ -6,13 +6,17 @@
 #define NOMINMAX
 #include <Windows.h>
 
+LRESULT CALLBACK controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
+
 using namespace dlgcpp;
 
 
-Control::Control() :
+Control::Control(const std::string& text, const Position& p) :
     _props(new ctl_props()),
     _state(new ctl_state())
 {
+    _props->p = p;
+    _props->text = text;
     _state->hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
     // TODO: translate and store system font
@@ -23,7 +27,7 @@ Control::Control() :
 
 Control::~Control()
 {
-    dump();
+    destruct();
 
     if (_state->hFont != nullptr)
         DeleteObject(_state->hFont);
@@ -34,17 +38,16 @@ Control::~Control()
     delete _state;
 }
 
-std::shared_ptr<IDialog> Control::parent() const
+ISharedDialog Control::parent() const
 {
     return _props->parent;
 }
 
-void Control::parent(std::shared_ptr<IDialog> parent)
+void Control::parent(ISharedDialog parent)
 {
     if (_props->parent == parent)
         return;
     _props->parent = parent;
-    rebuild();
 }
 
 int Control::id() const
@@ -55,7 +58,6 @@ int Control::id() const
 void Control::id(int value)
 {
     _props->id = value;
-    rebuild();
 }
 
 std::shared_ptr<IControl> Control::control()
@@ -68,9 +70,57 @@ ctl_state Control::state()
     return *_state;
 }
 
-void Control::notify(struct dlgcpp::dlg_message&)
+void Control::notify(dlg_message&)
 {
     // no default action
+}
+
+void Control::notify(ctl_message& msg)
+{
+    auto wMsg = msg.wMsg;
+    auto wParam = msg.wParam;
+    auto lParam = msg.lParam;
+
+    switch (wMsg)
+    {
+    case WM_MOVE:
+    {
+        // translate using mapped value and store
+        Point posPx((int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
+        Point posDu(posPx);
+        toUnits(GetParent(_state->hwnd), posDu);
+
+        DLGCPP_CMSG("WM_MOVE: " <<
+                    "x = "  << posDu.x() << " (" << posPx.x() << ") " <<
+                    "y = " << posDu.y() << " (" << posPx.y() << ") " <<
+                    "text = " + _props->text);
+
+        _props->p.x(posDu.x());
+        _props->p.y(posDu.y());
+        MoveEvent().invoke(shared_from_this());
+        break;
+    }
+    case WM_SIZE:
+    {
+        // translate using mapped value and store
+        Size sizePx({(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)});
+        Size sizeDu(sizePx);
+        toUnits(GetParent(_state->hwnd), sizeDu);
+
+        DLGCPP_CMSG("WM_SIZE: " <<
+                    "width = "  << sizeDu.width() << " (" << sizePx.width() << ") " <<
+                    "height = " << sizeDu.height() << " (" << sizePx.height() << ") " <<
+                    "text = " + _props->text);
+
+        _props->p.width(sizeDu.width());
+        _props->p.height(sizeDu.height());
+        SizeEvent().invoke(shared_from_this());
+        break;
+    }
+    }
+
+    // use default control action
+    msg.result = CallWindowProc(msg.orgWndProc, _state->hwnd, msg.wMsg, msg.wParam, msg.lParam);
 }
 
 bool Control::enabled() const
@@ -122,11 +172,53 @@ void Control::p(const Position& p)
     auto hwndParent = reinterpret_cast<HWND>(_props->parent->handle());
 
     // Convert units to pixels
-    auto rc = RECT();
-    SetRect(&rc, p._x, p._y, p._cx, p._cy);
-    MapDialogRect(hwndParent, &rc);
+    auto px = toPixels(hwndParent, p);
 
-    SetWindowPos(_state->hwnd, 0, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER);
+    SetWindowPos(_state->hwnd,
+                 0,
+                 px.x(),
+                 px.y(),
+                 px.width(),
+                 px.height(),
+                 SWP_NOZORDER);
+}
+
+void Control::move(const Point& point)
+{
+    _props->p.x(point.x());
+    _props->p.y(point.y());
+
+    if (_state->hwnd == NULL)
+        return;
+
+    auto px = toPixels(GetParent(_state->hwnd), _props->p);
+
+    SetWindowPos(_state->hwnd,
+                 0,
+                 px.x(),
+                 px.y(),
+                 0,
+                 0,
+                 SWP_NOZORDER | SWP_NOSIZE);
+}
+
+void Control::resize(const Size& size)
+{
+    _props->p.width(size.width());
+    _props->p.height(size.height());
+
+    if (_state->hwnd == NULL)
+        return;
+
+    auto px = toPixels(GetParent(_state->hwnd), _props->p);
+
+    SetWindowPos(_state->hwnd,
+                 0,
+                 0,
+                 0,
+                 px.width(),
+                 px.height(),
+                 SWP_NOZORDER | SWP_NOMOVE);
 }
 
 BorderStyle Control::border() const
@@ -311,7 +403,7 @@ void Control::setFocus()
 
 void Control::rebuild()
 {
-    dump();
+    destruct();
 
     // safety checks
     if (_props->parent == nullptr)
@@ -324,52 +416,87 @@ void Control::rebuild()
     if (hwndParent == NULL)
         return;
 
-    auto rc = RECT();
-    SetRect(&rc,
-            _props->p._x,
-            _props->p._y,
-            _props->p._cx,
-            _props->p._cy);
-    MapDialogRect(hwndParent, &rc);
+    auto p = toPixels(hwndParent, _props->p);
 
     auto hwnd = CreateWindowExW(exStyles(),
                                 toWide(className()).c_str(),
                                 toWide(_props->text).c_str(),
                                 styles(),
-                                rc.left,
-                                rc.top,
-                                rc.right,
-                                rc.bottom,
+                                p.x(),
+                                p.y(),
+                                p.width(),
+                                p.height(),
                                 hwndParent,
                                 (HMENU)(UINT_PTR)_props->id,
                                 GetModuleHandle(NULL), NULL);
     if (hwnd == NULL)
         return;
 
-    SendMessage(hwnd, WM_SETFONT, (WPARAM)_state->hFont, FALSE);
     _state->hwnd = hwnd;
+
+    if (_props->subclass)
+    {
+        SetProp(_state->hwnd, "this", this);
+        _state->prevWndProc = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)controlWndProc);
+        SetProp(_state->hwnd, "pproc", (HANDLE)_state->prevWndProc);
+    }
+
+    SendMessage(_state->hwnd, WM_SETFONT, (WPARAM)_state->hFont, FALSE);
 }
 
-void Control::dump()
+void Control::destruct()
 {
     if (_state->hwnd == NULL)
         return;
+
+    if (_props->subclass)
+    {
+        // remove subclass
+        SetWindowLongPtr(_state->hwnd, GWLP_WNDPROC, (LONG_PTR)_state->prevWndProc);
+        SetProp(_state->hwnd, "pproc", (HANDLE)NULL);
+    }
 
     DestroyWindow(_state->hwnd);
     _state->hwnd = nullptr;
 }
 
-IEvent<>& Control::ClickEvent()
+LRESULT CALLBACK controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
+{
+    auto pthis = reinterpret_cast<Control*>(GetProp(hwnd, "this"));
+    auto pproc = reinterpret_cast<WNDPROC>(GetProp(hwnd, "pproc"));
+
+    if (pthis != nullptr)
+    {
+        // wrap and transfer the message directly to the class.
+        // note: all derivatives will need to process the message and use CallWindowProc
+        auto msg = ctl_message{wMsg, wParam, lParam, 0, pproc};
+        pthis->notify(msg);
+        return msg.result;
+    }
+    return CallWindowProc(pproc, hwnd, wMsg, wParam, lParam);
+}
+
+IEvent<ISharedControl>& Control::ClickEvent()
 {
     return _props->clickEvent;
 }
 
-IEvent<>& Control::DoubleClickEvent()
+IEvent<ISharedControl>& Control::DoubleClickEvent()
 {
     return _props->dblClickEvent;
 }
 
-IEvent<bool>& Control::FocusEvent()
+IEvent<ISharedControl, bool>& Control::FocusEvent()
 {
     return _props->focusEvent;
+}
+
+IEvent<ISharedControl>& Control::MoveEvent()
+{
+    return _props->moveEvent;
+}
+
+IEvent<ISharedControl>& Control::SizeEvent()
+{
+    return _props->sizeEvent;
 }

@@ -5,7 +5,7 @@
 using namespace dlgcpp;
 using namespace dlgcpp::dialogs;
 
-FolderDialog::FolderDialog(std::shared_ptr<IDialog> parent)
+FolderDialog::FolderDialog(ISharedDialog parent)
     : _props(new folder_props())
 {
     _props->parent = parent;

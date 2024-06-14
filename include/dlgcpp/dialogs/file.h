@@ -1,10 +1,6 @@
 #pragma once
 
 #include "dlgcpp/dlgcpp.h"
-#pragma once
-
-#include <memory>
-#include <string>
 
 namespace dlgcpp
 {
@@ -27,7 +23,7 @@ namespace dlgcpp
         class FileDialog : public IFileDialog
         {
         public:
-            explicit FileDialog(std::shared_ptr<IDialog> parent = nullptr);
+            explicit FileDialog(ISharedDialog parent = nullptr);
             virtual ~FileDialog();
 
             // IFileDialog impl.

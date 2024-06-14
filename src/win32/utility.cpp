@@ -36,45 +36,149 @@ std::string dlgcpp::toBytes(const wchar_t* str)
     return buf;
 }
 
-Position dlgcpp::toPixels(HWND hwnd, const Position& p, bool menu)
+void getFontDimensions(HFONT hFont, Size& fontDimensions)
 {
-    if (hwnd == NULL)
-        return Position();
+    fontDimensions = Size();
 
+    HDC hdc = CreateCompatibleDC(NULL);
+
+    bool usingDefaultFont = (hFont == NULL);
+
+    if (usingDefaultFont)
+    {
+        NONCLIENTMETRICS ncm;
+        ncm.cbSize = sizeof(NONCLIENTMETRICS);
+        SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &ncm, 0);
+        hFont = CreateFontIndirect(&ncm.lfMessageFont);
+        usingDefaultFont = true;
+    }
+    HGDIOBJ hOldFont = SelectObject(hdc, hFont);
+
+    SIZE sz;
+    TEXTMETRICW tm;
+    static const WCHAR alphabet[] =
+        {
+            'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q',
+            'r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H',
+            'I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',0
+        };
+
+    if (GetTextMetricsW(hdc, &tm) &&
+        GetTextExtentPointW(hdc, alphabet, 52, &sz))
+    {
+        fontDimensions = Size((sz.cx / 26 + 1) / 2,
+                              tm.tmHeight);
+    }
+
+    SelectObject(hdc, hOldFont);
+    DeleteDC(hdc);
+    if (usingDefaultFont)
+        DeleteObject(hFont);
+}
+
+Position dlgcpp::toPixels(HWND hwnd, const Position& p, bool client)
+{
     auto rc = RECT();
-    SetRect(&rc,
-            p._x,
-            p._y,
-            p._x + p._cx,
-            p._y + p._cy);
 
-    MapDialogRect(hwnd, &rc);
+    if (hwnd != NULL)
+    {
+        SetRect(&rc,
+                p.x(),
+                p.y(),
+                p.x() + p.width(),
+                p.y() + p.height());
 
-    DWORD style = GetWindowLong(hwnd, GWL_STYLE);
-    AdjustWindowRect(&rc, style, menu);
+        if (MapDialogRect(hwnd, &rc) == FALSE)
+        {
+            // error
+            return Position();
+        }
+
+        if (!client)
+        {
+            // TODO: if we had IDialog::styles then we don't need HWND
+            auto menu = GetMenu(hwnd) != NULL;
+            DWORD style = GetWindowLong(hwnd, GWL_STYLE);
+            DWORD exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+            AdjustWindowRectEx(&rc, style, menu, exStyle);
+        }
+    }
+    else
+    {
+        if (!client)
+        {
+            // cant do window position
+            return Position();
+        }
+        // map units to pixels without a dialog box
+        Size fontDimensions;
+        getFontDimensions(NULL, fontDimensions);
+        rc.left = MulDiv(p.x(), fontDimensions.width(), 4);
+        rc.top = MulDiv(p.y(), fontDimensions.height(), 8);
+        rc.right = rc.left + MulDiv(p.width(), fontDimensions.width(), 4);
+        rc.bottom = rc.top + MulDiv(p.height(), fontDimensions.height(), 8);
+    }
 
     return Position{rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top};
 }
 
-Position dlgcpp::toUnits(HWND hwnd, const Position& p)
+void dlgcpp::toPixels(HWND hwnd, Point& point, bool client)
 {
-    if (hwnd == NULL)
-        return Position();
-
-    static const int multiplier = 1000;
-    RECT rc = {0,0,multiplier,multiplier};
-    MapDialogRect(hwnd, &rc);
-
-    // translate using mapped value
-    Position r;
-    r._x = p._x * float(multiplier) / float(rc.right);
-    r._y = p._y * float(multiplier) / float(rc.bottom);
-    r._cx = p._cx * float(multiplier) / float(rc.right);
-    r._cy = p._cy * float(multiplier) / float(rc.bottom);
-
-    return r;
+    auto p = toPixels(hwnd, Position(point), client);
+    point = p.point();
 }
 
+void dlgcpp::toPixels(HWND hwnd, Size& size, bool client)
+{
+    auto p = toPixels(hwnd, Position(size), client);
+    size = p.size();
+}
+
+Position dlgcpp::toUnits(HWND hwnd, const Position& p)
+{
+    if (hwnd != NULL)
+    {
+        // map a fixed rectangle to pixels using the dialog box
+        static const int multiplier = 1000;
+        auto rc = RECT();
+        SetRect(&rc, 0, 0, multiplier, multiplier);
+        if (MapDialogRect(hwnd, &rc) == FALSE)
+        {
+            // error
+            return Position();
+        }
+
+        // translate using mapped value
+        int x  = MulDiv(p.x(), multiplier, rc.right);
+        int y  = MulDiv(p.y(), multiplier, rc.bottom);
+        int cx = MulDiv(p.width(), multiplier, rc.right);
+        int cy = MulDiv(p.height(), multiplier, rc.bottom);
+        return Position(x,y,cx,cy);
+    }
+    else
+    {
+        // map pixels to units without a dialog box
+        Size fontDimensions;
+        getFontDimensions(NULL, fontDimensions);
+        int x = MulDiv(p.x(), 4, fontDimensions.width());
+        int y = MulDiv(p.y(), 8, fontDimensions.height());
+        int cx = MulDiv(p.width(), 4, fontDimensions.width());
+        int cy = MulDiv(p.height(), 8, fontDimensions.height());
+        return Position(x,y,cx,cy);
+    }
+}
+
+void dlgcpp::toUnits(HWND hwnd, Point& point)
+{
+    auto p = toUnits(hwnd, Position(point));
+    point = p.point();
+}
+
+void dlgcpp::toUnits(HWND hwnd, Size& size)
+{
+    auto p = toUnits(hwnd, Position(size));
+    size = p.size();
+}
 
 HFONT dlgcpp::makeFont(const Font& font)
 {
@@ -87,4 +191,65 @@ HFONT dlgcpp::makeFont(const Font& font)
     ReleaseDC(NULL, hdc);
     lf.lfCharSet = font.symbolType ? SYMBOL_CHARSET : DEFAULT_CHARSET;
     return CreateFontIndirectW(&lf);
+}
+
+HANDLE dlgcpp::loadImage(const ImageSource& image,
+                         Size& sizePx)
+{
+    if (image.id.empty())
+        return NULL;
+
+    auto imageType = (image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
+
+    UINT loadFlags = LR_CREATEDIBSECTION;
+    if (image.isFile)
+        loadFlags |= LR_LOADFROMFILE;
+
+    if (sizePx.empty())
+        loadFlags |= LR_DEFAULTSIZE;
+
+    auto hInstRes = GetModuleHandle(NULL);
+
+    HANDLE hImage = LoadImage(hInstRes,
+                              image.id.c_str(),
+                              imageType,
+                              sizePx.width(),
+                              sizePx.height(),
+                              loadFlags);
+
+    sizePx = Size();
+    if (hImage == NULL)
+        return NULL;
+
+    if (!image.isIcon)
+    {
+        BITMAP bitmap;
+        if (GetObject(hImage, sizeof(BITMAP), &bitmap) == FALSE)
+        {
+            DeleteObject(hImage);
+            return NULL;
+        }
+        else
+        {
+            sizePx = Size(bitmap.bmWidth, bitmap.bmHeight);
+        }
+    }
+    else
+    {
+        ICONINFO iconInfo;
+        if (GetIconInfo((HICON)hImage, &iconInfo) == FALSE)
+        {
+            DeleteObject(hImage);
+            return NULL;
+        }
+
+        BITMAP bitmap;
+        if (GetObject(iconInfo.hbmColor, sizeof(BITMAP), &bitmap))
+        {
+            sizePx = Size(bitmap.bmWidth, bitmap.bmHeight);
+        }
+        DeleteObject(iconInfo.hbmColor);
+        DeleteObject(iconInfo.hbmMask);
+    }
+    return hImage;
 }

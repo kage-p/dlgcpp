@@ -1,177 +1,129 @@
-
 #include "demo.h"
-
-#include "dlgcpp/dlgcpp.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
+using namespace dlgcpp::dialogs;
 
 int main()
 {
-    // indirect method: create all components from external function
+    auto mainDlg = std::make_shared<Dialog>();
+    mainDlg->title("DLGCPP Demo Application");
+    mainDlg->image(ImageSource{"#100", true, false});
+    mainDlg->color(Color::White);
+    mainDlg->resize({500,300});
+    mainDlg->center();
 
-    auto dlg = std::make_shared<Dialog>();
-    dlg->title("DLGCPP Demo Application");
-    dlg->type(DialogType::Popup);
-    dlg->image(ImageSource{"#100", true, false});
-    dlg->color(Color::White);
-    dlg->resize(360,230);
-    dlg->center();
-
-    auto lblEntry = std::make_shared<Label>("Entry:", Position{40, 10, 20, 15});
-    lblEntry->colors(Color::Gray, Color::None);
-    lblEntry->horizontalAlignment(HorizontalAlign::Right);
-    lblEntry->verticalAlignment(VerticalAlign::Center);
-    dlg->add(lblEntry);
-
-    auto txtEntry = std::make_shared<TextBox>("Text Entry", Position{65, 10, 120, 15});
-    txtEntry->colors(Color::Blue, Color::Orange);
-    dlg->add(txtEntry);
-
-    auto btnAdd = std::make_shared<Button>("Add", Position{190,10,50,15});
-    dlg->add(btnAdd);
-
-    auto btnRemove = std::make_shared<Button>("Remove", Position{245,10,50,15});
-    dlg->add(btnRemove);
-
-    auto btnAbout = std::make_shared<Button>("About", Position{300,10,50,15});
-    dlg->add(btnAbout);
-
-    auto lstItems = std::make_shared<ListBox>(Position{10,30,340,180});
-    lstItems->colors(Color::Black, Color::None);
-    dlg->add(lstItems);
-
-    auto lblPosition = std::make_shared<Label>("", Position{10,215,0,0});
-    lblPosition->colors(Color::Gray, Color::None);
-    lblPosition->autoSize(true);
-    dlg->add(lblPosition);
-
-    if (true)
+    auto label = std::make_shared<Label>("Select a demo from the menu", Position(0, 0, mainDlg->p().width(), mainDlg->p().height()));
+    label->colors(Color::Gray, Color::White);
+    label->horizontalAlignment(HorizontalAlign::Center);
+    label->verticalAlignment(VerticalAlign::Center);
+    mainDlg->add(label);
+    mainDlg->SizeEvent() += [label](ISharedDialog dlg)
     {
-        auto menu = std::make_shared<Menu>();
-
-        std::shared_ptr<IMenuItem> item;
-
-        auto file = std::make_shared<MenuItem>("&File");
-        menu->add(file);
-
-        item = std::make_shared<MenuItem>("&New");
-        item->Clicked() += [dlg]() { dlg->message("New selected"); };
-        file->add(item);
-
-        item = std::make_shared<MenuItem>("&Open...");
-        item->Clicked() += [dlg]() { dlg->message("Open selected"); };
-        file->add(item);
-
-        item = std::make_shared<MenuItem>("&Save");
-        item->Clicked() += [dlg]() { dlg->message("Save selected"); };
-        file->add(item);
-
-        item = std::make_shared<MenuItem>("Save &as...");
-        item->Clicked() += [dlg]() { dlg->message("Save As selected"); };
-        file->add(item);
-
-        item = std::make_shared<MenuItem>();
-        file->add(item);
-
-        item = std::make_shared<MenuItem>("E&xit");
-        item->Clicked() += [dlg]() { dlg->close(); };
-        file->add(item);
-
-        auto edit = std::make_shared<MenuItem>("&Edit");
-        menu->add(edit);
-
-        item = std::make_shared<MenuItem>("&Add");
-        item->Clicked() += [btnAdd]() { btnAdd->ClickEvent().invoke(); };
-        edit->add(item);
-
-        item = std::make_shared<MenuItem>("&Remove");
-        item->Clicked() += [btnRemove]() { btnRemove->ClickEvent().invoke(); };
-        edit->add(item);
-
-        item = std::make_shared<MenuItem>();
-        edit->add(item);
-
-        item = std::make_shared<MenuItem>("&Clear");
-        item->Clicked() += [lstItems]() { lstItems->items(std::vector<std::string>()); };
-        edit->add(item);
-
-        auto view = std::make_shared<MenuItem>("&View");
-        menu->add(view);
-
-        auto help = std::make_shared<MenuItem>("&Help");
-        menu->add(help);
-
-        item = std::make_shared<MenuItem>("About");
-        item->Clicked() += [btnAbout]() { btnAbout->ClickEvent().invoke(); };
-        help->add(item);
-
-        dlg->menu(menu);
-    }
-
-    btnAdd->ClickEvent() += [txtEntry,lstItems]()
-    {
-        auto items = lstItems->items();
-        items.push_back(txtEntry->text());
-        lstItems->items(items);
+        label->p(Position(0, 0, dlg->p().width(), dlg->p().height()));
+        label->redraw();
     };
 
-    btnRemove->ClickEvent() += [txtEntry,lstItems]()
-    {
-        auto items = lstItems->items();
-        if (items.empty() || lstItems->currentIndex() < 0)
-            return;
+    auto menu = std::make_shared<Menu>();
+    std::shared_ptr<IMenuItem> item;
 
-        items.erase(items.begin() + lstItems->currentIndex());
-        lstItems->items(items);
-    };
+    auto controls = std::make_shared<MenuItem>("&Controls");
+    menu->add(controls);
 
-    btnAbout->ClickEvent() += [dlg]()
-    {
-        dlg->message("Welcome to DLGCPP Demo App!", "DLGCPP Demo");
-    };
+    item = std::make_shared<MenuItem>("Button control");
+    item->ClickEvent() += [mainDlg]() { controls_button_demo(mainDlg); };
+    controls->add(item);
 
-    lstItems->SelChangedEvent() += [dlg,lstItems,txtEntry,lblPosition]()
-    {
-        if (lstItems->currentIndex() < 0)
-            lblPosition->text("No selection");
-        else
-            lblPosition->text("Selected item: " + std::to_string(lstItems->currentIndex()));
+    item = std::make_shared<MenuItem>("CheckBox control");
+    item->ClickEvent() += [mainDlg]() { controls_checkbox_demo(mainDlg); };
+    controls->add(item);
 
-        auto items = lstItems->items();
-        if (items.empty() || lstItems->currentIndex() < 0)
-            return;
+    item = std::make_shared<MenuItem>("ComboBox control");
+    item->ClickEvent() += [mainDlg]() { controls_combobox_demo(mainDlg); };
+    controls->add(item);
 
-        txtEntry->text(items.at(lstItems->currentIndex()));
-    };
+    item = std::make_shared<MenuItem>("Custom control");
+    item->ClickEvent() += [mainDlg]() { controls_custom_demo(mainDlg); };
+    controls->add(item);
 
-    dlg->ClickEvent() += [dlg]()
-    {
-        if (dlg->color() != Color::White)
-        {
-            dlg->color(Color::White);
-        }
-        else
-        {
-            dlg->color(Color::Blue);
-        }
-    };
+    item = std::make_shared<MenuItem>("Image control");
+    item->ClickEvent() += [mainDlg]() { controls_image_demo(mainDlg); };
+    controls->add(item);
 
-    // add some items
-    btnAdd->ClickEvent().invoke();
-    btnAdd->ClickEvent().invoke();
-    btnAdd->ClickEvent().invoke();
-    btnAdd->ClickEvent().invoke();
-    btnAdd->ClickEvent().invoke();
-    lstItems->SelChangedEvent().invoke();
+    item = std::make_shared<MenuItem>("Label control");
+    item->ClickEvent() += [mainDlg]() { controls_label_demo(mainDlg); };
+    controls->add(item);
 
-    // auto subDlg = std::make_shared<Dialog>(dlg);
-    // subDlg->title("Subdialog");
-    // subDlg->type(DialogType::Tool);
-    // subDlg->color(Color::Gray);
-    // subDlg->resize(80,120);
-    // subDlg->visible(true);
+    item = std::make_shared<MenuItem>("ListBox control");
+    item->ClickEvent() += [mainDlg]() { controls_listbox_demo(mainDlg); };
+    controls->add(item);
 
-    dlg->exec();
+    item = std::make_shared<MenuItem>("Slider control");
+    item->ClickEvent() += [mainDlg]() { controls_slider_demo(mainDlg); };
+    controls->add(item);
+
+    item = std::make_shared<MenuItem>("TextBox control");
+    item->ClickEvent() += [mainDlg]() { controls_textbox_demo(mainDlg); };
+    controls->add(item);
+
+    auto dialogs = std::make_shared<MenuItem>("&Dialogs");
+    menu->add(dialogs);
+
+    item = std::make_shared<MenuItem>("Popup Dialog (Modal)");
+    item->ClickEvent() += [mainDlg]() { dialogs_modal_demo(mainDlg); };
+    dialogs->add(item);
+
+    item = std::make_shared<MenuItem>("Popup Dialog (Modeless)");
+    item->ClickEvent() += [mainDlg]() { dialogs_modeless_demo(mainDlg); };
+    dialogs->add(item);
+
+    item = std::make_shared<MenuItem>("Tool Dialog (Modeless)");
+    item->ClickEvent() += [mainDlg]() { dialogs_tool_demo(mainDlg); };
+    dialogs->add(item);
+
+    item = std::make_shared<MenuItem>("Child Dialog (Embedded)");
+    item->ClickEvent() += [mainDlg]() { dialogs_child_demo(mainDlg); };
+    dialogs->add(item);
+
+    item = std::make_shared<MenuItem>();
+    dialogs->add(item);
+
+    item = std::make_shared<MenuItem>("About Dialog");
+    item->ClickEvent() += [mainDlg]() { dialogs_about_demo(mainDlg); };
+    dialogs->add(item);
+    item = std::make_shared<MenuItem>("File Dialog");
+    item->ClickEvent() += [mainDlg]() { dialogs_file_demo(mainDlg); };
+    dialogs->add(item);
+    item = std::make_shared<MenuItem>("Folder Dialog");
+    item->ClickEvent() += [mainDlg]() { dialogs_folder_demo(mainDlg); };
+    dialogs->add(item);
+    item = std::make_shared<MenuItem>("Message Dialog");
+    item->ClickEvent() += [mainDlg]() { dialogs_message_demo(mainDlg); };
+    dialogs->add(item);
+    item = std::make_shared<MenuItem>("Property Dialog");
+    item->ClickEvent() += [mainDlg]() { dialogs_property_demo(mainDlg); };
+    dialogs->add(item);
+    item = std::make_shared<MenuItem>("Splash Dialog");
+    item->ClickEvent() += [mainDlg]() { dialogs_splash_demo(mainDlg); };
+    dialogs->add(item);
+
+    auto advanced = std::make_shared<MenuItem>("&Advanced");
+    menu->add(advanced);
+
+    item = std::make_shared<MenuItem>("Popup Menu");
+    item->ClickEvent() += [mainDlg]() { advanced_popup_menu_demo(mainDlg); };
+    advanced->add(item);
+
+    item = std::make_shared<MenuItem>("Digital Clock Demo");
+    item->ClickEvent() += [mainDlg]() { advanced_clock_demo(mainDlg); };
+    advanced->add(item);
+
+    item = std::make_shared<MenuItem>("Note Keeper Demo");
+    item->ClickEvent() += [mainDlg]() { advanced_note_keeper_demo(mainDlg); };
+    advanced->add(item);
+
+    mainDlg->menu(menu);
+    mainDlg->exec();
+
     return 0;
 }

@@ -9,25 +9,31 @@
 
 namespace dlgcpp
 {
+    static const int MenuStartId = 10000;
+
     struct menu_props
     {
-        std::shared_ptr<IDialog> parent;
-        int startId = 0;
-        std::vector<std::shared_ptr<IMenuItem>> items;
+        ISharedDialog parent;
+        int startId = MenuStartId;
+        std::vector<ISharedMenuItem> items;
     };
 
     struct menu_state
     {
         HMENU hMenu = NULL;
-        std::map<int, std::shared_ptr<IMenuItem>> idMap;
+        std::map<int, ISharedMenuItem> idMap;
     };
 
     struct menui_props
     {
         int id = 0;
         std::string text;
+        bool enabled = true;
+        bool checked = false;
+        bool defaultItem = false;
         bool separator = false;
-        std::vector<std::shared_ptr<IMenuItem>> items;
-        Event<> clickedEvent;
+        bool dirty = false;
+        std::vector<ISharedMenuItem> items;
+        Event<ISharedMenuItem> clickEvent;
     };
 }

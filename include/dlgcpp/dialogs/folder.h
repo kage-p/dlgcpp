@@ -2,9 +2,6 @@
 
 #include "dlgcpp/dlgcpp.h"
 
-#include <memory>
-#include <string>
-
 namespace dlgcpp
 {
     namespace dialogs
@@ -25,7 +22,7 @@ namespace dlgcpp
         class FolderDialog : public IFolderDialog
         {
         public:
-            explicit FolderDialog(std::shared_ptr<IDialog> parent = nullptr);
+            explicit FolderDialog(ISharedDialog parent = nullptr);
             virtual ~FolderDialog();
 
             // IFolderDialog impl.

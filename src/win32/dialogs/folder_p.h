@@ -8,7 +8,7 @@ namespace dlgcpp
     {
         struct folder_props
         {
-            std::shared_ptr<IDialog> parent;
+            ISharedDialog parent;
             std::string title;
             std::string message;
             std::string folderName;
