@@ -65,6 +65,10 @@ add_library(${target} STATIC ${sources} ${headers})
 # consumers need the header target
 target_include_directories(${target} PUBLIC "$<TARGET_PROPERTY:dlgcpp,SOURCE_DIR>")
 
+if (DLGCPP_DEBUG)
+    target_compile_definitions(${target} PRIVATE DLGCPP_DEBUG)
+endif()
+
 if (MSVC)
     target_link_libraries(${target} PRIVATE comctl32.lib)
 endif()

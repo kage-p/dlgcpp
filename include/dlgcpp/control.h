@@ -40,6 +40,8 @@ namespace dlgcpp
         virtual IEvent<ISharedControl>& ClickEvent() = 0;
         virtual IEvent<ISharedControl>& DoubleClickEvent() = 0;
         virtual IEvent<ISharedControl, bool>& FocusEvent() = 0;
+        virtual IEvent<ISharedControl>& MoveEvent() = 0;
+        virtual IEvent<ISharedControl>& SizeEvent() = 0;
     };
 
     class Control : public IChildControl,
@@ -47,6 +49,8 @@ namespace dlgcpp
                     public std::enable_shared_from_this<Control>
     {
     public:
+        virtual void notify(struct ctl_message&);
+
         // IChildControl impl.
         ISharedDialog parent() const override;
         void parent(ISharedDialog) override;
@@ -85,6 +89,8 @@ namespace dlgcpp
         IEvent<ISharedControl>& ClickEvent() override;
         IEvent<ISharedControl>& DoubleClickEvent() override;
         IEvent<ISharedControl, bool>& FocusEvent() override;
+        IEvent<ISharedControl>& MoveEvent() override;
+        IEvent<ISharedControl>& SizeEvent() override;
 
     protected:
         explicit Control(const std::string& text, const Position& p);

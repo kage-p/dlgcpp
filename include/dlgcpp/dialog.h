@@ -161,10 +161,6 @@ namespace dlgcpp
         // overridable by derived class
         virtual unsigned int styles() const;
         virtual unsigned int exStyles() const;
-#ifdef _WIN32
-        // window procedure
-        virtual LRESULT defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
-#endif
 
     private:
         struct dlg_props* _props;
@@ -175,8 +171,9 @@ namespace dlgcpp
         void quit(int result = 0);
         void updateImage();
         void updateTimer();
+
 #ifdef _WIN32
-        static LRESULT CALLBACK staticWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
+        // TODO: replace these with internal impl.
         LRESULT onSetCursor(HWND hwndChild);
         LRESULT onColorDlg(HDC hdc);
         LRESULT onColorCtl(HDC hdc, HWND hwndChild);

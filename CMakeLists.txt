@@ -10,6 +10,7 @@ project(DLGCPP
 )
 
 option(DLGCPP_DEMO "Build DLGCPP Demo" ON)
+option(DLGCPP_DEBUG "Include verbose debug output" OFF)
 
 # ----- subprojects
 

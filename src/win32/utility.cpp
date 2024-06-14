@@ -50,7 +50,6 @@ void getFontDimensions(HFONT hFont, Size& fontDimensions)
         ncm.cbSize = sizeof(NONCLIENTMETRICS);
         SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &ncm, 0);
         hFont = CreateFontIndirect(&ncm.lfMessageFont);
-        //hFont = makeFont(Font{"MS Shell Dlg",8});
         usingDefaultFont = true;
     }
     HGDIOBJ hOldFont = SelectObject(hdc, hFont);
@@ -75,66 +74,6 @@ void getFontDimensions(HFONT hFont, Size& fontDimensions)
     DeleteDC(hdc);
     if (usingDefaultFont)
         DeleteObject(hFont);
-}
-
-// void getCharDimensions_Test()
-// {
-//     LOGFONT logfont = {-11, 0, 0, 0, 400,
-//                        0, 0, 0, 0, 0, 0, 0, 0,
-//                        "MS Shell Dlg 2"};
-//     HFONT hFont, hOldFont;
-//     HDC hdc;
-//     LONG x, y, x2;
-//     TEXTMETRICW tm;
-//     SIZE size;
-//     static const WCHAR alphabet[] = {
-//                                      'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q',
-//                                      'r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H',
-//                                      'I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',0};
-
-//     hFont = CreateFontIndirect(&logfont);
-//     hdc = CreateCompatibleDC(NULL);
-//     hOldFont = SelectObject(hdc, hFont);
-
-//     x = GdiGetCharDimensions(hdc, &tm, &y);
-//     GetTextExtentPointW(hdc, alphabet, 52, &size);
-//     x2 = (size.cx / 26 + 1) / 2;
-
-//     ok(x == x2, "x=%ld, x2=%ld\n", x, x2);
-//     ok(y == tm.tmHeight, "y = %ld, tm.tmHeight = %ld\n", y, tm.tmHeight);
-
-//     SelectObject(hdc, hOldFont);
-//     DeleteObject(hFont);
-//     DeleteDC(hdc);
-// }
-
-void getFontDimensions_OLD(HFONT hFont, Size& fontDimensions)
-{
-    // Obtain the handle to the system font typically used in dialogs
-    bool usingDefaultFont = (hFont == NULL);
-
-    if (usingDefaultFont)
-    {
-        NONCLIENTMETRICS ncm;
-        ncm.cbSize = sizeof(NONCLIENTMETRICS);
-        SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &ncm, 0);
-        hFont = CreateFontIndirect(&ncm.lfMessageFont);
-        //hFont = makeFont(Font{"MS Shell Dlg",8});
-        usingDefaultFont = true;
-    }
-
-    HDC hdc = CreateCompatibleDC(NULL);
-    HGDIOBJ oldFont = SelectObject(hdc, hFont);
-
-    auto tm = TEXTMETRIC();
-    GetTextMetrics(hdc, &tm);
-
-    SelectObject(hdc, oldFont);
-    DeleteDC(hdc);
-    if (usingDefaultFont)
-        DeleteObject(hFont);
-
-    fontDimensions = Size(tm.tmAveCharWidth, tm.tmHeight);
 }
 
 Position dlgcpp::toPixels(HWND hwnd, const Position& p, bool client)

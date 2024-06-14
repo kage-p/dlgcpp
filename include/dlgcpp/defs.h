@@ -3,7 +3,7 @@
 #include <memory>
 #include <string>
 
-#ifdef _DEBUG
+#ifdef DLGCPP_DEBUG
 #include <iostream>
 #define DLGCPP_CMSG(m_args) std::cout << m_args << std::endl
 #define DLGCPP_CERR(m_args) std::cerr << m_args << std::endl

@@ -9,6 +9,8 @@
 #include <CommCtrl.h>
 #include <shellapi.h>
 
+LRESULT CALLBACK dialogWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
+
 using namespace dlgcpp;
 
 Dialog::Dialog(DialogType type, ISharedDialog parent) :
@@ -81,11 +83,6 @@ void Dialog::id(int value)
 ISharedDialog Dialog::dialog()
 {
     return shared_from_this();
-}
-
-void Dialog::notify(struct dlgcpp::dlg_message&)
-{
-    // no default action
 }
 
 int Dialog::nextId()
@@ -655,7 +652,7 @@ void Dialog::rebuild()
     auto hwnd = CreateDialogIndirectParam(GetModuleHandle(NULL),
                                           &dlg,
                                           hwndParent,
-                                          &Dialog::staticWndProc, 0);
+                                          dialogWndProc, 0);
 
     if (hwnd == NULL)
         return;
@@ -770,16 +767,28 @@ unsigned int Dialog::exStyles() const
     return styles;
 }
 
-LRESULT CALLBACK Dialog::staticWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK dialogWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
     auto pthis = reinterpret_cast<Dialog*>(GetProp(hDlg, "this"));
+
     if (pthis != nullptr)
-        return pthis->defaultWndProc(hDlg, wMsg, wParam, lParam);
+    {
+        // wrap and transfer the message directly to the class.
+        auto msg = dlg_message{wMsg, wParam, lParam};
+        pthis->notify(msg);
+        return msg.result;
+    }
     return 0;
 }
 
-LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam)
+// intercepts dialog messages and performs the default actions.
+void Dialog::notify(dlg_message& msg)
 {
+    auto hDlg = (HWND)handle();
+    auto wMsg = msg.wMsg;
+    auto wParam = msg.wParam;
+    auto lParam = msg.lParam;
+
     switch (wMsg)
     {
     case WM_COMMAND:
@@ -794,9 +803,8 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
                     // menu item
                     if (_props->menu != nullptr)
                     {
-                        auto msg = dlg_message{wMsg, wParam, lParam};
                         _props->menu->notify(msg);
-                        return msg.result;
+                        return;
                     }
                 }
                 else if (HIWORD(wParam) == 0)
@@ -804,7 +812,7 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
                     // accelerator
 
                 }
-                return 0;
+                return;
             }
 
             auto child = controlFromId(id);
@@ -812,9 +820,8 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
             {
                 // wrap message and send to child for processing
                 // a result code is supported.
-                auto msg = dlg_message{wMsg, wParam, lParam};
                 child->notify(msg);
-                return msg.result;
+                return;
             }
             //else if (id == IDOK)
                 // TODO: Confirm event
@@ -835,9 +842,8 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
             {
                 // wrap message and send to child for processing
                 // a result code is supported.
-                auto msg = dlg_message{wMsg, wParam, lParam};
                 child->notify(msg);
-                return msg.result;
+                return;
             }
         }
         break;
@@ -855,9 +861,8 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
             {
                 // wrap message and send to child for processing
                 // a result code is supported.
-                auto msg = dlg_message{wMsg, wParam, lParam};
                 child->notify(msg);
-                return msg.result;
+                return;
             }
         }
         break;
@@ -875,9 +880,8 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
             {
                 // wrap message and send to child for processing
                 // a result code is supported.
-                auto msg = dlg_message{wMsg, wParam, lParam};
                 child->notify(msg);
-                return msg.result;
+                return;
             }
         }
         break;
@@ -968,17 +972,20 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
     }
 
     case WM_SETCURSOR:
-        return onSetCursor((HWND)wParam);
+        msg.result = onSetCursor((HWND)wParam);
+        return;
 
     case WM_CTLCOLORDLG:
-        return onColorDlg((HDC)wParam);
+        msg.result = onColorDlg((HDC)wParam);
+        return;
 
     case WM_CTLCOLORSTATIC:
     case WM_CTLCOLORBTN:
     case WM_CTLCOLOREDIT:
     case WM_CTLCOLORLISTBOX:
     case WM_CTLCOLORSCROLLBAR:
-        return onColorCtl((HDC)wParam, (HWND)lParam);
+        msg.result = onColorCtl((HDC)wParam, (HWND)lParam);
+        return;
 
     case WM_SYSCOMMAND:
         // Close X button on dialog...
@@ -994,7 +1001,7 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
         auto hDrop = (HDROP)wParam;
         auto fileCount = (int)DragQueryFileW(hDrop, 0xFFFFFFFF, NULL, 0);
         if (fileCount == 0)
-            return 0;
+            return;
 
         std::vector<std::string> files;
         for (int i = 0; i < fileCount; i++)
@@ -1005,7 +1012,7 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
             files.push_back(toBytes(wfile.data()));
         }
         if (files.empty())
-            return 0;
+            return;
         DropEvent().invoke(shared_from_this(), files);
         break;
     }
@@ -1026,13 +1033,10 @@ LRESULT Dialog::defaultWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
         break;
     }
     }
-
-    return 0;
 }
 
 LRESULT Dialog::onSetCursor(HWND hwndChild)
 {
-
     if (hwndChild != _state->hwnd && GetParent(hwndChild) != _state->hwnd)
     {
         // some controls have a different parent

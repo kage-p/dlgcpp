@@ -6,6 +6,8 @@
 #define NOMINMAX
 #include <Windows.h>
 
+LRESULT CALLBACK controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
+
 using namespace dlgcpp;
 
 
@@ -68,9 +70,57 @@ ctl_state Control::state()
     return *_state;
 }
 
-void Control::notify(struct dlgcpp::dlg_message&)
+void Control::notify(dlg_message&)
 {
     // no default action
+}
+
+void Control::notify(ctl_message& msg)
+{
+    auto wMsg = msg.wMsg;
+    auto wParam = msg.wParam;
+    auto lParam = msg.lParam;
+
+    switch (wMsg)
+    {
+    case WM_MOVE:
+    {
+        // translate using mapped value and store
+        Point posPx((int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
+        Point posDu(posPx);
+        toUnits(GetParent(_state->hwnd), posDu);
+
+        DLGCPP_CMSG("WM_MOVE: " <<
+                    "x = "  << posDu.x() << " (" << posPx.x() << ") " <<
+                    "y = " << posDu.y() << " (" << posPx.y() << ") " <<
+                    "text = " + _props->text);
+
+        _props->p.x(posDu.x());
+        _props->p.y(posDu.y());
+        MoveEvent().invoke(shared_from_this());
+        break;
+    }
+    case WM_SIZE:
+    {
+        // translate using mapped value and store
+        Size sizePx({(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)});
+        Size sizeDu(sizePx);
+        toUnits(GetParent(_state->hwnd), sizeDu);
+
+        DLGCPP_CMSG("WM_SIZE: " <<
+                    "width = "  << sizeDu.width() << " (" << sizePx.width() << ") " <<
+                    "height = " << sizeDu.height() << " (" << sizePx.height() << ") " <<
+                    "text = " + _props->text);
+
+        _props->p.width(sizeDu.width());
+        _props->p.height(sizeDu.height());
+        SizeEvent().invoke(shared_from_this());
+        break;
+    }
+    }
+
+    // use default control action
+    msg.result = CallWindowProc(msg.orgWndProc, _state->hwnd, msg.wMsg, msg.wParam, msg.lParam);
 }
 
 bool Control::enabled() const
@@ -382,8 +432,16 @@ void Control::rebuild()
     if (hwnd == NULL)
         return;
 
-    SendMessage(hwnd, WM_SETFONT, (WPARAM)_state->hFont, FALSE);
     _state->hwnd = hwnd;
+
+    if (_props->subclass)
+    {
+        SetProp(_state->hwnd, "this", this);
+        _state->prevWndProc = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)controlWndProc);
+        SetProp(_state->hwnd, "pproc", (HANDLE)_state->prevWndProc);
+    }
+
+    SendMessage(_state->hwnd, WM_SETFONT, (WPARAM)_state->hFont, FALSE);
 }
 
 void Control::destruct()
@@ -391,8 +449,31 @@ void Control::destruct()
     if (_state->hwnd == NULL)
         return;
 
+    if (_props->subclass)
+    {
+        // remove subclass
+        SetWindowLongPtr(_state->hwnd, GWLP_WNDPROC, (LONG_PTR)_state->prevWndProc);
+        SetProp(_state->hwnd, "pproc", (HANDLE)NULL);
+    }
+
     DestroyWindow(_state->hwnd);
     _state->hwnd = nullptr;
+}
+
+LRESULT CALLBACK controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
+{
+    auto pthis = reinterpret_cast<Control*>(GetProp(hwnd, "this"));
+    auto pproc = reinterpret_cast<WNDPROC>(GetProp(hwnd, "pproc"));
+
+    if (pthis != nullptr)
+    {
+        // wrap and transfer the message directly to the class.
+        // note: all derivatives will need to process the message and use CallWindowProc
+        auto msg = ctl_message{wMsg, wParam, lParam, 0, pproc};
+        pthis->notify(msg);
+        return msg.result;
+    }
+    return CallWindowProc(pproc, hwnd, wMsg, wParam, lParam);
 }
 
 IEvent<ISharedControl>& Control::ClickEvent()
@@ -408,4 +489,14 @@ IEvent<ISharedControl>& Control::DoubleClickEvent()
 IEvent<ISharedControl, bool>& Control::FocusEvent()
 {
     return _props->focusEvent;
+}
+
+IEvent<ISharedControl>& Control::MoveEvent()
+{
+    return _props->moveEvent;
+}
+
+IEvent<ISharedControl>& Control::SizeEvent()
+{
+    return _props->sizeEvent;
 }
