@@ -36,8 +36,11 @@ namespace dlgcpp
             int timeout = 0;
         } timer;
         void* user = nullptr;
-        Event<ISharedDialog, MouseButton, Point> clickEvent;
-        Event<ISharedDialog, MouseButton, Point> dblClickEvent;
+        Event<ISharedDialog, MouseEvent> mouseDownEvent;
+        Event<ISharedDialog, MouseEvent> mouseUpEvent;
+        Event<ISharedDialog, MouseEvent> mouseMoveEvent;
+        Event<ISharedDialog, MouseEvent> mouseDblClickEvent;
+        Event<ISharedDialog> mouseCaptureLost;
         Event<ISharedDialog, std::vector<std::string>> dropEvent;
         Event<ISharedDialog> focusEvent;
         Event<ISharedDialog> helpEvent;
@@ -52,5 +55,11 @@ namespace dlgcpp
         HBRUSH hbrBgColor = NULL;
         HGDIOBJ hImage = NULL;
         bool execParentEnabled = false;
+    };
+
+    struct dlg_priv
+    {
+        dlg_props props;
+        dlg_state state;
     };
 }

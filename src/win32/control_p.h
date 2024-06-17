@@ -27,6 +27,11 @@ namespace dlgcpp
         Event<ISharedControl> clickEvent;
         Event<ISharedControl> dblClickEvent;
         Event<ISharedControl, bool> focusEvent;
+        Event<ISharedControl, MouseEvent> mouseDownEvent;
+        Event<ISharedControl, MouseEvent> mouseUpEvent;
+        Event<ISharedControl, MouseEvent> mouseMoveEvent;
+        Event<ISharedControl, MouseEvent> mouseDblClickEvent;
+        Event<ISharedControl> mouseCaptureLost;
         Event<ISharedControl> moveEvent;
         Event<ISharedControl> sizeEvent;
     };
@@ -46,5 +51,11 @@ namespace dlgcpp
         LPARAM lParam = 0;
         LRESULT result = 0;
         WNDPROC orgWndProc = NULL;
+    };
+
+    struct ctl_priv
+    {
+        ctl_props props;
+        ctl_state state;
     };
 }

@@ -1,5 +1,9 @@
 #include "splash_p.h"
 
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 using namespace dlgcpp::dialogs;

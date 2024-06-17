@@ -52,10 +52,10 @@ void advanced_popup_menu_demo(ISharedDialog parent)
     };
     menu->add(item);
 
-    dlg->ClickEvent() += [menu](ISharedDialog dlg, MouseButton button, Point point)
+    dlg->MouseDownEvent() += [menu](ISharedDialog dlg, MouseEvent event)
     {
-        if (button == MouseButton::Right)
-            menu->popup(dlg, point);
+        if (event.button == MouseButton::Right)
+            menu->popup(dlg, event.point);
     };
 
     dlg->exec();

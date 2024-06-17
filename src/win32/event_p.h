@@ -9,25 +9,30 @@ namespace dlgcpp
     class Event : public IEvent<Args...>
     {
     public:
-        Event& operator+=(std::function<void(Args...args)> fn) override
+        inline Event& operator+=(std::function<void(Args...args)> fn) override
         {
             _listeners.push_back(fn);
             return *this;
         }
 
-        Event& operator+=(std::function<void()> fn) override
+        inline Event& operator+=(std::function<void()> fn) override
         {
             _basic_listeners.push_back(fn);
             return *this;
         }
 
-        void clear() override
+        inline size_t count() override
+        {
+            return _listeners.size() + _basic_listeners.size();
+        }
+
+        inline void clear() override
         {
             _listeners.clear();
             _basic_listeners.clear();
         }
 
-        void invoke(Args ... args) override
+        inline void invoke(Args ... args) override
         {
             for (auto& f : _listeners)
                 f(args...);
@@ -35,8 +40,9 @@ namespace dlgcpp
                 f();
         };
 
-        void invoke() override
+        inline void invoke() override
         {
+            // TODO: need to call parameter listeners
             //for (auto& f : _listeners)
             //    f(_defaultArgs);
             for (auto& f : _basic_listeners)

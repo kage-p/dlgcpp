@@ -40,6 +40,11 @@ namespace dlgcpp
         virtual IEvent<ISharedControl>& ClickEvent() = 0;
         virtual IEvent<ISharedControl>& DoubleClickEvent() = 0;
         virtual IEvent<ISharedControl, bool>& FocusEvent() = 0;
+        virtual IEvent<ISharedControl, MouseEvent>& MouseDownEvent() = 0;
+        virtual IEvent<ISharedControl, MouseEvent>& MouseUpEvent() = 0;
+        virtual IEvent<ISharedControl, MouseEvent>& MouseMoveEvent() = 0;
+        virtual IEvent<ISharedControl, MouseEvent>& MouseDoubleClickEvent() = 0;
+        virtual IEvent<ISharedControl>& MouseCaptureLostEvent() = 0;
         virtual IEvent<ISharedControl>& MoveEvent() = 0;
         virtual IEvent<ISharedControl>& SizeEvent() = 0;
     };
@@ -87,8 +92,13 @@ namespace dlgcpp
         void setFocus() override;
 
         IEvent<ISharedControl>& ClickEvent() override;
-        IEvent<ISharedControl>& DoubleClickEvent() override;
+        IEvent<ISharedControl>& DoubleClickEvent() override;        
         IEvent<ISharedControl, bool>& FocusEvent() override;
+        IEvent<ISharedControl, MouseEvent>& MouseDownEvent() override;
+        IEvent<ISharedControl, MouseEvent>& MouseUpEvent() override;
+        IEvent<ISharedControl, MouseEvent>& MouseMoveEvent() override;
+        IEvent<ISharedControl, MouseEvent>& MouseDoubleClickEvent() override;
+        IEvent<ISharedControl>& MouseCaptureLostEvent() override;
         IEvent<ISharedControl>& MoveEvent() override;
         IEvent<ISharedControl>& SizeEvent() override;
 
@@ -102,9 +112,6 @@ namespace dlgcpp
         virtual unsigned int exStyles() const;
 
     private:
-        struct ctl_props* _props;
-        struct ctl_state* _state;
-
-        void destruct();
+        struct ctl_priv* _pi = nullptr;
     };
 }

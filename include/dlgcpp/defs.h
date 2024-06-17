@@ -166,4 +166,10 @@ namespace dlgcpp
         Right,
         Middle
     };
+
+    struct MouseEvent
+    {
+        MouseButton button = MouseButton::Left;
+        Point point = Point(0,0);
+    };
 }

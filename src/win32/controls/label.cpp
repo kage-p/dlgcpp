@@ -27,7 +27,7 @@ unsigned int Label::styles() const
 {
     auto styles = Control::styles();
     styles = styles & ~WS_TABSTOP;
-    styles |= SS_NOPREFIX | SS_NOTIFY;
+    styles |= SS_NOPREFIX;
 
     switch (_props->horzAlign)
     {
@@ -55,6 +55,9 @@ unsigned int Label::styles() const
         // not supported
         break;
     }
+
+    if (_props->clickable)
+        styles |= SS_NOTIFY;
 
     if (_props->elipsis)
         styles |= SS_ENDELLIPSIS;
@@ -106,6 +109,25 @@ void Label::autoSize(bool value)
         return;
     _props->autoSize = value;
     updateAutoSize();
+}
+
+bool Label::clickable() const
+{
+    return _props->clickable;
+}
+
+void Label::clickable(bool value)
+{
+    if (_props->clickable == value)
+        return;
+    _props->clickable = value;
+
+    if (handle() == nullptr)
+        return;
+    auto hwnd = reinterpret_cast<HWND>(handle());
+
+    // update style
+    SetWindowLong(hwnd, GWL_STYLE, styles());
 }
 
 void Label::updateAutoSize()

@@ -9,12 +9,6 @@
 #include "event.h"
 #include "menu.h"
 
-#ifdef _WIN32
-    #define NOMINMAX
-    #define WIN32_LEAN_AND_MEAN
-    #include <Windows.h>
-#endif
-
 namespace dlgcpp
 {
     enum class DialogType
@@ -60,6 +54,8 @@ namespace dlgcpp
         virtual void cursor(Cursor value) = 0;
         virtual bool dropTarget() const = 0;
         virtual void dropTarget(bool value) = 0;
+        virtual bool mouseCapture() const = 0;
+        virtual void mouseCapture(bool value) = 0;
         virtual void* handle() const = 0;
         virtual void* user() const = 0;
         virtual void user(void* value) = 0;
@@ -77,8 +73,11 @@ namespace dlgcpp
         virtual std::vector<ISharedDialog> dialogs() const = 0;
 
         // events
-        virtual IEvent<ISharedDialog, MouseButton, Point>& ClickEvent() = 0;
-        virtual IEvent<ISharedDialog, MouseButton, Point>& DoubleClickEvent() = 0;
+        virtual IEvent<ISharedDialog, MouseEvent>& MouseDownEvent() = 0;
+        virtual IEvent<ISharedDialog, MouseEvent>& MouseUpEvent() = 0;
+        virtual IEvent<ISharedDialog, MouseEvent>& MouseMoveEvent() = 0;
+        virtual IEvent<ISharedDialog, MouseEvent>& MouseDoubleClickEvent() = 0;
+        virtual IEvent<ISharedDialog>& MouseCaptureLostEvent() = 0;
         virtual IEvent<ISharedDialog, std::vector<std::string>>& DropEvent() = 0;
         virtual IEvent<ISharedDialog>& HelpEvent() = 0;
         virtual IEvent<ISharedDialog>& MoveEvent() = 0;
@@ -123,6 +122,8 @@ namespace dlgcpp
         void cursor(Cursor value) override;
         bool dropTarget() const override;
         void dropTarget(bool value) override;
+        bool mouseCapture() const override;
+        void mouseCapture(bool value) override;
         const std::string& title() const override;
         void title(const std::string& value) override;
         const ImageSource& image() const override;
@@ -146,16 +147,18 @@ namespace dlgcpp
         std::vector<ISharedDialog> dialogs() const override;
 
         // events
-        IEvent<ISharedDialog, MouseButton, Point>& ClickEvent() override;
-        IEvent<ISharedDialog, MouseButton, Point>& DoubleClickEvent() override;
         IEvent<ISharedDialog, std::vector<std::string>>& DropEvent() override;
+        IEvent<ISharedDialog, MouseEvent>& MouseDownEvent() override;
+        IEvent<ISharedDialog, MouseEvent>& MouseUpEvent() override;
+        IEvent<ISharedDialog, MouseEvent>& MouseMoveEvent() override;
+        IEvent<ISharedDialog, MouseEvent>& MouseDoubleClickEvent() override;
+        IEvent<ISharedDialog>& MouseCaptureLostEvent() override;
         IEvent<ISharedDialog>& HelpEvent() override;
         IEvent<ISharedDialog>& MoveEvent() override;
         IEvent<ISharedDialog>& SizeEvent() override;
         IEvent<ISharedDialog>& TimerEvent() override;
 
     protected:
-        std::shared_ptr<IChildControl> controlFromId(int id);
         void redraw(bool drawChildren = false);
 
         // overridable by derived class
@@ -163,20 +166,6 @@ namespace dlgcpp
         virtual unsigned int exStyles() const;
 
     private:
-        struct dlg_props* _props;
-        struct dlg_state* _state;
-
-        void destruct();
-        int nextId();
-        void quit(int result = 0);
-        void updateImage();
-        void updateTimer();
-
-#ifdef _WIN32
-        // TODO: replace these with internal impl.
-        LRESULT onSetCursor(HWND hwndChild);
-        LRESULT onColorDlg(HDC hdc);
-        LRESULT onColorCtl(HDC hdc, HWND hwndChild);
-#endif
+        struct dlg_priv* _pi = nullptr;
     };
 }

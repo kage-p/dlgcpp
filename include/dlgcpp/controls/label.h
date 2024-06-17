@@ -17,6 +17,8 @@ namespace dlgcpp
             void font(const Font& value) override;
             bool autoSize() const;
             void autoSize(bool value);
+            bool clickable() const;
+            void clickable(bool value);
             bool elipsis() const;
             void elipsis(bool value);
             HorizontalAlign horizontalAlignment() const;

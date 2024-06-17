@@ -6,58 +6,58 @@
 #define NOMINMAX
 #include <Windows.h>
 
-LRESULT CALLBACK controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
-
 using namespace dlgcpp;
+
+// private functions
+void destruct(ctl_priv& pi);
+LRESULT CALLBACK controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 
 
 Control::Control(const std::string& text, const Position& p) :
-    _props(new ctl_props()),
-    _state(new ctl_state())
+    _pi(new ctl_priv())
 {
-    _props->p = p;
-    _props->text = text;
-    _state->hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+    _pi->props.p = p;
+    _pi->props.text = text;
+    _pi->state.hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
     // TODO: translate and store system font
     //auto lfw = LOGFONTW();
-    //GetObject(_state->font, sizeof(LOGFONTW), &lfw);
-    //_props->font = Font{};
+    //GetObject(_pi->state.font, sizeof(LOGFONTW), &lfw);
+    //_pi->props.font = Font{};
 }
 
 Control::~Control()
 {
-    destruct();
+    destruct(*_pi);
 
-    if (_state->hFont != nullptr)
-        DeleteObject(_state->hFont);
-    if (_state->hbrBack != NULL)
-        DeleteObject(_state->hbrBack);
+    if (_pi->state.hFont != nullptr)
+        DeleteObject(_pi->state.hFont);
+    if (_pi->state.hbrBack != NULL)
+        DeleteObject(_pi->state.hbrBack);
 
-    delete _props;
-    delete _state;
+    delete _pi;
 }
 
 ISharedDialog Control::parent() const
 {
-    return _props->parent;
+    return _pi->props.parent;
 }
 
 void Control::parent(ISharedDialog parent)
 {
-    if (_props->parent == parent)
+    if (_pi->props.parent == parent)
         return;
-    _props->parent = parent;
+    _pi->props.parent = parent;
 }
 
 int Control::id() const
 {
-    return _props->id;
+    return _pi->props.id;
 }
 
 void Control::id(int value)
 {
-    _props->id = value;
+    _pi->props.id = value;
 }
 
 std::shared_ptr<IControl> Control::control()
@@ -67,7 +67,7 @@ std::shared_ptr<IControl> Control::control()
 
 ctl_state Control::state()
 {
-    return *_state;
+    return _pi->state;
 }
 
 void Control::notify(dlg_message&)
@@ -77,26 +77,104 @@ void Control::notify(dlg_message&)
 
 void Control::notify(ctl_message& msg)
 {
+    HWND hwndParent = GetParent(_pi->state.hwnd);
     auto wMsg = msg.wMsg;
     auto wParam = msg.wParam;
     auto lParam = msg.lParam;
 
     switch (wMsg)
     {
+    case WM_LBUTTONDOWN:
+    case WM_MBUTTONDOWN:
+    case WM_RBUTTONDOWN:
+    {
+        MouseEvent event;
+
+        if (wMsg == WM_LBUTTONDOWN)
+            event.button = MouseButton::Left;
+        else if (wMsg == WM_RBUTTONDOWN)
+            event.button = MouseButton::Right;
+        else
+            event.button = MouseButton::Middle;
+
+        event.point = Point(LOWORD(lParam), HIWORD(lParam));
+        toUnits(hwndParent, event.point);
+
+        MouseDownEvent().invoke(shared_from_this(), event);
+        break;
+    }
+
+    case WM_LBUTTONUP:
+    case WM_MBUTTONUP:
+    case WM_RBUTTONUP:
+    {
+        MouseEvent event;
+
+        if (wMsg == WM_LBUTTONUP)
+            event.button = MouseButton::Left;
+        else if (wMsg == WM_RBUTTONUP)
+            event.button = MouseButton::Right;
+        else
+            event.button = MouseButton::Middle;
+
+        event.point = Point(LOWORD(lParam), HIWORD(lParam));
+        toUnits(hwndParent, event.point);
+
+        MouseUpEvent().invoke(shared_from_this(), event);
+        break;
+    }
+
+    case WM_LBUTTONDBLCLK:
+    case WM_MBUTTONDBLCLK:
+    case WM_RBUTTONDBLCLK:
+    {
+        MouseEvent event;
+
+        if (wMsg == WM_LBUTTONDBLCLK)
+            event.button = MouseButton::Left;
+        else if (wMsg == WM_RBUTTONDBLCLK)
+            event.button = MouseButton::Right;
+        else
+            event.button = MouseButton::Middle;
+
+        event.point = Point(LOWORD(lParam), HIWORD(lParam));
+        toUnits(hwndParent, event.point);
+
+        MouseDoubleClickEvent().invoke(shared_from_this(), event);
+        break;
+    }
+
+    case WM_MOUSEMOVE:
+    {
+        MouseEvent event;
+        event.button = wMsg == WM_LBUTTONDOWN ? MouseButton::Left : wMsg == WM_RBUTTONDOWN ? MouseButton::Right : MouseButton::Middle;
+        event.point = Point(LOWORD(lParam), HIWORD(lParam));
+        toUnits(hwndParent, event.point);
+
+        MouseMoveEvent().invoke(shared_from_this(), event);
+        break;
+    }
+
+    case WM_CAPTURECHANGED:
+    {
+        MouseCaptureLostEvent().invoke(shared_from_this());
+        break;
+    }
+
     case WM_MOVE:
     {
         // translate using mapped value and store
         Point posPx((int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
         Point posDu(posPx);
-        toUnits(GetParent(_state->hwnd), posDu);
+        toUnits(GetParent(_pi->state.hwnd), posDu);
 
         DLGCPP_CMSG("WM_MOVE: " <<
                     "x = "  << posDu.x() << " (" << posPx.x() << ") " <<
                     "y = " << posDu.y() << " (" << posPx.y() << ") " <<
-                    "text = " + _props->text);
+                    "text = " + _pi->props.text);
 
-        _props->p.x(posDu.x());
-        _props->p.y(posDu.y());
+        _pi->props.p.x(posDu.x());
+        _pi->props.p.y(posDu.y());
         MoveEvent().invoke(shared_from_this());
         break;
     }
@@ -105,76 +183,76 @@ void Control::notify(ctl_message& msg)
         // translate using mapped value and store
         Size sizePx({(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)});
         Size sizeDu(sizePx);
-        toUnits(GetParent(_state->hwnd), sizeDu);
+        toUnits(GetParent(_pi->state.hwnd), sizeDu);
 
         DLGCPP_CMSG("WM_SIZE: " <<
                     "width = "  << sizeDu.width() << " (" << sizePx.width() << ") " <<
                     "height = " << sizeDu.height() << " (" << sizePx.height() << ") " <<
-                    "text = " + _props->text);
+                    "text = " + _pi->props.text);
 
-        _props->p.width(sizeDu.width());
-        _props->p.height(sizeDu.height());
+        _pi->props.p.width(sizeDu.width());
+        _pi->props.p.height(sizeDu.height());
         SizeEvent().invoke(shared_from_this());
         break;
     }
     }
 
     // use default control action
-    msg.result = CallWindowProc(msg.orgWndProc, _state->hwnd, msg.wMsg, msg.wParam, msg.lParam);
+    msg.result = CallWindowProc(msg.orgWndProc, _pi->state.hwnd, msg.wMsg, msg.wParam, msg.lParam);
 }
 
 bool Control::enabled() const
 {
-    return _props->enabled;
+    return _pi->props.enabled;
 }
 
 void Control::enabled(bool value)
 {
-    if (_props->enabled == value)
+    if (_pi->props.enabled == value)
         return;
-    _props->enabled = value;
-    if (_state->hwnd == NULL)
+    _pi->props.enabled = value;
+    if (_pi->state.hwnd == NULL)
         return;
 
-    EnableWindow(_state->hwnd, _props->enabled);
+    EnableWindow(_pi->state.hwnd, _pi->props.enabled);
 }
 
 
 bool Control::visible() const
 {
-    return _props->visible;
+    return _pi->props.visible;
 }
 
 void Control::visible(bool value)
 {
-    _props->visible = value;
+    _pi->props.visible = value;
 
-    if (_state->hwnd == NULL)
+    if (_pi->state.hwnd == NULL)
         return;
 
-    ShowWindow(_state->hwnd,
-               _props->visible ? SW_SHOW : SW_HIDE);
+    ShowWindow(_pi->state.hwnd,
+               _pi->props.visible ? SW_SHOW : SW_HIDE);
 }
 
 const Position& Control::p() const
 {
-    return _props->p;
+    return _pi->props.p;
 }
 
 void Control::p(const Position& p)
 {
-    _props->p = p;
+    _pi->props.p = p;
 
-    if (_props->parent == nullptr)
+    if (_pi->props.parent == nullptr)
         return;
-    if (_state->hwnd == NULL)
+    if (_pi->state.hwnd == NULL)
         return;
-    auto hwndParent = reinterpret_cast<HWND>(_props->parent->handle());
+    auto hwndParent = reinterpret_cast<HWND>(_pi->props.parent->handle());
 
     // Convert units to pixels
     auto px = toPixels(hwndParent, p);
 
-    SetWindowPos(_state->hwnd,
+    SetWindowPos(_pi->state.hwnd,
                  0,
                  px.x(),
                  px.y(),
@@ -185,15 +263,15 @@ void Control::p(const Position& p)
 
 void Control::move(const Point& point)
 {
-    _props->p.x(point.x());
-    _props->p.y(point.y());
+    _pi->props.p.x(point.x());
+    _pi->props.p.y(point.y());
 
-    if (_state->hwnd == NULL)
+    if (_pi->state.hwnd == NULL)
         return;
 
-    auto px = toPixels(GetParent(_state->hwnd), _props->p);
+    auto px = toPixels(GetParent(_pi->state.hwnd), _pi->props.p);
 
-    SetWindowPos(_state->hwnd,
+    SetWindowPos(_pi->state.hwnd,
                  0,
                  px.x(),
                  px.y(),
@@ -204,15 +282,15 @@ void Control::move(const Point& point)
 
 void Control::resize(const Size& size)
 {
-    _props->p.width(size.width());
-    _props->p.height(size.height());
+    _pi->props.p.width(size.width());
+    _pi->props.p.height(size.height());
 
-    if (_state->hwnd == NULL)
+    if (_pi->state.hwnd == NULL)
         return;
 
-    auto px = toPixels(GetParent(_state->hwnd), _props->p);
+    auto px = toPixels(GetParent(_pi->state.hwnd), _pi->props.p);
 
-    SetWindowPos(_state->hwnd,
+    SetWindowPos(_pi->state.hwnd,
                  0,
                  0,
                  0,
@@ -223,50 +301,50 @@ void Control::resize(const Size& size)
 
 BorderStyle Control::border() const
 {
-    return _props->borderStyle;
+    return _pi->props.borderStyle;
 }
 
 void Control::border(BorderStyle value)
 {
-    if (_props->borderStyle == value)
+    if (_pi->props.borderStyle == value)
         return;
-    _props->borderStyle = value;
+    _pi->props.borderStyle = value;
 
     rebuild();
 }
 
 const std::string& Control::text() const
 {
-    return _props->text;
+    return _pi->props.text;
 }
 
 void Control::text(const std::string& value)
 {
-    if (_props->text == value)
+    if (_pi->props.text == value)
         return;
 
-    _props->text = value;
-    if (_state->hwnd == NULL)
+    _pi->props.text = value;
+    if (_pi->state.hwnd == NULL)
         return;
 
     // only sync the text when it has changed
-    auto cbText = (size_t)GetWindowTextLengthW(_state->hwnd);
-    if (_props->text.size() == cbText)
+    auto cbText = (size_t)GetWindowTextLengthW(_pi->state.hwnd);
+    if (_pi->props.text.size() == cbText)
     {
         cbText++;
         std::wstring buf(cbText, 0);
-        GetWindowTextW(_state->hwnd, &buf[0], cbText);
-        if (_props->text == toBytes(buf.c_str()))
+        GetWindowTextW(_pi->state.hwnd, &buf[0], cbText);
+        if (_pi->props.text == toBytes(buf.c_str()))
             return;
     }
 
-    SetWindowTextW(_state->hwnd,
-                   toWide(_props->text).c_str());
+    SetWindowTextW(_pi->state.hwnd,
+                   toWide(_pi->props.text).c_str());
 }
 
 std::pair<Color, Color> Control::colors() const
 {
-    return std::make_pair(_props->fgColor, _props->bgColor);
+    return std::make_pair(_pi->props.fgColor, _pi->props.bgColor);
 }
 
 void Control::colors(Color fgColor, Color bgColor)
@@ -275,77 +353,77 @@ void Control::colors(Color fgColor, Color bgColor)
 
     // foreground 'None' is not supported
     if (fgColor != Color::None &&
-        _props->fgColor != fgColor)
+        _pi->props.fgColor != fgColor)
     {
-        _props->fgColor = fgColor;
+        _pi->props.fgColor = fgColor;
         changed = true;
     }
     if (bgColor != fgColor)
     {
-        _props->bgColor = bgColor;
+        _pi->props.bgColor = bgColor;
         changed = true;
     }
 
     if (!changed)
         return;
 
-    if (_state->hbrBack != NULL)
+    if (_pi->state.hbrBack != NULL)
     {
-        DeleteObject(_state->hbrBack);
-        _state->hbrBack = NULL;
+        DeleteObject(_pi->state.hbrBack);
+        _pi->state.hbrBack = NULL;
     }
 
     if (bgColor != Color::None && bgColor != Color::Default)
-        _state->hbrBack = CreateSolidBrush((COLORREF)bgColor);
+        _pi->state.hbrBack = CreateSolidBrush((COLORREF)bgColor);
     redraw();
 }
 
 Cursor Control::cursor() const
 {
-    return _props->cursor;
+    return _pi->props.cursor;
 }
 
 void Control::cursor(Cursor value)
 {
-    _props->cursor = value;
+    _pi->props.cursor = value;
 }
 
 const Font& Control::font() const
 {
-    return _props->font;
+    return _pi->props.font;
 }
 
 void Control::font(const Font& value)
 {
-    _props->font = value;
+    _pi->props.font = value;
 
-    if (_state->hFont != NULL)
-        DeleteObject(_state->hFont);
+    if (_pi->state.hFont != NULL)
+        DeleteObject(_pi->state.hFont);
 
-    if (!_props->font.faceName.empty())
-        _state->hFont = makeFont(_props->font);
+    if (!_pi->props.font.faceName.empty())
+        _pi->state.hFont = makeFont(_pi->props.font);
     else
-        _state->hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+        _pi->state.hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
-    if (_state->hwnd == NULL)
+    if (_pi->state.hwnd == NULL)
         return;
 
-    SendMessage(_state->hwnd, WM_SETFONT, (WPARAM)_state->hFont, TRUE);
+    SendMessage(_pi->state.hwnd, WM_SETFONT, (WPARAM)_pi->state.hFont, TRUE);
 }
 
 void* Control::handle() const
 {
-    return _state->hwnd;
+    return _pi->state.hwnd;
 }
 
 void* Control::user() const
 {
-    return _props->user;
+    return _pi->props.user;
 }
 
 void Control::user(void* value)
 {
-    _props->user = value;
+    _pi->props.user = value;
 }
 
 std::string Control::className() const
@@ -356,9 +434,9 @@ std::string Control::className() const
 unsigned int Control::styles() const
 {
     unsigned int styles = WS_CHILD | WS_TABSTOP | WS_CLIPSIBLINGS;
-    if (_props->visible)
+    if (_pi->props.visible)
         styles |= WS_VISIBLE;
-    if (!_props->enabled)
+    if (!_pi->props.enabled)
         styles |= WS_DISABLED;
     return styles;
 }
@@ -367,7 +445,7 @@ unsigned int Control::exStyles() const
 {
     unsigned int styles = 0;
 
-    switch (_props->borderStyle)
+    switch (_pi->props.borderStyle)
     {
     case BorderStyle::Raised:
         styles |= WS_EX_DLGMODALFRAME;
@@ -387,77 +465,77 @@ unsigned int Control::exStyles() const
 
 void Control::redraw()
 {
-    if (_state->hwnd == NULL)
+    if (_pi->state.hwnd == NULL)
         return;
 
-    RedrawWindow(_state->hwnd, NULL, 0, RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW);
+    RedrawWindow(_pi->state.hwnd, NULL, 0, RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
 void Control::setFocus()
 {
-    if (_state->hwnd == NULL)
+    if (_pi->state.hwnd == NULL)
         return;
 
-    SetFocus(_state->hwnd);
+    SetFocus(_pi->state.hwnd);
 }
 
 void Control::rebuild()
 {
-    destruct();
+    destruct(*_pi);
 
     // safety checks
-    if (_props->parent == nullptr)
+    if (_pi->props.parent == nullptr)
         return;
 
-    if (_props->id < 1)
+    if (_pi->props.id < 1)
         return;
 
-    HWND hwndParent = reinterpret_cast<HWND>(_props->parent->handle());
+    HWND hwndParent = reinterpret_cast<HWND>(_pi->props.parent->handle());
     if (hwndParent == NULL)
         return;
 
-    auto p = toPixels(hwndParent, _props->p);
+    auto p = toPixels(hwndParent, _pi->props.p);
 
     auto hwnd = CreateWindowExW(exStyles(),
                                 toWide(className()).c_str(),
-                                toWide(_props->text).c_str(),
+                                toWide(_pi->props.text).c_str(),
                                 styles(),
                                 p.x(),
                                 p.y(),
                                 p.width(),
                                 p.height(),
                                 hwndParent,
-                                (HMENU)(UINT_PTR)_props->id,
+                                (HMENU)(UINT_PTR)_pi->props.id,
                                 GetModuleHandle(NULL), NULL);
     if (hwnd == NULL)
         return;
 
-    _state->hwnd = hwnd;
+    _pi->state.hwnd = hwnd;
 
-    if (_props->subclass)
+    if (_pi->props.subclass)
     {
-        SetProp(_state->hwnd, "this", this);
-        _state->prevWndProc = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)controlWndProc);
-        SetProp(_state->hwnd, "pproc", (HANDLE)_state->prevWndProc);
+        SetProp(_pi->state.hwnd, "this", this);
+        _pi->state.prevWndProc = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)controlWndProc);
+        SetProp(_pi->state.hwnd, "pproc", (HANDLE)_pi->state.prevWndProc);
     }
 
-    SendMessage(_state->hwnd, WM_SETFONT, (WPARAM)_state->hFont, FALSE);
+    SendMessage(_pi->state.hwnd, WM_SETFONT, (WPARAM)_pi->state.hFont, FALSE);
 }
 
-void Control::destruct()
+void destruct(ctl_priv& pi)
 {
-    if (_state->hwnd == NULL)
+    if (pi.state.hwnd == NULL)
         return;
 
-    if (_props->subclass)
+    if (pi.props.subclass)
     {
         // remove subclass
-        SetWindowLongPtr(_state->hwnd, GWLP_WNDPROC, (LONG_PTR)_state->prevWndProc);
-        SetProp(_state->hwnd, "pproc", (HANDLE)NULL);
+        SetWindowLongPtr(pi.state.hwnd, GWLP_WNDPROC, (LONG_PTR)pi.state.prevWndProc);
+        SetProp(pi.state.hwnd, "pproc", (HANDLE)NULL);
     }
 
-    DestroyWindow(_state->hwnd);
-    _state->hwnd = nullptr;
+    DestroyWindow(pi.state.hwnd);
+    pi.state.hwnd = nullptr;
 }
 
 LRESULT CALLBACK controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
@@ -478,25 +556,50 @@ LRESULT CALLBACK controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lPar
 
 IEvent<ISharedControl>& Control::ClickEvent()
 {
-    return _props->clickEvent;
+    return _pi->props.clickEvent;
 }
 
 IEvent<ISharedControl>& Control::DoubleClickEvent()
 {
-    return _props->dblClickEvent;
+    return _pi->props.dblClickEvent;
 }
 
 IEvent<ISharedControl, bool>& Control::FocusEvent()
 {
-    return _props->focusEvent;
+    return _pi->props.focusEvent;
+}
+
+IEvent<ISharedControl, MouseEvent>& Control::MouseDownEvent()
+{
+    return _pi->props.mouseDownEvent;
+}
+
+IEvent<ISharedControl, MouseEvent>& Control::MouseUpEvent()
+{
+    return _pi->props.mouseUpEvent;
+}
+
+IEvent<ISharedControl, MouseEvent>& Control::MouseMoveEvent()
+{
+    return _pi->props.mouseMoveEvent;
+}
+
+IEvent<ISharedControl, MouseEvent>& Control::MouseDoubleClickEvent()
+{
+    return _pi->props.mouseDblClickEvent;
+}
+
+IEvent<ISharedControl>& Control::MouseCaptureLostEvent()
+{
+    return _pi->props.mouseCaptureLost;
 }
 
 IEvent<ISharedControl>& Control::MoveEvent()
 {
-    return _props->moveEvent;
+    return _pi->props.moveEvent;
 }
 
 IEvent<ISharedControl>& Control::SizeEvent()
 {
-    return _props->sizeEvent;
+    return _pi->props.sizeEvent;
 }
