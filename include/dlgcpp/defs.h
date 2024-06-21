@@ -28,7 +28,9 @@ namespace dlgcpp
     public:
         Point(int x = 0, int y = 0);
         Point(const Point&);
-        Point& operator=(const Point& other) = default;
+        Point& operator=(const Point& other);
+        bool operator==(const Point& other) const;
+        bool operator!=(const Point& other) const;
 
         int x() const;
         void x(int value);
@@ -45,7 +47,9 @@ namespace dlgcpp
     public:
         Size(int w = 0, int h = 0);
         Size(const Size&);
-        Size& operator=(const Size& other) = default;
+        Size& operator=(const Size& other);
+        bool operator==(const Size& other) const;
+        bool operator!=(const Size& other) const;
 
         int width() const;
         void width(int value);
@@ -65,7 +69,10 @@ namespace dlgcpp
         Position(const Position&);
         Position(const Point&);
         Position(const Size&);
-        Position& operator=(const Position& other) = default;
+        Position& operator=(const Position& other);
+        bool operator==(const Position& other) const;
+        bool operator!=(const Position& other) const;
+
         const Point& point() const { return *this; }
         const Size& size() const { return *this; }
     };
@@ -153,11 +160,23 @@ namespace dlgcpp
 
     struct ImageSource
     {
+        // location of a file or resource
         std::string id;
         // image is an icon, else a bitmap
         bool isIcon = false;
         // id is a file, else a resource
         bool isFile = false;
+
+        inline bool operator==(const ImageSource& other) const
+        {
+            return (id == other.id &&
+                    isIcon == other.isIcon &&
+                    isFile == other.isFile);
+        }
+        inline bool operator!=(const ImageSource& other) const
+        {
+            return !(*this == other);
+        }
     };
 
     enum class MouseButton

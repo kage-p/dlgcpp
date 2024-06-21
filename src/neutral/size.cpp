@@ -12,6 +12,24 @@ Size::Size(const Size& other) :
 {
 }
 
+Size& Size::operator=(const Size& other)
+{
+    _width = other._width;
+    _height = other._height;
+    return *this;
+}
+
+bool Size::operator==(const Size& other) const
+{
+    return _width == other._width &&
+           _height == other._height;
+}
+
+bool Size::operator!=(const Size& other) const
+{
+    return !(*this == other);
+}
+
 int Size::width() const
 {
     return _width;

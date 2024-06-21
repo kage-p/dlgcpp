@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.27)
 
-set(target dlgdemo)
+set(target dlgcpp_demo)
 
 set(headers
     demo.h

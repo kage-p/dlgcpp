@@ -21,3 +21,23 @@ Position::Position(const Size& other) :
     Size(other)
 {
 }
+
+Position& Position::operator=(const Position& other)
+{
+    x(other.x());
+    y(other.y());
+    width(other.width());
+    height(other.height());
+    return *this;
+}
+
+bool Position::operator==(const Position& other) const
+{
+    return point() == other.point() &&
+           size() == other.size();
+}
+
+bool Position::operator!=(const Position& other) const
+{
+    return !(*this == other);
+}

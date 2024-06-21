@@ -9,8 +9,9 @@ project(DLGCPP
     LANGUAGES CXX
 )
 
+option(DLGCPP_DEBUG "DLGCPP verbose debug output" OFF)
 option(DLGCPP_DEMO "Build DLGCPP Demo" ON)
-option(DLGCPP_DEBUG "Include verbose debug output" OFF)
+option(DLGCPP_TESTS "Build DLGCPP Tests" ON)
 
 # ----- subprojects
 
@@ -19,6 +20,11 @@ add_subdirectory(src)
 
 if (DLGCPP_DEMO)
     add_subdirectory(apps/demo)
+endif()
+
+if (DLGCPP_TESTS)
+    add_subdirectory(3rdparty/utframework)
+    add_subdirectory(tests)
 endif()
 
 # ----- installer
