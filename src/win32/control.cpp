@@ -514,9 +514,9 @@ void Control::rebuild()
 
     if (_pi->props.subclass)
     {
-        SetProp(_pi->state.hwnd, "this", this);
+        SetPropW(_pi->state.hwnd, L"this", this);
         _pi->state.prevWndProc = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)controlWndProc);
-        SetProp(_pi->state.hwnd, "pproc", (HANDLE)_pi->state.prevWndProc);
+        SetPropW(_pi->state.hwnd, L"pproc", (HANDLE)_pi->state.prevWndProc);
     }
 
     SendMessage(_pi->state.hwnd, WM_SETFONT, (WPARAM)_pi->state.hFont, FALSE);
@@ -531,7 +531,7 @@ void destruct(ctl_priv& pi)
     {
         // remove subclass
         SetWindowLongPtr(pi.state.hwnd, GWLP_WNDPROC, (LONG_PTR)pi.state.prevWndProc);
-        SetProp(pi.state.hwnd, "pproc", (HANDLE)NULL);
+        SetPropW(pi.state.hwnd, L"pproc", (HANDLE)NULL);
     }
 
     DestroyWindow(pi.state.hwnd);
@@ -540,8 +540,8 @@ void destruct(ctl_priv& pi)
 
 LRESULT CALLBACK controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
-    auto pthis = reinterpret_cast<Control*>(GetProp(hwnd, "this"));
-    auto pproc = reinterpret_cast<WNDPROC>(GetProp(hwnd, "pproc"));
+    auto pthis = reinterpret_cast<Control*>(GetPropW(hwnd, L"this"));
+    auto pproc = reinterpret_cast<WNDPROC>(GetPropW(hwnd, L"pproc"));
 
     if (pthis != nullptr)
     {

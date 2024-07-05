@@ -242,7 +242,7 @@ void ComboBox::readInput()
         return;
 
     auto hwnd = reinterpret_cast<HWND>(handle());
-    auto cb = (size_t)GetWindowTextLengthW(hwnd) + 1;
+    auto cb = (int)GetWindowTextLengthW(hwnd) + 1;
     std::wstring buf(cb, 0);
     GetWindowTextW(hwnd, &buf[0], cb);
     text(toBytes(buf.c_str()));

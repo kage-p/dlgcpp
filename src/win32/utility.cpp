@@ -210,12 +210,12 @@ HANDLE dlgcpp::loadImage(const ImageSource& image,
 
     auto hInstRes = GetModuleHandle(NULL);
 
-    HANDLE hImage = LoadImage(hInstRes,
-                              image.id.c_str(),
-                              imageType,
-                              sizePx.width(),
-                              sizePx.height(),
-                              loadFlags);
+    HANDLE hImage = LoadImageW(hInstRes,
+                               toWide(image.id).c_str(),
+                               imageType,
+                               sizePx.width(),
+                               sizePx.height(),
+                               loadFlags);
 
     sizePx = Size();
     if (hImage == NULL)

@@ -127,7 +127,7 @@ void createMenuItems(HMENU hMenu,
         mi.wID = ++nextItemId;
         mi.dwTypeData = (LPWSTR)&text[0];
         mi.fState = stateFlags;
-        mi.cch = text.size();
+        mi.cch = (UINT)text.size();
 
         idMap[nextItemId] = item;
 

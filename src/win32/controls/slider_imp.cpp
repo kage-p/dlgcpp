@@ -5,8 +5,6 @@
 #include <Windows.h>
 #include <strsafe.h>
 
-#include <string>
-
 #define SLDR_MAX_TEXT 512
 typedef struct TSLDR_DATA {                    // Custom data for the control
     HWND hwnd;                                 // Handle to the control
@@ -316,12 +314,11 @@ LRESULT WINAPI sldWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
         }
 
         static const int bufSize = 512;
-        TCHAR szText[bufSize];
+        TCHAR szText[bufSize] = {0};
         if (psd->bPercent)
         {
             int curPos = 0+(psd->lPos * (psd->lMin+psd->lMax)/100);
-            auto perc = std::to_string(curPos) + "%";
-            StringCchCopy(szText, bufSize, perc.c_str());
+            StringCchPrintf(szText, bufSize, TEXT("%d%%"), curPos);
         }
         else
             StringCchCopy(szText, bufSize, psd->szText);
@@ -468,8 +465,6 @@ LRESULT WINAPI sldWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam)
     return DefWindowProc(hwnd, wMsg, wParam, lParam);
 }
 
-
-
 //------------------------------------------------------------------------------
 // Registers the library for use.
 //------------------------------------------------------------------------------
@@ -482,7 +477,7 @@ int sldRegister()
     WNDCLASS wc = WNDCLASS();
 
     TCHAR szClass[64];
-    StringCchCopy(szClass, 64, SLDR_CLASS);
+    StringCchCopy(szClass, 64, TEXT(SLDR_CLASS));
     wc.lpfnWndProc = &sldWndProc;
     wc.hInstance = GetModuleHandle(NULL);
     wc.cbWndExtra = sizeof(LPVOID); // Correct
@@ -501,5 +496,5 @@ int sldRegister()
 //------------------------------------------------------------------------------
 int sldUnregister()
 {
-    return UnregisterClass(SLDR_CLASS, GetModuleHandle(NULL));
+    return UnregisterClass(TEXT(SLDR_CLASS), GetModuleHandle(NULL));
 }

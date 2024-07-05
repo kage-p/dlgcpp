@@ -337,12 +337,12 @@ void updateImage(dlg_priv& pi)
 
     auto hInstRes = GetModuleHandle(NULL);
     auto imageType = (pi.props.image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
-    pi.state.hImage = LoadImage(hInstRes,
-                               pi.props.image.id.c_str(),
-                               imageType,
-                               0,
-                               0,
-                               LR_DEFAULTSIZE | (pi.props.image.isFile ? LR_LOADFROMFILE : 0));
+    pi.state.hImage = LoadImageW(hInstRes,
+                                 toWide(pi.props.image.id).c_str(),
+                                 imageType,
+                                 0,
+                                 0,
+                                 LR_DEFAULTSIZE | (pi.props.image.isFile ? LR_LOADFROMFILE : 0));
     if (pi.state.hImage == NULL)
         return;
 
@@ -674,7 +674,7 @@ void Dialog::rebuild()
     if (hwnd == NULL)
         return;
 
-    SetProp(hwnd, "this", this);
+    SetPropW(hwnd, L"this", this);
     _pi->state.hwnd = hwnd;
 
     move(_pi->props.p);
@@ -786,7 +786,7 @@ unsigned int Dialog::exStyles() const
 
 LRESULT CALLBACK dialogWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam)
 {
-    auto pthis = reinterpret_cast<Dialog*>(GetProp(hDlg, "this"));
+    auto pthis = reinterpret_cast<Dialog*>(GetPropW(hDlg, L"this"));
 
     if (pthis != nullptr)
     {
@@ -854,7 +854,7 @@ void Dialog::notify(dlg_message& msg)
         auto pNmHdr = (NMHDR*)lParam;
         if (pNmHdr->idFrom != 0)
         {
-            auto child = findControl(*_pi, pNmHdr->idFrom);
+            auto child = findControl(*_pi, (int)pNmHdr->idFrom);
             if (child != nullptr)
             {
                 // wrap message and send to child for processing
@@ -1053,7 +1053,7 @@ void Dialog::notify(dlg_message& msg)
         for (int i = 0; i < fileCount; i++)
         {
             std::wstring wfile(MAX_PATH, 0x0);
-            if (DragQueryFileW(hDrop, i, &wfile[0], wfile.size()) == 0)
+            if (DragQueryFileW(hDrop, i, &wfile[0], (UINT)wfile.size()) == 0)
                 continue;
             files.push_back(toBytes(wfile.data()));
         }
