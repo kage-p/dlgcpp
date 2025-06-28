@@ -353,12 +353,12 @@ void Control::colors(Color fgColor, Color bgColor)
 
     // foreground 'None' is not supported
     if (fgColor != Color::None &&
-        _pi->props.fgColor != fgColor)
+        fgColor != _pi->props.fgColor)
     {
         _pi->props.fgColor = fgColor;
         changed = true;
     }
-    if (bgColor != fgColor)
+    if (bgColor != _pi->props.bgColor)
     {
         _pi->props.bgColor = bgColor;
         changed = true;
