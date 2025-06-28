@@ -201,7 +201,7 @@ HANDLE dlgcpp::loadImage(const ImageSource& image,
 
     auto imageType = (image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
 
-    UINT loadFlags = LR_CREATEDIBSECTION;
+    UINT loadFlags = 0; //LR_CREATEDIBSECTION;
     if (image.isFile)
         loadFlags |= LR_LOADFROMFILE;
 

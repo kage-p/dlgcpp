@@ -24,8 +24,12 @@
 #include "controls/image.h"
 #include "controls/label.h"
 #include "controls/listbox.h"
+#include "controls/listview.h"
+#include "controls/progress.h"
 #include "controls/slider.h"
+#include "controls/tabs.h"
 #include "controls/textbox.h"
+#include "controls/toolbar.h"
 
 #include "dialogs/about.h"
 #include "dialogs/file.h"

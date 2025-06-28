@@ -1,5 +1,32 @@
 #include "demo.h"
 
+#include "dlgcpp/dlgcpp.h"
+
+#include "advanced/clock_demo.h"
+#include "advanced/notes_demo.h"
+#include "advanced/popup_menu_demo.h"
+
+#include "controls/button_demo.h"
+#include "controls/checkbox_demo.h"
+#include "controls/combobox_demo.h"
+#include "controls/custom_demo.h"
+#include "controls/image_demo.h"
+#include "controls/label_demo.h"
+#include "controls/listbox_demo.h"
+#include "controls/listview_demo.h"
+#include "controls/progress_demo.h"
+#include "controls/slider_demo.h"
+#include "controls/tabs_demo.h"
+#include "controls/textbox_demo.h"
+
+#include "dialogs/about_demo.h"
+#include "dialogs/dialog_demo.h"
+#include "dialogs/file_demo.h"
+#include "dialogs/folder_demo.h"
+#include "dialogs/message_demo.h"
+#include "dialogs/property_demo.h"
+#include "dialogs/splash_demo.h"
+
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 using namespace dlgcpp::dialogs;
@@ -58,8 +85,20 @@ int main()
     item->ClickEvent() += [mainDlg]() { controls_listbox_demo(mainDlg); };
     controls->add(item);
 
+    item = std::make_shared<MenuItem>("ListView control");
+    item->ClickEvent() += [mainDlg]() { controls_listview_demo(mainDlg); };
+    controls->add(item);
+
+    item = std::make_shared<MenuItem>("Progress control");
+    item->ClickEvent() += [mainDlg]() { controls_progress_demo(mainDlg); };
+    controls->add(item);
+
     item = std::make_shared<MenuItem>("Slider control");
     item->ClickEvent() += [mainDlg]() { controls_slider_demo(mainDlg); };
+    controls->add(item);
+
+    item = std::make_shared<MenuItem>("Tab control");
+    item->ClickEvent() += [mainDlg]() { controls_tabs_demo(mainDlg); };
     controls->add(item);
 
     item = std::make_shared<MenuItem>("TextBox control");

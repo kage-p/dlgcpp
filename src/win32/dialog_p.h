@@ -11,6 +11,8 @@ namespace dlgcpp
     static const int ChildStartId = 100;
     static const int MenuStartId = 10000;
 
+    static const int WM_DLGCPP_USER = WM_USER+1000;
+
     struct dlg_props
     {
         ISharedDialog parent;
@@ -47,6 +49,7 @@ namespace dlgcpp
         Event<ISharedDialog> moveEvent;
         Event<ISharedDialog> sizeEvent;
         Event<ISharedDialog> timerEvent;
+        Event<ISharedDialog, int> userEvent;
     };
 
     struct dlg_state

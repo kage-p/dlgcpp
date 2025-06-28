@@ -1,7 +1,7 @@
 #pragma once
 
-#include "defs.h"
 #include "child.h"
+#include "defs.h"
 #include "event.h"
 
 #include <memory>
@@ -61,7 +61,7 @@ namespace dlgcpp
         bool defaultItem() const override;
         void defaultItem(bool value) override;
         bool separator() const override;
-        void seperator(bool value) override;        
+        void seperator(bool value) override;
         void add(ISharedMenuItem item) override;
         void remove(ISharedMenuItem item) override;
         void clear() override;
@@ -75,8 +75,8 @@ namespace dlgcpp
     };
 
     class Menu : public IChildMenu,
-                 public IMenu,
-                 public std::enable_shared_from_this<Menu>
+        public IMenu,
+        public std::enable_shared_from_this<Menu>
 
     {
     public:
@@ -88,6 +88,7 @@ namespace dlgcpp
         void parent(ISharedDialog) override;
         int id() const override;
         void id(int value) override;
+        int idRange() const override { return 1; } // TBD
         void notify(dlg_message&) override;
         void rebuild() override;
         std::shared_ptr<IMenu> menu() override;

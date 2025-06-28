@@ -60,6 +60,11 @@ void Control::id(int value)
     _pi->props.id = value;
 }
 
+int Control::idRange() const
+{
+    return 1;
+}
+
 std::shared_ptr<IControl> Control::control()
 {
     return shared_from_this();
@@ -299,6 +304,36 @@ void Control::resize(const Size& size)
                  SWP_NOZORDER | SWP_NOMOVE);
 }
 
+void Control::setFocus()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    SetFocus(_pi->state.hwnd);
+}
+
+void Control::bringToFront()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    SetWindowPos(_pi->state.hwnd,
+                 HWND_TOP,
+                 0,0,0,0,
+                 SWP_NOMOVE | SWP_NOSIZE);
+}
+
+void Control::sendToBack()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    SetWindowPos(_pi->state.hwnd,
+                 HWND_BOTTOM,
+                 0,0,0,0,
+                 SWP_NOMOVE | SWP_NOSIZE);
+}
+
 BorderStyle Control::border() const
 {
     return _pi->props.borderStyle;
@@ -469,14 +504,6 @@ void Control::redraw()
         return;
 
     RedrawWindow(_pi->state.hwnd, NULL, 0, RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW);
-}
-
-void Control::setFocus()
-{
-    if (_pi->state.hwnd == NULL)
-        return;
-
-    SetFocus(_pi->state.hwnd);
 }
 
 void Control::rebuild()

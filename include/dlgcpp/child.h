@@ -15,6 +15,7 @@ namespace dlgcpp
 
         virtual int id() const = 0;
         virtual void id(int value) = 0;
+        virtual int idRange() const = 0;
 
         virtual void notify(dlg_message&) = 0;
         virtual void rebuild() = 0;

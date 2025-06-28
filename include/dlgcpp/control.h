@@ -20,6 +20,9 @@ namespace dlgcpp
         virtual void p(const Position& p) = 0;
         virtual void move(const Point& point) = 0;
         virtual void resize(const Size& size) = 0;
+        virtual void setFocus() = 0;
+        virtual void bringToFront() = 0;
+        virtual void sendToBack() = 0;
         virtual BorderStyle border() const = 0;
         virtual void border(BorderStyle value) = 0;
         virtual const std::string& text() const = 0;
@@ -35,7 +38,6 @@ namespace dlgcpp
         virtual void user(void* value) = 0;
         virtual ISharedDialog parent() const = 0;
         virtual void redraw() = 0;
-        virtual void setFocus() = 0;
 
         virtual IEvent<ISharedControl>& ClickEvent() = 0;
         virtual IEvent<ISharedControl>& DoubleClickEvent() = 0;
@@ -61,6 +63,7 @@ namespace dlgcpp
         void parent(ISharedDialog) override;
         int id() const override;
         void id(int value) override;
+        int idRange() const override;
         std::shared_ptr<IControl> control() override;
         struct ctl_state state() override;
         void notify(dlg_message&) override;
@@ -75,6 +78,9 @@ namespace dlgcpp
         void p(const Position& p) override;
         void move(const Point& point) override;
         void resize(const Size& size) override;
+        void setFocus() override;
+        void bringToFront() override;
+        void sendToBack() override;
         BorderStyle border() const override;
         void border(BorderStyle value) override;
         const std::string& text() const override;
@@ -89,7 +95,6 @@ namespace dlgcpp
         void* user() const override;
         void user(void* value) override;
         void redraw() override;
-        void setFocus() override;
 
         IEvent<ISharedControl>& ClickEvent() override;
         IEvent<ISharedControl>& DoubleClickEvent() override;        

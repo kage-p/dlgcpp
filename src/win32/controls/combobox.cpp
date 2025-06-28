@@ -132,11 +132,7 @@ void ComboBox::currentIndex(int value)
     else
         text(std::string());
 
-    if (handle() == nullptr)
-        return;
-    auto hwnd = reinterpret_cast<HWND>(handle());
-
-    SendMessage(hwnd, CB_SETCURSEL, (WPARAM)_props->currentIndex, 0);
+    updateSelection();
 }
 
 void ComboBox::readSelection()

@@ -23,9 +23,13 @@ set(headers ${headers}
     win32/controls/image_p.h
     win32/controls/label_p.h
     win32/controls/listbox_p.h
-    win32/controls/slider_p.h
-    win32/controls/textbox_p.h
+    win32/controls/listview_p.h
+    win32/controls/progress_p.h
     win32/controls/slider_imp.h
+    win32/controls/slider_p.h
+    win32/controls/tabs_p.h
+    win32/controls/textbox_p.h
+    win32/controls/toolbar_p.h
     win32/dialogs/about_p.h
     win32/dialogs/file_p.h
     win32/dialogs/folder_p.h
@@ -46,9 +50,16 @@ set(sources ${sources}
     win32/controls/image.cpp
     win32/controls/label.cpp
     win32/controls/listbox.cpp
+    win32/controls/listview.cpp
+    win32/controls/listview_col.cpp
+    win32/controls/progress.cpp
     win32/controls/slider.cpp
-    win32/controls/textbox.cpp
     win32/controls/slider_imp.cpp
+    win32/controls/tabs.cpp
+    win32/controls/tab_item.cpp
+    win32/controls/textbox.cpp
+    win32/controls/toolbar.cpp
+    win32/controls/toolbar_item.cpp
     win32/dialogs/about.cpp
     win32/dialogs/file.cpp
     win32/dialogs/folder.cpp
@@ -69,6 +80,6 @@ if (DLGCPP_DEBUG)
     target_compile_definitions(${target} PRIVATE DLGCPP_DEBUG)
 endif()
 
-if (MSVC)
-    target_link_libraries(${target} PRIVATE comctl32.lib)
+if (WIN32)
+    target_link_libraries(${target} PUBLIC comctl32.lib)
 endif()

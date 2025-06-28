@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "defs.h"
 #include "child.h"
+#include "defs.h"
 #include "event.h"
 #include "menu.h"
 
@@ -36,13 +36,17 @@ namespace dlgcpp
         virtual bool visible() const = 0;
         virtual void visible(bool value) = 0;
         virtual const Position& p() const = 0;
+        virtual void p(const Position& p) = 0;
         virtual void move(const Point& point) = 0;
         virtual void resize(const Size& size) = 0;
         virtual void center() = 0;
+        virtual void setFocus() = 0;
+        virtual void bringToFront() = 0;
+        virtual void sendToBack() = 0;
         virtual DialogType type() const = 0;
         virtual bool showHelp() const = 0;
         virtual void showHelp(bool value) = 0;
-        virtual const std::string& title() const = 0;        
+        virtual const std::string& title() const = 0;
         virtual void title(const std::string& value) = 0;
         virtual const ImageSource& image() const = 0;
         virtual void image(const ImageSource& image) = 0;
@@ -62,6 +66,7 @@ namespace dlgcpp
         virtual ISharedDialog parent() = 0;
         virtual void close(int result = 0) = 0;
         virtual void message(const std::string& message, const std::string& title = std::string()) = 0;
+        virtual void sendUserEvent(int param = 0) = 0;
         virtual void timer(int timeout) = 0;
 
         // child management
@@ -83,15 +88,16 @@ namespace dlgcpp
         virtual IEvent<ISharedDialog>& MoveEvent() = 0;
         virtual IEvent<ISharedDialog>& SizeEvent() = 0;
         virtual IEvent<ISharedDialog>& TimerEvent() = 0;
+        virtual IEvent<ISharedDialog, int>& UserEvent() = 0;
     };
 
     class Dialog : public IChildDialog,
-                   public IDialog,
-                   public std::enable_shared_from_this<Dialog>
+        public IDialog,
+        public std::enable_shared_from_this<Dialog>
     {
     public:
         explicit Dialog(DialogType type = DialogType::Application,
-                        ISharedDialog parent = nullptr);
+            ISharedDialog parent = nullptr);
         virtual ~Dialog();
         int exec();
 
@@ -100,6 +106,7 @@ namespace dlgcpp
         void parent(ISharedDialog) override;
         int id() const override;
         void id(int value) override;
+        int idRange() const override { return 1; } // no id range for dialogs, only for controls
         ISharedDialog dialog() override;
         void notify(dlg_message&) override;
         void rebuild() override;
@@ -110,9 +117,13 @@ namespace dlgcpp
         bool visible() const override;
         void visible(bool value) override;
         const Position& p() const override;
+        void p(const Position& p) override;
         void move(const Point& point) override;
         void resize(const Size& size) override;
         void center() override;
+        void setFocus() override;
+        void bringToFront() override;
+        void sendToBack() override;
         DialogType type() const override;
         bool showHelp() const override;
         void showHelp(bool value) override;
@@ -136,6 +147,7 @@ namespace dlgcpp
         ISharedDialog parent() override;
         void close(int result = 0) override;
         void message(const std::string& message, const std::string& title = std::string()) override;
+        void sendUserEvent(int param = 0) override;
         void timer(int timeout) override;
 
         // child management
@@ -157,6 +169,7 @@ namespace dlgcpp
         IEvent<ISharedDialog>& MoveEvent() override;
         IEvent<ISharedDialog>& SizeEvent() override;
         IEvent<ISharedDialog>& TimerEvent() override;
+        IEvent<ISharedDialog, int>& UserEvent() override;
 
     protected:
         void redraw(bool drawChildren = false);

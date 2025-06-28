@@ -14,7 +14,10 @@ set(headers
     controls/image_demo.h
     controls/label_demo.h
     controls/listbox_demo.h
+    controls/listview_demo.h
+    controls/progress_demo.h
     controls/slider_demo.h
+    controls/tabs_demo.h
     controls/textbox_demo.h
     dialogs/about_demo.h
     dialogs/dialog_demo.h
@@ -37,7 +40,10 @@ set(sources
     controls/image_demo.cpp
     controls/label_demo.cpp
     controls/listbox_demo.cpp
+    controls/listview_demo.cpp
+    controls/progress_demo.cpp
     controls/slider_demo.cpp
+    controls/tabs_demo.cpp
     controls/textbox_demo.cpp
     dialogs/about_demo.cpp
     dialogs/dialog_demo.cpp

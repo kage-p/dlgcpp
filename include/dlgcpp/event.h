@@ -16,4 +16,16 @@ namespace dlgcpp
         virtual void invoke(Args ... args) = 0;
         virtual void invoke() = 0;
     };
+
+    // event handler for users
+    class UserEvent : public IEvent<int>
+    {
+    public:
+        IEvent& operator+=(std::function<void(int)> fn) override;
+        IEvent& operator+=(std::function<void(void)> fn) override;
+        size_t count() override;
+        void clear() override;
+        void invoke() override;
+        void invoke(int arg) override;
+    };
 }

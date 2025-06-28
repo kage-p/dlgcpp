@@ -5,16 +5,29 @@ namespace dlgcpp
 {
     namespace controls
     {
-        class Button : public dlgcpp::Control
+        class IButton
+        {
+        public:
+            virtual HorizontalAlign horizontalAlignment() const = 0;
+            virtual void horizontalAlignment(HorizontalAlign value) = 0;
+            virtual VerticalAlign verticalAlignment() const = 0;
+            virtual void verticalAlignment(VerticalAlign value) = 0;
+        };
+
+        typedef std::shared_ptr<IButton> ISharedButton;
+
+        class Button : public dlgcpp::Control,
+                       public IButton
         {
         public:
             explicit Button(const std::string& text = std::string(), const Position& p = Position());
             ~Button() override;
 
-            HorizontalAlign horizontalAlignment() const;
-            void horizontalAlignment(HorizontalAlign value);
-            VerticalAlign verticalAlignment() const;
-            void verticalAlignment(VerticalAlign value);
+            // IButton impl.
+            HorizontalAlign horizontalAlignment() const override;
+            void horizontalAlignment(HorizontalAlign value) override;
+            VerticalAlign verticalAlignment() const override;
+            void verticalAlignment(VerticalAlign value) override;
 
         private:
             struct button_props* _props;

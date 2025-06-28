@@ -12,13 +12,12 @@
 using namespace dlgcpp;
 
 // private functions
-int nextId(dlg_priv& pi);
+int nextId(dlg_priv& pi, int reservedRange = 1);
 void updateImage(dlg_priv& pi);
 void updateTimer(dlg_priv& pi);
 void destruct(dlg_priv& pi);
 void quit(dlg_priv& pi, int result = 0);
-std::shared_ptr<IChildControl> findControl(dlg_priv& pi, int id);
-std::shared_ptr<IChildControl> findControl(dlg_priv& pi, HWND hwndChild);
+std::shared_ptr<IChildControl> findControl(dlg_priv& pi, int id, HWND hwnd = NULL);
 LRESULT onSetCursor(dlg_priv& pi, HWND hwndChild);
 LRESULT onColorDlg(dlg_priv& pi, HDC hdc);
 LRESULT onColorCtl(dlg_priv& pi, HDC hdc, HWND hwndChild);
@@ -95,10 +94,10 @@ ISharedDialog Dialog::dialog()
     return shared_from_this();
 }
 
-int nextId(dlg_priv& pi)
+int nextId(dlg_priv& pi, int reservedRange)
 {
     auto id = pi.props.nextId;
-    pi.props.nextId++;
+    pi.props.nextId += reservedRange;
     return id;
 }
 
@@ -201,6 +200,32 @@ const Position& Dialog::p() const
     return _pi->props.p;
 }
 
+void Dialog::p(const Position& p)
+{
+    _pi->props.p = p;
+
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    Position px;
+    if (_pi->props.id > 0)
+    {
+        // child dialog; use parent client
+        HWND hwndParent = (HWND)_pi->props.parent->handle();
+        px = toPixels(hwndParent, p, true);
+    }
+    else
+        px = toPixels(_pi->state.hwnd, p, false);
+
+    SetWindowPos(_pi->state.hwnd,
+                 0,
+                 px.x(),
+                 px.y(),
+                 px.width(),
+                 px.height(),
+                 SWP_NOZORDER);
+}
+
 void Dialog::move(const Point& point)
 {
     _pi->props.p.x(point.x());
@@ -262,6 +287,36 @@ void Dialog::center()
             (screenSize.height() / 2) - (_pi->props.p.height() / 2));
 
     move(p);
+}
+
+void Dialog::setFocus()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    SetFocus(_pi->state.hwnd);
+}
+
+void Dialog::bringToFront()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    SetWindowPos(_pi->state.hwnd,
+                 HWND_TOP,
+                 0,0,0,0,
+                 SWP_NOMOVE | SWP_NOSIZE);
+}
+
+void Dialog::sendToBack()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    SetWindowPos(_pi->state.hwnd,
+                 HWND_BOTTOM,
+                 0,0,0,0,
+                 SWP_NOMOVE | SWP_NOSIZE);
 }
 
 DialogType Dialog::type() const
@@ -459,6 +514,13 @@ void Dialog::message(const std::string& message, const std::string& title)
                 titleText.c_str(), flags);
 }
 
+void Dialog::sendUserEvent(int param)
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+    PostMessage(_pi->state.hwnd, WM_DLGCPP_USER, (WPARAM)param, 0);
+}
+
 void Dialog::timer(int timeout)
 {
     if ( _pi->props.timer.id == 0)
@@ -536,7 +598,7 @@ void Dialog::add(std::shared_ptr<IChildControl> child)
     _pi->props.controls.push_back(child);
 
     child->parent(shared_from_this());
-    child->id(nextId(*_pi));
+    child->id(nextId(*_pi, child->idRange()));
     child->rebuild();
 }
 
@@ -725,7 +787,7 @@ unsigned int Dialog::styles() const
     if (_pi->props.id > 0)
     {
         // a child dialog
-        styles |= WS_CHILD | DS_CONTROL;
+        styles |= WS_CHILD | WS_CLIPSIBLINGS | DS_CONTROL;
     }
     else
     {
@@ -832,7 +894,9 @@ void Dialog::notify(dlg_message& msg)
                 return;
             }
 
-            auto child = findControl(*_pi, id);
+            // locate the sender; we may need to use the HWND
+            auto child = findControl(*_pi, id, (HWND)lParam);
+
             if (child != nullptr)
             {
                 // wrap message and send to child for processing
@@ -851,17 +915,34 @@ void Dialog::notify(dlg_message& msg)
 
     case WM_NOTIFY:
     {
-        auto pNmHdr = (NMHDR*)lParam;
-        if (pNmHdr->idFrom != 0)
+        auto nmhdr = *((NMHDR*)lParam);
+
+        if (nmhdr.code == TTN_NEEDTEXT)
         {
-            auto child = findControl(*_pi, (int)pNmHdr->idFrom);
-            if (child != nullptr)
-            {
-                // wrap message and send to child for processing
-                // a result code is supported.
-                child->notify(msg);
-                return;
-            }
+            // ##### TODO: ToolTips - idFrom is a toolbar button; the hwndFrom is the tooltip
+            // either: 1) implement reserved id ranges and perform lookup within range
+            //            note: we need id ranges as conflicts will occur with multiple controls
+            //
+            //         2) implement find(HWND) from IChild to explicitly look for this HWND.
+
+
+            DLGCPP_CMSG("WM_NOTIFY: idFrom=" << nmhdr.idFrom <<
+                        " code=" << nmhdr.code <<
+                        " hwndID=" << GetDlgCtrlID(nmhdr.hwndFrom) <<
+                        " hwndFrom=" << nmhdr.hwndFrom <<
+                        " toolbarHWND = " << (HWND)_pi->props.controls.at(0)->control()->handle() <<
+                        " toolTipHWND = " << (HWND)SendMessage((HWND)_pi->props.controls.at(0)->control()->handle(), TB_GETTOOLTIPS, 0, 0));
+
+        }
+
+        // locate the sender; we may need to use the HWND
+        auto child = findControl(*_pi, nmhdr.idFrom, nmhdr.hwndFrom);
+        if (child != nullptr)
+        {
+            // wrap message and send to child for processing
+            // a result code is supported.
+            child->notify(msg);
+            return;
         }
         break;
     }
@@ -1078,12 +1159,18 @@ void Dialog::notify(dlg_message& msg)
         }
         break;
     }
+
+    case WM_DLGCPP_USER:
+    {
+        UserEvent().invoke(shared_from_this(), (int)wParam);
+        break;
+    }
     }
 }
 
 LRESULT onSetCursor(dlg_priv& pi, HWND hwndChild)
 {
-    auto child = findControl(pi, hwndChild);
+    auto child = findControl(pi, 0, hwndChild);
 
     auto cursor = Cursor::Default;
     if (child != nullptr)
@@ -1164,7 +1251,7 @@ LRESULT onColorDlg(dlg_priv& pi, HDC hdc)
 
 LRESULT onColorCtl(dlg_priv& pi, HDC hdc, HWND hwndChild)
 {
-    auto child = findControl(pi, hwndChild);
+    auto child = findControl(pi, 0, hwndChild);
     if (child == nullptr)
         return 0;
 
@@ -1221,28 +1308,36 @@ LRESULT onColorCtl(dlg_priv& pi, HDC hdc, HWND hwndChild)
     return (LRESULT)child->state().hbrBack;
 }
 
-std::shared_ptr<IChildControl> findControl(dlg_priv& pi, int id)
+std::shared_ptr<IChildControl> findControl(dlg_priv& pi, int id, HWND hwnd)
 {
-    if (id == 0)
-        return nullptr;
-
-    for (auto child : pi.props.controls)
-        if (child->id() == id)
-            return child;
-    return nullptr;
-}
-
-std::shared_ptr<IChildControl> findControl(dlg_priv& pi, HWND hwndChild)
-{
-    if (hwndChild != pi.state.hwnd &&
-        GetParent(hwndChild) != pi.state.hwnd)
+    if (id > 0)
     {
-        // some controls have a different parent
-        hwndChild = GetParent(hwndChild);
+        // by explicit identifier
+        for (auto child : pi.props.controls)
+            if (child->id() == id)
+                return child;
     }
 
-    auto id = GetDlgCtrlID(hwndChild);
-    return findControl(pi, id);
+    if (hwnd != NULL)
+    {
+        // by HWND identifier
+        id = GetDlgCtrlID(hwnd);
+        for (auto child : pi.props.controls)
+            if (child->id() == id)
+                return child;
+
+        // by HWND
+        for (auto child : pi.props.controls)
+            if ((HWND)child->control()->handle() == hwnd)
+                return child;
+
+        // by HWND (PARENT)
+        for (auto child : pi.props.controls)
+            if (GetParent((HWND)child->control()->handle()) == hwnd)
+                return child;
+    }
+
+    return nullptr;
 }
 
 IEvent<ISharedDialog, MouseEvent>& Dialog::MouseDownEvent()
@@ -1293,4 +1388,9 @@ IEvent<ISharedDialog>& Dialog::SizeEvent()
 IEvent<ISharedDialog>& Dialog::TimerEvent()
 {
     return _pi->props.timerEvent;
+}
+
+IEvent<ISharedDialog, int>& Dialog::UserEvent()
+{
+    return _pi->props.userEvent;
 }

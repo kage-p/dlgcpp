@@ -17,8 +17,15 @@ set(headers
     dlgcpp/controls/image.h
     dlgcpp/controls/label.h
     dlgcpp/controls/listbox.h
+    dlgcpp/controls/listview.h
+    dlgcpp/controls/listview_col.h
+    dlgcpp/controls/progress.h
     dlgcpp/controls/slider.h
+    dlgcpp/controls/tabs.h
+    dlgcpp/controls/tab_item.h
     dlgcpp/controls/textbox.h
+    dlgcpp/controls/toolbar.h
+    dlgcpp/controls/toolbar_item.h
     dlgcpp/dialogs/about.h
     dlgcpp/dialogs/file.h
     dlgcpp/dialogs/folder.h
