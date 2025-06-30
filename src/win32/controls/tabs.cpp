@@ -1,6 +1,6 @@
-#include "tabs_p.h"
 #include "../dlgmsg.h"
 #include "../utility.h"
+#include "tabs_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -68,7 +68,7 @@ Position Tabs::area() const
     // map to parent dialog
     MapWindowPoints(hwnd, GetParent(hwnd), (LPPOINT)&rc, 2);
 
-    auto pos = Position(rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top);
+    auto pos = Position(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
     return toUnits(GetParent(hwnd), pos);
 }
 
@@ -98,13 +98,13 @@ void Tabs::updateItems()
     int index = 0;
     for (const auto& item : _props->items)
     {
-        auto tci = TCITEM();
+        auto tci = TCITEMW();
 
         auto text = toWide(item->text());
         if (!text.empty())
         {
             tci.mask = TCIF_TEXT;
-            tci.pszText = &text[0];
+            tci.pszText = (LPWSTR)text.c_str();
         }
 
         if (!item->image().id.empty())
@@ -131,7 +131,7 @@ void Tabs::updateItems()
             tci.dwState |= TCIS_HIGHLIGHTED;
         }
 
-        if ((int)SendMessageW(hwnd, TCM_INSERTITEMW, (WPARAM)index, (LPARAM)(const TC_ITEM *)(&tci)) < 0)
+        if ((int)SendMessageW(hwnd, TCM_INSERTITEMW, (WPARAM)index, (LPARAM)(const TC_ITEM*)(&tci)) < 0)
             break;
         index++;
     }

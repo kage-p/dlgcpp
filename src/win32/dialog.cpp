@@ -1,6 +1,6 @@
+#include "control_p.h"
 #include "dialog_p.h"
 #include "dlgmsg.h"
-#include "control_p.h"
 #include "utility.h"
 
 #define WIN32_LEAN_AND_MEAN
@@ -169,7 +169,9 @@ void Dialog::enabled(bool value)
     if (_pi->state.hwnd == NULL)
         return;
 
-    EnableWindow(_pi->state.hwnd, _pi->props.enabled);
+    EnableWindow(
+        _pi->state.hwnd,
+        _pi->props.enabled);
 }
 
 bool Dialog::visible() const
@@ -191,8 +193,9 @@ void Dialog::visible(bool value)
         if (_pi->state.hwnd == NULL)
             return;
     }
-    ShowWindow(_pi->state.hwnd,
-               _pi->props.visible ? SW_SHOW : SW_HIDE);
+    ShowWindow(
+        _pi->state.hwnd,
+        _pi->props.visible ? SW_SHOW : SW_HIDE);
 }
 
 const Position& Dialog::p() const
@@ -215,15 +218,17 @@ void Dialog::p(const Position& p)
         px = toPixels(hwndParent, p, true);
     }
     else
+    {
         px = toPixels(_pi->state.hwnd, p, false);
+    }
 
     SetWindowPos(_pi->state.hwnd,
-                 0,
-                 px.x(),
-                 px.y(),
-                 px.width(),
-                 px.height(),
-                 SWP_NOZORDER);
+        0,
+        px.x(),
+        px.y(),
+        px.width(),
+        px.height(),
+        SWP_NOZORDER);
 }
 
 void Dialog::move(const Point& point)
@@ -234,7 +239,7 @@ void Dialog::move(const Point& point)
     if (_pi->state.hwnd == NULL)
         return;
 
-    auto pxPos = point;
+    Point pxPos = point;
     if (_pi->props.id > 0)
     {
         // child dialog; use parent client
@@ -242,15 +247,18 @@ void Dialog::move(const Point& point)
         toPixels(hwndParent, pxPos, true);
     }
     else
+    {
         toPixels(_pi->state.hwnd, pxPos, false);
+    }
 
-    SetWindowPos(_pi->state.hwnd,
-                 0,
-                 pxPos.x(),
-                 pxPos.y(),
-                 0,
-                 0,
-                 SWP_NOZORDER | SWP_NOSIZE);
+    SetWindowPos(
+        _pi->state.hwnd,
+        0,
+        pxPos.x(),
+        pxPos.y(),
+        0,
+        0,
+        SWP_NOZORDER | SWP_NOSIZE);
 }
 
 void Dialog::resize(const Size& size)
@@ -261,16 +269,16 @@ void Dialog::resize(const Size& size)
     if (_pi->state.hwnd == NULL)
         return;
 
-    auto pxSize = size;
+    Size pxSize = size;
     toPixels(_pi->state.hwnd, pxSize, false);
 
     SetWindowPos(_pi->state.hwnd,
-                 0,
-                 0,
-                 0,
-                 pxSize.width(),
-                 pxSize.height(),
-                 SWP_NOZORDER | SWP_NOMOVE);
+        0,
+        0,
+        0,
+        pxSize.width(),
+        pxSize.height(),
+        SWP_NOZORDER | SWP_NOMOVE);
 }
 
 void Dialog::center()
@@ -280,11 +288,11 @@ void Dialog::center()
         return;
 
     // use dialog-independent mapping to units
-    auto screenSize = Size(GetSystemMetrics(SM_CXSCREEN),GetSystemMetrics(SM_CYSCREEN));
+    auto screenSize = Size(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
     toUnits(HWND_DESKTOP, screenSize);
 
     Point p((screenSize.width() / 2) - (_pi->props.p.width() / 2),
-            (screenSize.height() / 2) - (_pi->props.p.height() / 2));
+        (screenSize.height() / 2) - (_pi->props.p.height() / 2));
 
     move(p);
 }
@@ -303,9 +311,9 @@ void Dialog::bringToFront()
         return;
 
     SetWindowPos(_pi->state.hwnd,
-                 HWND_TOP,
-                 0,0,0,0,
-                 SWP_NOMOVE | SWP_NOSIZE);
+        HWND_TOP,
+        0, 0, 0, 0,
+        SWP_NOMOVE | SWP_NOSIZE);
 }
 
 void Dialog::sendToBack()
@@ -314,9 +322,9 @@ void Dialog::sendToBack()
         return;
 
     SetWindowPos(_pi->state.hwnd,
-                 HWND_BOTTOM,
-                 0,0,0,0,
-                 SWP_NOMOVE | SWP_NOSIZE);
+        HWND_BOTTOM,
+        0, 0, 0, 0,
+        SWP_NOMOVE | SWP_NOSIZE);
 }
 
 DialogType Dialog::type() const
@@ -354,7 +362,7 @@ void Dialog::title(const std::string& value)
         return;
 
     SetWindowTextW(_pi->state.hwnd,
-                   toWide(_pi->props.title).c_str());
+        toWide(_pi->props.title).c_str());
 }
 
 const ImageSource& Dialog::image() const
@@ -393,11 +401,11 @@ void updateImage(dlg_priv& pi)
     auto hInstRes = GetModuleHandle(NULL);
     auto imageType = (pi.props.image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
     pi.state.hImage = LoadImageW(hInstRes,
-                                 toWide(pi.props.image.id).c_str(),
-                                 imageType,
-                                 0,
-                                 0,
-                                 LR_DEFAULTSIZE | (pi.props.image.isFile ? LR_LOADFROMFILE : 0));
+        toWide(pi.props.image.id).c_str(),
+        imageType,
+        0,
+        0,
+        LR_DEFAULTSIZE | (pi.props.image.isFile ? LR_LOADFROMFILE : 0));
     if (pi.state.hImage == NULL)
         return;
 
@@ -510,8 +518,8 @@ void Dialog::message(const std::string& message, const std::string& title)
     std::wstring messageText = toWide(message);
 
     MessageBoxW(_pi->state.hwnd,
-                messageText.c_str(),
-                titleText.c_str(), flags);
+        messageText.c_str(),
+        titleText.c_str(), flags);
 }
 
 void Dialog::sendUserEvent(int param)
@@ -523,7 +531,7 @@ void Dialog::sendUserEvent(int param)
 
 void Dialog::timer(int timeout)
 {
-    if ( _pi->props.timer.id == 0)
+    if (_pi->props.timer.id == 0)
         _pi->props.timer.id = nextId(*_pi);
 
     // if timeout is negative the timer is removed.
@@ -575,9 +583,9 @@ void updateTimer(dlg_priv& pi)
     if (pi.props.timer.timeout > 0)
     {
         SetTimer(pi.state.hwnd,
-                 pi.props.timer.id,
-                 pi.props.timer.timeout,
-                 NULL);
+            pi.props.timer.id,
+            pi.props.timer.timeout,
+            NULL);
     }
     else
     {
@@ -616,7 +624,7 @@ void Dialog::remove(std::shared_ptr<IChildControl> child)
 std::vector<std::shared_ptr<IControl>> Dialog::controls() const
 {
     auto r = std::vector<std::shared_ptr<IControl>>();
-    for (auto child : _pi->props.controls)
+    for (auto& child : _pi->props.controls)
         r.push_back(child->control());
     return r;
 }
@@ -651,8 +659,10 @@ void Dialog::remove(std::shared_ptr<IChildDialog> child)
 std::vector<ISharedDialog> Dialog::dialogs() const
 {
     auto r = std::vector<ISharedDialog>();
-    for (auto child : _pi->props.dialogs)
+    for (auto& child : _pi->props.dialogs)
+    {
         r.push_back(child->dialog());
+    }
     return r;
 }
 
@@ -662,9 +672,9 @@ void Dialog::redraw(bool drawChildren)
         return;
 
     RedrawWindow(_pi->state.hwnd,
-                 NULL,
-                 0,
-                 RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW | (drawChildren ? RDW_ALLCHILDREN : 0) );
+        NULL,
+        0,
+        RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW | (drawChildren ? RDW_ALLCHILDREN : 0));
 }
 
 void Dialog::rebuild()
@@ -685,7 +695,7 @@ void Dialog::rebuild()
     size_t cbFont = fontFace.size();
 
     // Params ok. Create heap for dialog...
-    size_t bufSize = sizeof(DLGTEMPLATE) + 4 + ((cbCaption+1) * 2) + ((cbFont+1) * 2) + 2;
+    size_t bufSize = sizeof(DLGTEMPLATE) + 4 + ((cbCaption + 1) * 2) + ((cbFont + 1) * 2) + 2;
     std::vector<char> buf(bufSize);
     DLGTEMPLATE& dlg = *(DLGTEMPLATE*)&buf[0];
 
@@ -729,9 +739,9 @@ void Dialog::rebuild()
 
     // Create the dialog, passing private data struct
     auto hwnd = CreateDialogIndirectParam(GetModuleHandle(NULL),
-                                          &dlg,
-                                          hwndParent,
-                                          dialogWndProc, 0);
+        &dlg,
+        hwndParent,
+        dialogWndProc, 0);
 
     if (hwnd == NULL)
         return;
@@ -853,7 +863,7 @@ LRESULT CALLBACK dialogWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
     if (pthis != nullptr)
     {
         // wrap and transfer the message directly to the class.
-        auto msg = dlg_message{wMsg, wParam, lParam};
+        auto msg = dlg_message{ wMsg, wParam, lParam };
         pthis->notify(msg);
         return msg.result;
     }
@@ -927,11 +937,11 @@ void Dialog::notify(dlg_message& msg)
 
 
             DLGCPP_CMSG("WM_NOTIFY: idFrom=" << nmhdr.idFrom <<
-                        " code=" << nmhdr.code <<
-                        " hwndID=" << GetDlgCtrlID(nmhdr.hwndFrom) <<
-                        " hwndFrom=" << nmhdr.hwndFrom <<
-                        " toolbarHWND = " << (HWND)_pi->props.controls.at(0)->control()->handle() <<
-                        " toolTipHWND = " << (HWND)SendMessage((HWND)_pi->props.controls.at(0)->control()->handle(), TB_GETTOOLTIPS, 0, 0));
+                " code=" << nmhdr.code <<
+                " hwndID=" << GetDlgCtrlID(nmhdr.hwndFrom) <<
+                " hwndFrom=" << nmhdr.hwndFrom <<
+                " toolbarHWND = " << (HWND)_pi->props.controls.at(0)->control()->handle() <<
+                " toolTipHWND = " << (HWND)SendMessage((HWND)_pi->props.controls.at(0)->control()->handle(), TB_GETTOOLTIPS, 0, 0));
 
         }
 
@@ -1074,9 +1084,9 @@ void Dialog::notify(dlg_message& msg)
         toUnits(_pi->state.hwnd, posDu);
 
         DLGCPP_CMSG("WM_MOVE: " <<
-                    "x = "  << posDu.x() << " (" << posPx.x() << ") " <<
-                    "y = " << posDu.y() << " (" << posPx.y() << ") " <<
-                    "title = " + _pi->props.title);
+            "x = " << posDu.x() << " (" << posPx.x() << ") " <<
+            "y = " << posDu.y() << " (" << posPx.y() << ") " <<
+            "title = " + _pi->props.title);
 
         _pi->props.p.x(posDu.x());
         _pi->props.p.y(posDu.y());
@@ -1087,14 +1097,14 @@ void Dialog::notify(dlg_message& msg)
     case WM_SIZE:
     {
         // translate using mapped value and store
-        Size sizePx({(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)});
+        Size sizePx({ (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam) });
         Size sizeDu(sizePx);
         toUnits(_pi->state.hwnd, sizeDu);
 
         DLGCPP_CMSG("WM_SIZE: " <<
-                    "width = "  << sizeDu.width() << " (" << sizePx.width() << ") " <<
-                    "height = " << sizeDu.height() << " (" << sizePx.height() << ") " <<
-                    "title = " + _pi->props.title);
+            "width = " << sizeDu.width() << " (" << sizePx.width() << ") " <<
+            "height = " << sizeDu.height() << " (" << sizePx.height() << ") " <<
+            "title = " + _pi->props.title);
 
         _pi->props.p.width(sizeDu.width());
         _pi->props.p.height(sizeDu.height());
@@ -1313,28 +1323,36 @@ std::shared_ptr<IChildControl> findControl(dlg_priv& pi, int id, HWND hwnd)
     if (id > 0)
     {
         // by explicit identifier
-        for (auto child : pi.props.controls)
+        for (auto& child : pi.props.controls)
+        {
             if (child->id() == id)
                 return child;
+        }
     }
 
     if (hwnd != NULL)
     {
         // by HWND identifier
         id = GetDlgCtrlID(hwnd);
-        for (auto child : pi.props.controls)
+        for (auto& child : pi.props.controls)
+        {
             if (child->id() == id)
                 return child;
+        }
 
         // by HWND
-        for (auto child : pi.props.controls)
+        for (auto& child : pi.props.controls)
+        {
             if ((HWND)child->control()->handle() == hwnd)
                 return child;
+        }
 
         // by HWND (PARENT)
-        for (auto child : pi.props.controls)
+        for (auto& child : pi.props.controls)
+        {
             if (GetParent((HWND)child->control()->handle()) == hwnd)
                 return child;
+        }
     }
 
     return nullptr;

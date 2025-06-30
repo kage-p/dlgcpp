@@ -2,7 +2,10 @@ cmake_minimum_required(VERSION 3.27)
 
 set(target dlgcpp)
 
-set(headers
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(src_files
     dlgcpp/dlgcpp.h
     dlgcpp/child.h
     dlgcpp/control.h
@@ -34,6 +37,6 @@ set(headers
     dlgcpp/dialogs/splash.h
 )
 
-add_library(${target} INTERFACE ${headers})
+add_library(${target} INTERFACE ${src_files})
 
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "../control.h"
 #include "tab_item.h"
+#include <vector>
 
 namespace dlgcpp
 {

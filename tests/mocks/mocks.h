@@ -15,9 +15,13 @@ namespace dlgcpp
             MOCK_METHOD(bool, visible, (), (const, override));
             MOCK_METHOD(void, visible, (bool value), (override));
             MOCK_METHOD(const Position&, p, (), (const, override));
+            MOCK_METHOD(void, p, (const Position&), (override));
             MOCK_METHOD(void, move, (const Point& point), (override));
             MOCK_METHOD(void, resize, (const Size& size), (override));
             MOCK_METHOD(void, center, (), (override));
+            MOCK_METHOD(void, setFocus, (), (override));
+            MOCK_METHOD(void, bringToFront, (), (override));
+            MOCK_METHOD(void, sendToBack, (), (override));
             MOCK_METHOD(DialogType, type, (), (const, override));
             MOCK_METHOD(bool, showHelp, (), (const, override));
             MOCK_METHOD(void, showHelp, (bool value), (override));
@@ -42,6 +46,7 @@ namespace dlgcpp
             MOCK_METHOD(void, close, (int result), (override));
             MOCK_METHOD(void, message, (const std::string& message, const std::string& title), (override));
             MOCK_METHOD(void, timer, (int timeout), (override));
+            MOCK_METHOD(void, sendUserEvent, (int param), (override));
 
             // child management
             MOCK_METHOD(void, add, (std::shared_ptr<IChildControl> child), (override));
@@ -62,6 +67,7 @@ namespace dlgcpp
             MOCK_METHOD((IEvent<ISharedDialog>&), MoveEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog>&), SizeEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog>&), TimerEvent, (), (override));
+            MOCK_METHOD((IEvent<ISharedDialog, int>&), UserEvent, (), (override));
         };
 
         class MockControl : public IControl
@@ -137,6 +143,7 @@ namespace dlgcpp
             MOCK_METHOD(void, parent, (ISharedDialog), (override));
             MOCK_METHOD(int, id, (), (const, override));
             MOCK_METHOD(void, id, (int value), (override));
+            MOCK_METHOD(int, idRange, (), (const, override));
             MOCK_METHOD(void, notify, (dlg_message&), (override));
             MOCK_METHOD(void, rebuild, (), (override));
 
@@ -150,6 +157,7 @@ namespace dlgcpp
             MOCK_METHOD(void, parent, (ISharedDialog), (override));
             MOCK_METHOD(int, id, (), (const, override));
             MOCK_METHOD(void, id, (int value), (override));
+            MOCK_METHOD(int, idRange, (), (const, override));
             MOCK_METHOD(void, notify, (dlg_message&), (override));
             MOCK_METHOD(void, rebuild, (), (override));
 
@@ -159,8 +167,8 @@ namespace dlgcpp
         template <class... Args>
         class MockEvent : public IEvent<Args...> {
         public:
-           // MOCK_METHOD((IEvent<Args...>&), (operator+=), (std::function<void(Args... args)> fn), (override));
-           // MOCK_METHOD((IEvent<Args...>&), operator+=, (std::function<void()> fn), (override));
+            // MOCK_METHOD((IEvent<Args...>&), (operator+=), (std::function<void(Args... args)> fn), (override));
+            // MOCK_METHOD((IEvent<Args...>&), operator+=, (std::function<void()> fn), (override));
             MOCK_METHOD(size_t, count, (), (override));
             MOCK_METHOD(void, clear, (), (override));
             MOCK_METHOD(void, invoke, (Args... args), (override));

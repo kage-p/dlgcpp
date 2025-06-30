@@ -46,7 +46,7 @@ void getFontDimensions(HFONT hFont, Size& fontDimensions)
 
     if (usingDefaultFont)
     {
-        NONCLIENTMETRICS ncm;
+        auto ncm = NONCLIENTMETRICS();
         ncm.cbSize = sizeof(NONCLIENTMETRICS);
         SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &ncm, 0);
         hFont = CreateFontIndirect(&ncm.lfMessageFont);
@@ -57,17 +57,17 @@ void getFontDimensions(HFONT hFont, Size& fontDimensions)
     SIZE sz;
     TEXTMETRICW tm;
     static const WCHAR alphabet[] =
-        {
-            'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q',
-            'r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H',
-            'I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',0
-        };
+    {
+        'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q',
+        'r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H',
+        'I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',0
+    };
 
     if (GetTextMetricsW(hdc, &tm) &&
         GetTextExtentPointW(hdc, alphabet, 52, &sz))
     {
         fontDimensions = Size((sz.cx / 26 + 1) / 2,
-                              tm.tmHeight);
+            tm.tmHeight);
     }
 
     SelectObject(hdc, hOldFont);
@@ -83,10 +83,10 @@ Position dlgcpp::toPixels(HWND hwnd, const Position& p, bool client)
     if (hwnd != NULL)
     {
         SetRect(&rc,
-                p.x(),
-                p.y(),
-                p.x() + p.width(),
-                p.y() + p.height());
+            p.x(),
+            p.y(),
+            p.x() + p.width(),
+            p.y() + p.height());
 
         if (MapDialogRect(hwnd, &rc) == FALSE)
         {
@@ -119,7 +119,7 @@ Position dlgcpp::toPixels(HWND hwnd, const Position& p, bool client)
         rc.bottom = rc.top + MulDiv(p.height(), fontDimensions.height(), 8);
     }
 
-    return Position{rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top};
+    return Position{ rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top };
 }
 
 void dlgcpp::toPixels(HWND hwnd, Point& point, bool client)
@@ -149,11 +149,11 @@ Position dlgcpp::toUnits(HWND hwnd, const Position& p)
         }
 
         // translate using mapped value
-        int x  = MulDiv(p.x(), multiplier, rc.right);
-        int y  = MulDiv(p.y(), multiplier, rc.bottom);
+        int x = MulDiv(p.x(), multiplier, rc.right);
+        int y = MulDiv(p.y(), multiplier, rc.bottom);
         int cx = MulDiv(p.width(), multiplier, rc.right);
         int cy = MulDiv(p.height(), multiplier, rc.bottom);
-        return Position(x,y,cx,cy);
+        return Position(x, y, cx, cy);
     }
     else
     {
@@ -164,7 +164,7 @@ Position dlgcpp::toUnits(HWND hwnd, const Position& p)
         int y = MulDiv(p.y(), 8, fontDimensions.height());
         int cx = MulDiv(p.width(), 4, fontDimensions.width());
         int cy = MulDiv(p.height(), 8, fontDimensions.height());
-        return Position(x,y,cx,cy);
+        return Position(x, y, cx, cy);
     }
 }
 
@@ -194,7 +194,7 @@ HFONT dlgcpp::makeFont(const Font& font)
 }
 
 HANDLE dlgcpp::loadImage(const ImageSource& image,
-                         Size& sizePx)
+    Size& sizePx)
 {
     if (image.id.empty())
         return NULL;
@@ -211,11 +211,11 @@ HANDLE dlgcpp::loadImage(const ImageSource& image,
     auto hInstRes = GetModuleHandle(NULL);
 
     HANDLE hImage = LoadImageW(hInstRes,
-                               toWide(image.id).c_str(),
-                               imageType,
-                               sizePx.width(),
-                               sizePx.height(),
-                               loadFlags);
+        toWide(image.id).c_str(),
+        imageType,
+        sizePx.width(),
+        sizePx.height(),
+        loadFlags);
 
     sizePx = Size();
     if (hImage == NULL)
@@ -223,7 +223,7 @@ HANDLE dlgcpp::loadImage(const ImageSource& image,
 
     if (!image.isIcon)
     {
-        BITMAP bitmap;
+        auto bitmap = BITMAP();
         if (GetObject(hImage, sizeof(BITMAP), &bitmap) == FALSE)
         {
             DeleteObject(hImage);
@@ -243,7 +243,7 @@ HANDLE dlgcpp::loadImage(const ImageSource& image,
             return NULL;
         }
 
-        BITMAP bitmap;
+        auto bitmap = BITMAP();
         if (GetObject(iconInfo.hbmColor, sizeof(BITMAP), &bitmap))
         {
             sizePx = Size(bitmap.bmWidth, bitmap.bmHeight);
