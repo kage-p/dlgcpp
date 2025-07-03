@@ -1,12 +1,12 @@
-#include "label_p.h"
-#include "../utility.h"
 #include "../dlgmsg.h"
+#include "../utility.h"
+#include "label_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Label::Label(const std::string& text,
-             const Position& p) :
+    const Position& p) :
     Control(text, p),
     _props(new lbl_props())
 {
@@ -84,6 +84,7 @@ void Label::notify(dlg_message& msg)
             DoubleClickEvent().invoke(shared_from_this());
         }
     }
+    Control::notify(msg);
 }
 
 void Label::text(const std::string& value)

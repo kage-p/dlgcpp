@@ -1,12 +1,12 @@
-#include "textbox_p.h"
 #include "../dlgmsg.h"
 #include "../utility.h"
+#include "textbox_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 TextBox::TextBox(const std::string& text,
-                 const Position& p) :
+    const Position& p) :
     Control(text, p),
     _props(new textbox_props())
 {
@@ -89,6 +89,7 @@ void TextBox::notify(dlg_message& msg)
             FocusEvent().invoke(shared_from_this(), false);
         }
     }
+    Control::notify(msg);
 }
 
 void TextBox::readInput()

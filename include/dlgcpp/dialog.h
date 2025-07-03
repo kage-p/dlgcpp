@@ -78,6 +78,8 @@ namespace dlgcpp
         virtual std::vector<ISharedDialog> dialogs() const = 0;
 
         // events
+        virtual IEvent<ISharedDialog, KeyboardEvent>& KeyDownEvent() = 0;
+        virtual IEvent<ISharedDialog, KeyboardEvent>& KeyUpEvent() = 0;
         virtual IEvent<ISharedDialog, MouseEvent>& MouseDownEvent() = 0;
         virtual IEvent<ISharedDialog, MouseEvent>& MouseUpEvent() = 0;
         virtual IEvent<ISharedDialog, MouseEvent>& MouseMoveEvent() = 0;
@@ -160,6 +162,8 @@ namespace dlgcpp
 
         // events
         IEvent<ISharedDialog, std::vector<std::string>>& DropEvent() override;
+        IEvent<ISharedDialog, KeyboardEvent>& KeyDownEvent() override;
+        IEvent<ISharedDialog, KeyboardEvent>& KeyUpEvent() override;
         IEvent<ISharedDialog, MouseEvent>& MouseDownEvent() override;
         IEvent<ISharedDialog, MouseEvent>& MouseUpEvent() override;
         IEvent<ISharedDialog, MouseEvent>& MouseMoveEvent() override;

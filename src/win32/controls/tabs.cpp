@@ -39,12 +39,14 @@ void Tabs::notify(dlg_message& msg)
 {
     if (msg.wMsg == WM_NOTIFY)
     {
-        auto nmhdr = *((NMHDR*)msg.lParam);
+        auto& nmhdr = *((NMHDR*)msg.lParam);
         if (nmhdr.code == TCN_SELCHANGE)
         {
             readSelection();
         }
     }
+
+    Control::notify(msg);
 }
 
 void Tabs::rebuild()

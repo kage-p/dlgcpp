@@ -1,5 +1,5 @@
-#include "checkbox_p.h"
 #include "../dlgmsg.h"
+#include "checkbox_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -86,6 +86,8 @@ void CheckBox::notify(dlg_message& msg)
             FocusEvent().invoke(shared_from_this(), false);
         }
     }
+
+    Control::notify(msg);
 }
 
 bool CheckBox::checked() const

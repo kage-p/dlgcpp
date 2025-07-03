@@ -1,5 +1,5 @@
-#include "property_p.h"
 #include "../utility.h"
+#include "property_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -51,7 +51,7 @@ bool PropertyDialog::show()
 {
     _state->propertyDialog = std::make_shared<Dialog>(DialogType::Application, _props->parent);
     _state->propertyDialog->title(_props->title);
-    _state->propertyDialog->resize({400,275});
+    _state->propertyDialog->resize({ 400,275 });
 
     _state->sectionListBox = std::make_shared<ListBox>();
     _state->propertyDialog->add(_state->sectionListBox);
@@ -60,19 +60,19 @@ bool PropertyDialog::show()
     _state->propertyDialog->add(_state->propertySheet);
 
     _state->propertyDialog->SizeEvent() += [this](ISharedDialog dlg)
-    {
-        auto width = dlg->p().width();
-        auto height = dlg->p().height();
+        {
+            auto width = dlg->p().width();
+            auto height = dlg->p().height();
 
-        // TODO: complete property dialog
-        Position pos;
+            // ##### PROPDLG1: complete property dialog
+            Position pos;
 
-        pos = Position{10,10, _props->sectionWidth, (height-20)};
-        _state->sectionListBox->p(pos);
+            pos = Position{ 10,10, _props->sectionWidth, (height - 20) };
+            _state->sectionListBox->p(pos);
 
-        pos = Position{pos.x() + pos.width() + 10, 10, (width / 3) * 2, (height-20)};
-        //_state->propertySheet->p(pos);
-    };
+            pos = Position{ pos.x() + pos.width() + 10, 10, (width / 3) * 2, (height - 20) };
+            //_state->propertySheet->p(pos);
+        };
 
     _state->propertyDialog->center();
     int r = _state->propertyDialog->exec();

@@ -36,6 +36,9 @@ namespace dlgcpp
         virtual bool separator() const = 0;
         virtual void seperator(bool value) = 0;
         virtual const std::vector<ISharedMenuItem>& items() const = 0;
+
+        // events
+        virtual IEvent<ISharedMenuItem>& ChangedEvent() = 0;
         virtual IEvent<ISharedMenuItem>& ClickEvent() = 0;
     };
 
@@ -43,9 +46,12 @@ namespace dlgcpp
     {
     public:
         virtual void popup(ISharedDialog parent, const Point& coords) = 0;
+        virtual void popup(ISharedControl parent, const Point& coords) = 0;
     };
 
-    class MenuItem : public IMenuItem
+    class MenuItem :
+        public IMenuItem,
+        public std::enable_shared_from_this<MenuItem>
     {
     public:
         explicit MenuItem(const std::string& text = std::string());
@@ -68,13 +74,15 @@ namespace dlgcpp
         const std::vector<ISharedMenuItem>& items() const override;
 
         // events
+        IEvent<ISharedMenuItem>& ChangedEvent() override;
         IEvent<ISharedMenuItem>& ClickEvent() override;
 
     private:
         struct menui_props* _props;
     };
 
-    class Menu : public IChildMenu,
+    class Menu :
+        public IChildMenu,
         public IMenu,
         public std::enable_shared_from_this<Menu>
 
@@ -98,12 +106,14 @@ namespace dlgcpp
         void remove(ISharedMenuItem item) override;
         void clear() override;
         const std::vector<ISharedMenuItem>& items() const override;
+        void popup(ISharedControl parent, const Point& coords) override;
         void popup(ISharedDialog parent, const Point& coords) override;
 
     private:
         struct menu_props* _props;
         struct menu_state* _state;
 
+        void updateItem(ISharedMenuItem item);
         void destruct();
     };
 }

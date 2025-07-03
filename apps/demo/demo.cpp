@@ -35,9 +35,9 @@ int main()
 {
     auto mainDlg = std::make_shared<Dialog>();
     mainDlg->title("DLGCPP Demo Application");
-    mainDlg->image(ImageSource{"#100", true, false});
+    mainDlg->image(ImageSource{ "#100", true, false });
     mainDlg->color(Color::White);
-    mainDlg->resize({500,300});
+    mainDlg->resize({ 500,300 });
     mainDlg->center();
 
     auto label = std::make_shared<Label>("Select a demo from the menu", Position(0, 0, mainDlg->p().width(), mainDlg->p().height()));
@@ -46,10 +46,10 @@ int main()
     label->verticalAlignment(VerticalAlign::Center);
     mainDlg->add(label);
     mainDlg->SizeEvent() += [label](ISharedDialog dlg)
-    {
-        label->p(Position(0, 0, dlg->p().width(), dlg->p().height()));
-        label->redraw();
-    };
+        {
+            label->p(Position(0, 0, dlg->p().width(), dlg->p().height()));
+            label->redraw();
+        };
 
     auto menu = std::make_shared<Menu>();
     std::shared_ptr<IMenuItem> item;

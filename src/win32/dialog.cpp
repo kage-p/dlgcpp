@@ -1,6 +1,8 @@
 #include "control_p.h"
 #include "dialog_p.h"
 #include "dlgmsg.h"
+#include "keys_p.h"
+#include "message_p.h"
 #include "utility.h"
 
 #define WIN32_LEAN_AND_MEAN
@@ -126,25 +128,13 @@ int Dialog::exec()
         _pi->props.parent->enabled(false);
     }
 
-    auto msg = MSG();
-    HACCEL hAccel = NULL;
-
     _pi->props.execRunning = true;
-    while (GetMessage(&msg, NULL, 0, 0))
-    {
-        // dialog handle may change
-        if (hAccel == NULL || !TranslateAccelerator(_pi->state.hwnd, hAccel, &msg))
-        {
-            if (!IsDialogMessage(_pi->state.hwnd, &msg))
-            {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-        }
-    }
+
+    int result = MessageProcessor::beginLoop(_pi->state.hwnd);
+
     _pi->props.execRunning = false;
 
-    return (int)msg.wParam;
+    return result;
 }
 
 void quit(dlg_priv& pi, int result)
@@ -925,7 +915,7 @@ void Dialog::notify(dlg_message& msg)
 
     case WM_NOTIFY:
     {
-        auto nmhdr = *((NMHDR*)lParam);
+        auto& nmhdr = *((NMHDR*)lParam);
 
         if (nmhdr.code == TTN_NEEDTEXT)
         {
@@ -992,6 +982,21 @@ void Dialog::notify(dlg_message& msg)
                 return;
             }
         }
+        break;
+    }
+
+    case WM_KEYDOWN:
+    {
+        KeyboardEvent event;
+        event.key = TranslateKey(static_cast<UINT>(msg.wParam));
+        KeyDownEvent().invoke(shared_from_this(), event);
+        break;
+    }
+    case WM_KEYUP:
+    {
+        KeyboardEvent event;
+        event.key = TranslateKey(static_cast<UINT>(msg.wParam));
+        KeyUpEvent().invoke(shared_from_this(), event);
         break;
     }
 
@@ -1356,6 +1361,16 @@ std::shared_ptr<IChildControl> findControl(dlg_priv& pi, int id, HWND hwnd)
     }
 
     return nullptr;
+}
+
+IEvent<ISharedDialog, KeyboardEvent>& Dialog::KeyDownEvent()
+{
+    return _pi->props.keyDownEvent;
+}
+
+IEvent<ISharedDialog, KeyboardEvent>& Dialog::KeyUpEvent()
+{
+    return _pi->props.keyUpEvent;
 }
 
 IEvent<ISharedDialog, MouseEvent>& Dialog::MouseDownEvent()

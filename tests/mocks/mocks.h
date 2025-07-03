@@ -57,6 +57,8 @@ namespace dlgcpp
             MOCK_METHOD(std::vector<ISharedDialog>, dialogs, (), (const, override));
 
             // events
+            MOCK_METHOD((IEvent<ISharedDialog, KeyboardEvent>&), KeyDownEvent, (), (override));
+            MOCK_METHOD((IEvent<ISharedDialog, KeyboardEvent>&), KeyUpEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog, MouseEvent>&), MouseDownEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog, MouseEvent>&), MouseUpEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog, MouseEvent>&), MouseMoveEvent, (), (override));
@@ -118,6 +120,7 @@ namespace dlgcpp
             MOCK_METHOD(void, clear, (), (override));
             MOCK_METHOD(const std::vector<ISharedMenuItem>&, items, (), (const, override));
 
+            MOCK_METHOD(void, popup, (ISharedControl, const Point&), (override));
             MOCK_METHOD(void, popup, (ISharedDialog, const Point&), (override));
         };
 

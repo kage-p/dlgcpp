@@ -1,6 +1,6 @@
-#include "listbox_p.h"
 #include "../dlgmsg.h"
 #include "../utility.h"
+#include "listbox_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -58,6 +58,7 @@ void ListBox::notify(dlg_message& msg)
             FocusEvent().invoke(shared_from_this(), false);
         }
     }
+    Control::notify(msg);
 }
 
 void ListBox::rebuild()
@@ -134,13 +135,13 @@ void ListBox::currentIndexes(const std::vector<int>& indexes)
         // skip invalid
         if (_props->items.empty() ||
             index < 0 ||
-            index > (int)_props->items.size())
+            index >(int)_props->items.size())
             continue;
 
         // skip duplicates
         if (std::find(_props->currentIndexes.begin(),
-                      _props->currentIndexes.end(),
-                      index) != _props->currentIndexes.end())
+            _props->currentIndexes.end(),
+            index) != _props->currentIndexes.end())
             continue;
 
         _props->currentIndexes.push_back(index);
@@ -162,9 +163,9 @@ void ListBox::readSelection()
         _props->currentIndexes.clear();
         _props->currentIndexes.resize(_props->items.size());
         auto count = (int)SendMessage(hwnd,
-                                       LB_GETSELITEMS,
-                                       (WPARAM)_props->currentIndexes.size(),
-                                       (LPARAM)&_props->currentIndexes[0]);
+            LB_GETSELITEMS,
+            (WPARAM)_props->currentIndexes.size(),
+            (LPARAM)&_props->currentIndexes[0]);
         if (count < 1)
             _props->currentIndexes.clear();
         else
@@ -193,8 +194,8 @@ void ListBox::updateSelection()
         for (int index = 0; index < (int)_props->items.size(); index++)
         {
             bool selected = std::find(_props->currentIndexes.begin(),
-                                      _props->currentIndexes.end(),
-                                      index) != _props->currentIndexes.end();
+                _props->currentIndexes.end(),
+                index) != _props->currentIndexes.end();
             SendMessage(hwnd, LB_SETSEL, selected, index);
         }
     }

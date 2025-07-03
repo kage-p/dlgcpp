@@ -1,15 +1,20 @@
 #include "control_p.h"
-#include "utility.h"
 #include "dlgcpp/dialog.h"
+#include "dlgmsg.h"
+#include "keys_p.h"
+#include "utility.h"
+#include <map>
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h>
+#include <CommCtrl.h>
 
 using namespace dlgcpp;
 
 // private functions
 void destruct(ctl_priv& pi);
+bool mustBeSubclassed(const ctl_props& props);
 LRESULT CALLBACK controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 
 
@@ -75,131 +80,172 @@ ctl_state Control::state()
     return _pi->state;
 }
 
-void Control::notify(dlg_message&)
+/// <summary>
+/// The default handler for control WM_NOTIFY messages.
+/// </summary>
+void Control::notify(dlg_message& msg)
 {
-    // no default action
+    switch (msg.wMsg)
+    {
+    case WM_NOTIFY:
+    {
+        auto& nmhdr = *((NMHDR*)msg.lParam);
+        switch (nmhdr.code)
+        {
+        case NM_CLICK:
+            ClickEvent().invoke(shared_from_this());
+            break;
+        case NM_RCLICK:
+            RightClickEvent().invoke(shared_from_this());
+            break;
+        case NM_DBLCLK:
+            DoubleClickEvent().invoke(shared_from_this());
+            break;
+        case NM_RDBLCLK:
+            DoubleRightClickEvent().invoke(shared_from_this());
+            break;
+        }
+    }
+    break;
+    }
 }
 
+/// <summary>
+/// The default handler for subclassed control messages.
+/// </summary>
+/// <param name="msg"></param>
 void Control::notify(ctl_message& msg)
 {
     HWND hwndParent = GetParent(_pi->state.hwnd);
-    auto wMsg = msg.wMsg;
-    auto wParam = msg.wParam;
-    auto lParam = msg.lParam;
 
-    switch (wMsg)
+    if (_pi->props.wantKeyboardActions)
     {
-    case WM_LBUTTONDOWN:
-    case WM_MBUTTONDOWN:
-    case WM_RBUTTONDOWN:
-    {
-        MouseEvent event;
-
-        if (wMsg == WM_LBUTTONDOWN)
-            event.button = MouseButton::Left;
-        else if (wMsg == WM_RBUTTONDOWN)
-            event.button = MouseButton::Right;
-        else
-            event.button = MouseButton::Middle;
-
-        event.point = Point(LOWORD(lParam), HIWORD(lParam));
-        toUnits(hwndParent, event.point);
-
-        MouseDownEvent().invoke(shared_from_this(), event);
-        break;
+        switch (msg.wMsg)
+        {
+        case WM_KEYDOWN:
+        {
+            KeyboardEvent event;
+            event.key = TranslateKey(static_cast<UINT>(msg.wParam));
+            KeyDownEvent().invoke(shared_from_this(), event);
+            break;
+        }
+        case WM_KEYUP:
+        {
+            KeyboardEvent event;
+            event.key = TranslateKey(static_cast<UINT>(msg.wParam));
+            KeyUpEvent().invoke(shared_from_this(), event);
+            break;
+        }
+        }
     }
 
-    case WM_LBUTTONUP:
-    case WM_MBUTTONUP:
-    case WM_RBUTTONUP:
+    if (_pi->props.wantMouseActions)
     {
-        MouseEvent event;
+        static const std::map<UINT, MouseButton> mouseMsgButtonMap =
+        {
+            { WM_LBUTTONDOWN, MouseButton::Left },
+            { WM_MBUTTONDOWN, MouseButton::Middle },
+            { WM_RBUTTONDOWN, MouseButton::Right },
+            { WM_LBUTTONUP, MouseButton::Left },
+            { WM_MBUTTONUP, MouseButton::Middle },
+            { WM_RBUTTONUP, MouseButton::Right },
+            { WM_LBUTTONDBLCLK, MouseButton::Left },
+            { WM_MBUTTONDBLCLK, MouseButton::Middle },
+            { WM_RBUTTONDBLCLK, MouseButton::Right }
+        };
+        switch (msg.wMsg)
+        {
+        case WM_MOUSEMOVE:
+        {
+            MouseEvent event;
+            UINT keys = GET_KEYSTATE_WPARAM(msg.wParam);
+            if (keys & MK_LBUTTON)
+                event.button = MouseButton::Left;
+            else if (keys & MK_MBUTTON)
+                event.button = MouseButton::Middle;
+            else if (keys & MK_RBUTTON)
+                event.button = MouseButton::Right;
+            event.point = Point(LOWORD(msg.lParam), HIWORD(msg.lParam));
+            toUnits(hwndParent, event.point);
 
-        if (wMsg == WM_LBUTTONUP)
-            event.button = MouseButton::Left;
-        else if (wMsg == WM_RBUTTONUP)
-            event.button = MouseButton::Right;
-        else
-            event.button = MouseButton::Middle;
+            MouseMoveEvent().invoke(shared_from_this(), event);
+            break;
+        }
 
-        event.point = Point(LOWORD(lParam), HIWORD(lParam));
-        toUnits(hwndParent, event.point);
+        case WM_CAPTURECHANGED:
+        {
+            MouseCaptureLostEvent().invoke(shared_from_this());
+            break;
+        }
 
-        MouseUpEvent().invoke(shared_from_this(), event);
-        break;
+        default:
+            if (mouseMsgButtonMap.find(msg.wMsg) != mouseMsgButtonMap.end())
+            {
+                MouseEvent event;
+                event.button = mouseMsgButtonMap.at(msg.wMsg);
+                event.point = Point(LOWORD(msg.lParam), HIWORD(msg.lParam));
+                toUnits(hwndParent, event.point);
+                switch (msg.wMsg)
+                {
+                case WM_LBUTTONDOWN:
+                case WM_MBUTTONDOWN:
+                case WM_RBUTTONDOWN:
+                    MouseDownEvent().invoke(shared_from_this(), event);
+                    break;
+                case WM_LBUTTONUP:
+                case WM_MBUTTONUP:
+                case WM_RBUTTONUP:
+                    MouseUpEvent().invoke(shared_from_this(), event);
+                    break;
+                case WM_LBUTTONDBLCLK:
+                case WM_MBUTTONDBLCLK:
+                case WM_RBUTTONDBLCLK:
+                    MouseDoubleClickEvent().invoke(shared_from_this(), event);
+                    break;
+                }
+            }
+        }
     }
 
-    case WM_LBUTTONDBLCLK:
-    case WM_MBUTTONDBLCLK:
-    case WM_RBUTTONDBLCLK:
+    if (_pi->props.wantSizingActions)
     {
-        MouseEvent event;
+        switch (msg.wMsg)
+        {
+        case WM_MOVE:
+        {
+            // translate using mapped value and store
+            Point posPx((int)(short)LOWORD(msg.lParam), (int)(short)HIWORD(msg.lParam));
+            Point posDu(posPx);
+            toUnits(GetParent(_pi->state.hwnd), posDu);
 
-        if (wMsg == WM_LBUTTONDBLCLK)
-            event.button = MouseButton::Left;
-        else if (wMsg == WM_RBUTTONDBLCLK)
-            event.button = MouseButton::Right;
-        else
-            event.button = MouseButton::Middle;
+            DLGCPP_CMSG("WM_MOVE: " <<
+                "x = " << posDu.x() << " (" << posPx.x() << ") " <<
+                "y = " << posDu.y() << " (" << posPx.y() << ") " <<
+                "text = " + _pi->props.text);
 
-        event.point = Point(LOWORD(lParam), HIWORD(lParam));
-        toUnits(hwndParent, event.point);
+            _pi->props.p.x(posDu.x());
+            _pi->props.p.y(posDu.y());
+            MoveEvent().invoke(shared_from_this());
+            break;
+        }
+        case WM_SIZE:
+        {
+            // translate using mapped value and store
+            Size sizePx({ (int)(short)LOWORD(msg.lParam), (int)(short)HIWORD(msg.lParam) });
+            Size sizeDu(sizePx);
+            toUnits(GetParent(_pi->state.hwnd), sizeDu);
 
-        MouseDoubleClickEvent().invoke(shared_from_this(), event);
-        break;
-    }
+            DLGCPP_CMSG("WM_SIZE: " <<
+                "width = " << sizeDu.width() << " (" << sizePx.width() << ") " <<
+                "height = " << sizeDu.height() << " (" << sizePx.height() << ") " <<
+                "text = " + _pi->props.text);
 
-    case WM_MOUSEMOVE:
-    {
-        MouseEvent event;
-        event.button = wMsg == WM_LBUTTONDOWN ? MouseButton::Left : wMsg == WM_RBUTTONDOWN ? MouseButton::Right : MouseButton::Middle;
-        event.point = Point(LOWORD(lParam), HIWORD(lParam));
-        toUnits(hwndParent, event.point);
-
-        MouseMoveEvent().invoke(shared_from_this(), event);
-        break;
-    }
-
-    case WM_CAPTURECHANGED:
-    {
-        MouseCaptureLostEvent().invoke(shared_from_this());
-        break;
-    }
-
-    case WM_MOVE:
-    {
-        // translate using mapped value and store
-        Point posPx((int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
-        Point posDu(posPx);
-        toUnits(GetParent(_pi->state.hwnd), posDu);
-
-        DLGCPP_CMSG("WM_MOVE: " <<
-                    "x = "  << posDu.x() << " (" << posPx.x() << ") " <<
-                    "y = " << posDu.y() << " (" << posPx.y() << ") " <<
-                    "text = " + _pi->props.text);
-
-        _pi->props.p.x(posDu.x());
-        _pi->props.p.y(posDu.y());
-        MoveEvent().invoke(shared_from_this());
-        break;
-    }
-    case WM_SIZE:
-    {
-        // translate using mapped value and store
-        Size sizePx({(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)});
-        Size sizeDu(sizePx);
-        toUnits(GetParent(_pi->state.hwnd), sizeDu);
-
-        DLGCPP_CMSG("WM_SIZE: " <<
-                    "width = "  << sizeDu.width() << " (" << sizePx.width() << ") " <<
-                    "height = " << sizeDu.height() << " (" << sizePx.height() << ") " <<
-                    "text = " + _pi->props.text);
-
-        _pi->props.p.width(sizeDu.width());
-        _pi->props.p.height(sizeDu.height());
-        SizeEvent().invoke(shared_from_this());
-        break;
-    }
+            _pi->props.p.width(sizeDu.width());
+            _pi->props.p.height(sizeDu.height());
+            SizeEvent().invoke(shared_from_this());
+            break;
+        }
+        }
     }
 
     // use default control action
@@ -236,7 +282,7 @@ void Control::visible(bool value)
         return;
 
     ShowWindow(_pi->state.hwnd,
-               _pi->props.visible ? SW_SHOW : SW_HIDE);
+        _pi->props.visible ? SW_SHOW : SW_HIDE);
 }
 
 const Position& Control::p() const
@@ -258,12 +304,12 @@ void Control::p(const Position& p)
     auto px = toPixels(hwndParent, p);
 
     SetWindowPos(_pi->state.hwnd,
-                 0,
-                 px.x(),
-                 px.y(),
-                 px.width(),
-                 px.height(),
-                 SWP_NOZORDER);
+        0,
+        px.x(),
+        px.y(),
+        px.width(),
+        px.height(),
+        SWP_NOZORDER);
 }
 
 void Control::move(const Point& point)
@@ -277,12 +323,12 @@ void Control::move(const Point& point)
     auto px = toPixels(GetParent(_pi->state.hwnd), _pi->props.p);
 
     SetWindowPos(_pi->state.hwnd,
-                 0,
-                 px.x(),
-                 px.y(),
-                 0,
-                 0,
-                 SWP_NOZORDER | SWP_NOSIZE);
+        0,
+        px.x(),
+        px.y(),
+        0,
+        0,
+        SWP_NOZORDER | SWP_NOSIZE);
 }
 
 void Control::resize(const Size& size)
@@ -296,12 +342,12 @@ void Control::resize(const Size& size)
     auto px = toPixels(GetParent(_pi->state.hwnd), _pi->props.p);
 
     SetWindowPos(_pi->state.hwnd,
-                 0,
-                 0,
-                 0,
-                 px.width(),
-                 px.height(),
-                 SWP_NOZORDER | SWP_NOMOVE);
+        0,
+        0,
+        0,
+        px.width(),
+        px.height(),
+        SWP_NOZORDER | SWP_NOMOVE);
 }
 
 void Control::setFocus()
@@ -318,9 +364,9 @@ void Control::bringToFront()
         return;
 
     SetWindowPos(_pi->state.hwnd,
-                 HWND_TOP,
-                 0,0,0,0,
-                 SWP_NOMOVE | SWP_NOSIZE);
+        HWND_TOP,
+        0, 0, 0, 0,
+        SWP_NOMOVE | SWP_NOSIZE);
 }
 
 void Control::sendToBack()
@@ -329,9 +375,9 @@ void Control::sendToBack()
         return;
 
     SetWindowPos(_pi->state.hwnd,
-                 HWND_BOTTOM,
-                 0,0,0,0,
-                 SWP_NOMOVE | SWP_NOSIZE);
+        HWND_BOTTOM,
+        0, 0, 0, 0,
+        SWP_NOMOVE | SWP_NOSIZE);
 }
 
 BorderStyle Control::border() const
@@ -374,7 +420,7 @@ void Control::text(const std::string& value)
     }
 
     SetWindowTextW(_pi->state.hwnd,
-                   toWide(_pi->props.text).c_str());
+        toWide(_pi->props.text).c_str());
 }
 
 std::pair<Color, Color> Control::colors() const
@@ -413,16 +459,6 @@ void Control::colors(Color fgColor, Color bgColor)
     redraw();
 }
 
-Cursor Control::cursor() const
-{
-    return _pi->props.cursor;
-}
-
-void Control::cursor(Cursor value)
-{
-    _pi->props.cursor = value;
-}
-
 const Font& Control::font() const
 {
     return _pi->props.font;
@@ -444,6 +480,55 @@ void Control::font(const Font& value)
         return;
 
     SendMessage(_pi->state.hwnd, WM_SETFONT, (WPARAM)_pi->state.hFont, TRUE);
+}
+
+Cursor Control::cursor() const
+{
+    return _pi->props.cursor;
+}
+
+void Control::cursor(Cursor value)
+{
+    _pi->props.cursor = value;
+}
+
+bool Control::wantKeyboardActions() const
+{
+    return _pi->props.wantKeyboardActions;
+}
+
+void Control::wantKeyboardActions(bool value)
+{
+    if (_pi->props.wantKeyboardActions == value)
+        return;
+    _pi->props.wantKeyboardActions = value;
+    rebuild();
+}
+
+bool Control::wantMouseActions() const
+{
+    return _pi->props.wantMouseActions;
+}
+
+void Control::wantMouseActions(bool value)
+{
+    if (_pi->props.wantMouseActions == value)
+        return;
+    _pi->props.wantMouseActions = value;
+    rebuild();
+}
+
+bool Control::wantSizingActions() const
+{
+    return _pi->props.wantSizingActions;
+}
+
+void Control::wantSizingActions(bool value)
+{
+    if (_pi->props.wantSizingActions == value)
+        return;
+    _pi->props.wantSizingActions = value;
+    rebuild();
 }
 
 void* Control::handle() const
@@ -524,22 +609,22 @@ void Control::rebuild()
     auto p = toPixels(hwndParent, _pi->props.p);
 
     auto hwnd = CreateWindowExW(exStyles(),
-                                toWide(className()).c_str(),
-                                toWide(_pi->props.text).c_str(),
-                                styles(),
-                                p.x(),
-                                p.y(),
-                                p.width(),
-                                p.height(),
-                                hwndParent,
-                                (HMENU)(UINT_PTR)_pi->props.id,
-                                GetModuleHandle(NULL), NULL);
+        toWide(className()).c_str(),
+        toWide(_pi->props.text).c_str(),
+        styles(),
+        p.x(),
+        p.y(),
+        p.width(),
+        p.height(),
+        hwndParent,
+        (HMENU)(UINT_PTR)_pi->props.id,
+        GetModuleHandle(NULL), NULL);
     if (hwnd == NULL)
         return;
 
     _pi->state.hwnd = hwnd;
 
-    if (_pi->props.subclass)
+    if (mustBeSubclassed(_pi->props))
     {
         SetPropW(_pi->state.hwnd, L"this", this);
         _pi->state.prevWndProc = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)controlWndProc);
@@ -549,12 +634,28 @@ void Control::rebuild()
     SendMessage(_pi->state.hwnd, WM_SETFONT, (WPARAM)_pi->state.hFont, FALSE);
 }
 
+/// <summary>
+/// Determines if the control needs to be subclassed.
+/// </summary>
+bool mustBeSubclassed(const ctl_props& props)
+{
+    bool subclass = false;
+
+    if (props.wantKeyboardActions)
+        subclass = true;
+    if (props.wantMouseActions)
+        subclass = true;
+    if (props.wantSizingActions)
+        subclass = true;
+    return subclass;
+}
+
 void destruct(ctl_priv& pi)
 {
     if (pi.state.hwnd == NULL)
         return;
 
-    if (pi.props.subclass)
+    if (pi.state.prevWndProc != NULL)
     {
         // remove subclass
         SetWindowLongPtr(pi.state.hwnd, GWLP_WNDPROC, (LONG_PTR)pi.state.prevWndProc);
@@ -574,7 +675,7 @@ LRESULT CALLBACK controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lPar
     {
         // wrap and transfer the message directly to the class.
         // note: all derivatives will need to process the message and use CallWindowProc
-        auto msg = ctl_message{wMsg, wParam, lParam, 0, pproc};
+        auto msg = ctl_message{ wMsg, wParam, lParam, 0, pproc };
         pthis->notify(msg);
         return msg.result;
     }
@@ -586,14 +687,34 @@ IEvent<ISharedControl>& Control::ClickEvent()
     return _pi->props.clickEvent;
 }
 
+IEvent<ISharedControl>& Control::RightClickEvent()
+{
+    return _pi->props.rightClickEvent;
+}
+
 IEvent<ISharedControl>& Control::DoubleClickEvent()
 {
     return _pi->props.dblClickEvent;
 }
 
+IEvent<ISharedControl>& Control::DoubleRightClickEvent()
+{
+    return _pi->props.dblRightClickEvent;
+}
+
 IEvent<ISharedControl, bool>& Control::FocusEvent()
 {
     return _pi->props.focusEvent;
+}
+
+IEvent<ISharedControl, KeyboardEvent>& Control::KeyDownEvent()
+{
+    return _pi->props.keyDownEvent;
+}
+
+IEvent<ISharedControl, KeyboardEvent>& Control::KeyUpEvent()
+{
+    return _pi->props.keyUpEvent;
 }
 
 IEvent<ISharedControl, MouseEvent>& Control::MouseDownEvent()

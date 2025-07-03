@@ -1,6 +1,6 @@
-#include "toolbar_p.h"
 #include "../dlgmsg.h"
 #include "../utility.h"
+#include "toolbar_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -47,7 +47,7 @@ void ToolBar::notify(dlg_message& msg)
 
             auto& item = _props->items.at(index);
             item->ClickEvent().invoke(item);
-        }        
+        }
     }
     else if (msg.wMsg == WM_NOTIFY)
     {
@@ -65,6 +65,8 @@ void ToolBar::notify(dlg_message& msg)
             auto id = tdi->hdr.idFrom;
         }
     }
+
+    Control::notify(msg);
 }
 
 void ToolBar::rebuild()
@@ -178,7 +180,7 @@ void ToolBar::updateItems()
             }
         }
 
-        TBBUTTON tbi = { MAKELONG(imageId, imageListId), btnId, state, style, {0}, 0, btnText};
+        TBBUTTON tbi = { MAKELONG(imageId, imageListId), btnId, state, style, {0}, 0, btnText };
 
         SendMessageW(hwnd, TB_INSERTBUTTONW, index, (LPARAM)&tbi);
         index++;

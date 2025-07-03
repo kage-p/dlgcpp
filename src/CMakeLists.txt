@@ -62,8 +62,10 @@ set(src_files ${src_files}
     win32/dialogs/splash_p.h
     win32/dlgmsg.h
     win32/event_p.h
+    win32/keys_p.h
     win32/menu.cpp
     win32/menu_p.h
+	win32/message_p.h
     win32/utility.cpp
     win32/utility.h
 )

@@ -1,5 +1,5 @@
-#include "slider_p.h"
 #include "../dlgmsg.h"
+#include "slider_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -56,6 +56,7 @@ void Slider::notify(dlg_message& msg)
         value((int)msg.wParam);
         ChangedEvent().invoke(shared_from_this());
     }
+    Control::notify(msg);
 }
 
 bool Slider::vertical() const
@@ -99,9 +100,9 @@ std::pair<int, int> Slider::range() const
 
 void Slider::range(int from, int to)
 {
-    if (_props->range == std::pair<int,int>(from,to))
+    if (_props->range == std::pair<int, int>(from, to))
         return;
-    _props->range = std::pair<int,int>(from,to);
+    _props->range = std::pair<int, int>(from, to);
 
     if (handle() == nullptr)
         return;

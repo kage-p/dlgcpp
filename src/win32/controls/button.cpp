@@ -1,5 +1,5 @@
-#include "button_p.h"
 #include "../dlgmsg.h"
+#include "button_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -85,6 +85,8 @@ void Button::notify(dlg_message& msg)
             FocusEvent().invoke(shared_from_this(), false);
         }
     }
+
+    Control::notify(msg);
 }
 
 HorizontalAlign Button::horizontalAlignment() const

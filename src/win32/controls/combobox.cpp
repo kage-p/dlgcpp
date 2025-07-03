@@ -1,6 +1,6 @@
-#include "combobox_p.h"
 #include "../dlgmsg.h"
 #include "../utility.h"
+#include "combobox_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -81,6 +81,8 @@ void ComboBox::notify(dlg_message& msg)
             FocusEvent().invoke(shared_from_this(), false);
         }
     }
+
+    Control::notify(msg);
 }
 
 void ComboBox::rebuild()
@@ -115,7 +117,7 @@ unsigned int ComboBox::styles() const
 }
 
 int ComboBox::currentIndex() const
-{    
+{
     return _props->currentIndex;
 }
 

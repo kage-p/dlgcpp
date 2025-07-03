@@ -11,7 +11,7 @@ namespace dlgcpp
     static const int ChildStartId = 100;
     static const int MenuStartId = 10000;
 
-    static const int WM_DLGCPP_USER = WM_USER+1000;
+    static const int WM_DLGCPP_USER = WM_USER + 1000;
 
     struct dlg_props
     {
@@ -38,6 +38,9 @@ namespace dlgcpp
             int timeout = 0;
         } timer;
         void* user = nullptr;
+
+        Event<ISharedDialog, KeyboardEvent> keyDownEvent;
+        Event<ISharedDialog, KeyboardEvent> keyUpEvent;
         Event<ISharedDialog, MouseEvent> mouseDownEvent;
         Event<ISharedDialog, MouseEvent> mouseUpEvent;
         Event<ISharedDialog, MouseEvent> mouseMoveEvent;

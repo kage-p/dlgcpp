@@ -1,5 +1,5 @@
-#include "progress_p.h"
 #include "../dlgmsg.h"
+#include "progress_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -64,6 +64,7 @@ void Progress::notify(dlg_message& msg)
         value((int)msg.wParam);
         ChangedEvent().invoke(shared_from_this());
     }
+    Control::notify(msg);
 }
 
 bool Progress::vertical() const
@@ -109,9 +110,9 @@ std::pair<int, int> Progress::range() const
 
 void Progress::range(int from, int to)
 {
-    if (_props->range == std::pair<int,int>(from,to))
+    if (_props->range == std::pair<int, int>(from, to))
         return;
-    _props->range = std::pair<int,int>(from,to);
+    _props->range = std::pair<int, int>(from, to);
 
     if (handle() == nullptr)
         return;

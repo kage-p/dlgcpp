@@ -1,7 +1,7 @@
 #pragma once
 
-#include "defs.h"
 #include "child.h"
+#include "defs.h"
 #include "event.h"
 
 #include <memory>
@@ -33,6 +33,12 @@ namespace dlgcpp
         virtual void font(const Font& value) = 0;
         virtual Cursor cursor() const = 0;
         virtual void cursor(Cursor value) = 0;
+        virtual bool wantKeyboardActions() const = 0;
+        virtual void wantKeyboardActions(bool value) = 0;
+        virtual bool wantMouseActions() const = 0;
+        virtual void wantMouseActions(bool value) = 0;
+        virtual bool wantSizingActions() const = 0;
+        virtual void wantSizingActions(bool value) = 0;
         virtual void* handle() const = 0;
         virtual void* user() const = 0;
         virtual void user(void* value) = 0;
@@ -40,8 +46,12 @@ namespace dlgcpp
         virtual void redraw() = 0;
 
         virtual IEvent<ISharedControl>& ClickEvent() = 0;
+        virtual IEvent<ISharedControl>& RightClickEvent() = 0;
         virtual IEvent<ISharedControl>& DoubleClickEvent() = 0;
+        virtual IEvent<ISharedControl>& DoubleRightClickEvent() = 0;
         virtual IEvent<ISharedControl, bool>& FocusEvent() = 0;
+        virtual IEvent<ISharedControl, KeyboardEvent>& KeyDownEvent() = 0;
+        virtual IEvent<ISharedControl, KeyboardEvent>& KeyUpEvent() = 0;
         virtual IEvent<ISharedControl, MouseEvent>& MouseDownEvent() = 0;
         virtual IEvent<ISharedControl, MouseEvent>& MouseUpEvent() = 0;
         virtual IEvent<ISharedControl, MouseEvent>& MouseMoveEvent() = 0;
@@ -52,8 +62,8 @@ namespace dlgcpp
     };
 
     class Control : public IChildControl,
-                    public IControl,
-                    public std::enable_shared_from_this<Control>
+        public IControl,
+        public std::enable_shared_from_this<Control>
     {
     public:
         virtual void notify(struct ctl_message&);
@@ -91,14 +101,24 @@ namespace dlgcpp
         void font(const Font& value) override;
         Cursor cursor() const override;
         void cursor(Cursor value) override;
+        bool wantKeyboardActions() const override;
+        void wantKeyboardActions(bool value) override;
+        bool wantMouseActions() const override;
+        void wantMouseActions(bool value) override;
+        bool wantSizingActions() const override;
+        void wantSizingActions(bool value) override;
         void* handle() const override;
         void* user() const override;
         void user(void* value) override;
         void redraw() override;
 
         IEvent<ISharedControl>& ClickEvent() override;
-        IEvent<ISharedControl>& DoubleClickEvent() override;        
+        IEvent<ISharedControl>& RightClickEvent() override;
+        IEvent<ISharedControl>& DoubleClickEvent() override;
+        IEvent<ISharedControl>& DoubleRightClickEvent() override;
         IEvent<ISharedControl, bool>& FocusEvent() override;
+        IEvent<ISharedControl, KeyboardEvent>& KeyDownEvent() override;
+        IEvent<ISharedControl, KeyboardEvent>& KeyUpEvent() override;
         IEvent<ISharedControl, MouseEvent>& MouseDownEvent() override;
         IEvent<ISharedControl, MouseEvent>& MouseUpEvent() override;
         IEvent<ISharedControl, MouseEvent>& MouseMoveEvent() override;
