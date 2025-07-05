@@ -75,10 +75,30 @@ void ListView::notify(ctl_message& msg)
         // use the listview colors
         auto ctl_priv = priv();
         auto hdc = (HDC)msg.wParam;
+
         auto clrPair = Control::colors();
-        SetBkColor(hdc, (COLORREF)clrPair.second);
-        SetTextColor(hdc, (COLORREF)clrPair.first);
-        msg.result = (LRESULT)ctl_priv->state.hbrBack;
+
+        if (clrPair.second != Color::Default &&
+            clrPair.second != Color::None)
+        {
+            // has background color
+            COLORREF textColor =
+                clrPair.first != Color::Default
+                ? (COLORREF)clrPair.first
+                : GetSysColor(COLOR_WINDOWTEXT);
+
+            SetTextColor(hdc, textColor);
+            SetBkColor(hdc, (COLORREF)clrPair.second);
+            msg.result = (LRESULT)ctl_priv->state.hbrBack;
+        }
+        else if (clrPair.first != Color::Default)
+        {
+            // has text color only
+            SetTextColor(hdc, (COLORREF)clrPair.first);
+            SetBkColor(hdc, GetSysColor(COLOR_WINDOW));
+            msg.result = (LRESULT)GetSysColorBrush(COLOR_WINDOW);
+        }
+
         return;
     }
 
@@ -199,15 +219,9 @@ void ListView::rebuild()
     if (handle() == nullptr)
         return;
 
-    auto hwnd = (HWND)handle();
-
-    auto clrPair = Control::colors();
-    ListView_SetBkColor(hwnd, (COLORREF)clrPair.second);
-    ListView_SetTextBkColor(hwnd, (COLORREF)clrPair.second);
-    ListView_SetTextColor(hwnd, (COLORREF)clrPair.first);
-
     updateColumns();
     updateRows();
+    updateDisplayStyles();
     updateListStyles();
     updateSelection();
 }
@@ -219,11 +233,7 @@ void ListView::colors(Color fgColor, Color bgColor)
     if (handle() == nullptr)
         return;
 
-    auto hwnd = reinterpret_cast<HWND>(handle());
-    auto clrPair = Control::colors();
-    ListView_SetBkColor(hwnd, (COLORREF)clrPair.second);
-    ListView_SetTextBkColor(hwnd, (COLORREF)clrPair.second);
-    ListView_SetTextColor(hwnd, (COLORREF)clrPair.first);
+    updateDisplayStyles();
 }
 
 int ListView::selectedIndex() const
@@ -570,6 +580,25 @@ bool ListView::checked(size_t row) const
 void ListView::checked(size_t row, bool checked)
 {
     // placeholder
+}
+
+void ListView::updateDisplayStyles()
+{
+    auto hwnd = (HWND)handle();
+    auto clrPair = Control::colors();
+
+    COLORREF backColor =
+        clrPair.second != Color::Default
+        ? (COLORREF)clrPair.second
+        : GetSysColor(COLOR_WINDOW);
+    COLORREF textColor =
+        clrPair.first != Color::Default
+        ? (COLORREF)clrPair.first
+        : GetSysColor(COLOR_WINDOWTEXT);
+
+    ListView_SetBkColor(hwnd, backColor);
+    ListView_SetTextBkColor(hwnd, backColor);
+    ListView_SetTextColor(hwnd, textColor);
 }
 
 void ListView::updateListStyles()

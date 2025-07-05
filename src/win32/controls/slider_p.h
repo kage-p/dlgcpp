@@ -1,8 +1,8 @@
 #pragma once
 
+#include "../event_p.h"
 #include "dlgcpp/controls/slider.h"
 #include "slider_imp.h"
-#include "../event_p.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -16,8 +16,8 @@ namespace dlgcpp
         {
             bool vertical = false;
             int value = 0;
-            std::pair<int, int> range = {0,100};
-            Color barColor = Color::Blue;
+            std::pair<int, int> range = { 0,100 };
+            Color barColor = Color::Default;
             Event<ISharedControl> changedEvent;
         };
     }

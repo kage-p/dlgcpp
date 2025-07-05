@@ -28,6 +28,8 @@ namespace dlgcpp
             void rebuild() override;
             std::string className() const override;
             void notify(dlg_message&) override;
+
+            void updateDisplayStyles();
         };
     }
 }

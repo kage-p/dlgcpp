@@ -26,13 +26,11 @@ void Slider::rebuild()
     auto hwnd = reinterpret_cast<HWND>(handle());
 
     // apply the properties
-    auto clrPair = Control::colors();
     SendMessage(hwnd, SLM_SETDIRECTION, 0, _props->vertical ? SLS_VERTICAL : SLS_HORIZONTAL);
     SendMessage(hwnd, SLM_SETRANGE, (WPARAM)_props->range.first, (LPARAM)_props->range.second);
     SendMessage(hwnd, SLM_SETPOS, (WPARAM)_props->value, TRUE);
-    SendMessage(hwnd, SLM_SETTEXTCOLOR, 0, (LPARAM)clrPair.first);
-    SendMessage(hwnd, SLM_SETBKCOLOR, 0, (LPARAM)clrPair.second);
-    SendMessage(hwnd, SLM_SETBARCOLOR, 0, (LPARAM)_props->barColor);
+
+    updateDisplayStyles();
 }
 
 std::string Slider::className() const
@@ -119,10 +117,7 @@ void Slider::colors(Color fgColor, Color bgColor)
     if (handle() == nullptr)
         return;
 
-    auto hwnd = reinterpret_cast<HWND>(handle());
-    auto clrPair = Control::colors();
-    SendMessage(hwnd, SLM_SETTEXTCOLOR, 0, (LPARAM)clrPair.first);
-    SendMessage(hwnd, SLM_SETBKCOLOR, 0, (LPARAM)clrPair.second);
+    updateDisplayStyles();
 }
 
 Color Slider::barColor() const
@@ -140,4 +135,29 @@ void Slider::barColor(Color value)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
     SendMessage(hwnd, SLM_SETBARCOLOR, 0, (LPARAM)_props->barColor);
+}
+
+void Slider::updateDisplayStyles()
+{
+    auto hwnd = reinterpret_cast<HWND>(handle());
+    auto clrPair = Control::colors();
+
+    COLORREF backColor =
+        clrPair.second != Color::Default
+        ? (COLORREF)clrPair.second
+        : GetSysColor(COLOR_3DFACE);
+
+    COLORREF textColor =
+        clrPair.first != Color::Default
+        ? (COLORREF)clrPair.first
+        : GetSysColor(COLOR_BTNTEXT);
+
+    COLORREF barColor =
+        _props->barColor != Color::Default
+        ? (COLORREF)_props->barColor
+        : GetSysColor(COLOR_HIGHLIGHT);
+
+    SendMessage(hwnd, SLM_SETTEXTCOLOR, 0, (LPARAM)textColor);
+    SendMessage(hwnd, SLM_SETBKCOLOR, 0, (LPARAM)backColor);
+    SendMessage(hwnd, SLM_SETBARCOLOR, 0, (LPARAM)barColor);
 }

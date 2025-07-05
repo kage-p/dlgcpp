@@ -134,6 +134,7 @@ namespace dlgcpp
             void updateSelection();
             void updateColumns();
             void updateRows();
+            void updateDisplayStyles();
             void updateListStyles();
 
             void onColumnsChanged();

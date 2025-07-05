@@ -25,11 +25,10 @@ void Progress::rebuild()
     auto hwnd = reinterpret_cast<HWND>(handle());
 
     // apply the properties
-    auto clrPair = Control::colors();
     SendMessage(hwnd, PBM_SETRANGE32, (WPARAM)_props->range.first, (LPARAM)_props->range.second);
     SendMessage(hwnd, PBM_SETPOS, (WPARAM)_props->value, FALSE);
-    SendMessage(hwnd, PBM_SETBARCOLOR, 0, (LPARAM)clrPair.first);
-    SendMessage(hwnd, PBM_SETBKCOLOR, 0, (LPARAM)clrPair.second);
+
+    updateDisplayStyles();
 }
 
 std::string Progress::className() const
@@ -128,8 +127,24 @@ void Progress::colors(Color fgColor, Color bgColor)
     if (handle() == nullptr)
         return;
 
+    updateDisplayStyles();
+}
+
+void Progress::updateDisplayStyles()
+{
     auto hwnd = reinterpret_cast<HWND>(handle());
     auto clrPair = Control::colors();
-    SendMessage(hwnd, PBM_SETBARCOLOR, 0, (LPARAM)clrPair.first);
-    SendMessage(hwnd, PBM_SETBKCOLOR, 0, (LPARAM)clrPair.second);
+
+    COLORREF backColor =
+        clrPair.second != Color::Default
+        ? (COLORREF)clrPair.second
+        : GetSysColor(COLOR_3DFACE);
+    COLORREF barColor =
+        clrPair.first != Color::Default
+        ? (COLORREF)clrPair.first
+        : GetSysColor(COLOR_HIGHLIGHT);
+
+    SendMessage(hwnd, PBM_SETBARCOLOR, 0, (LPARAM)barColor);
+    SendMessage(hwnd, PBM_SETBKCOLOR, 0, (LPARAM)backColor);
 }
+
