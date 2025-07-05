@@ -65,7 +65,7 @@ void advanced_popup_menu_demo(ISharedDialog parent)
     menu->add(item);
 
     item = std::make_shared<MenuItem>("Close Dialog");
-    item->ClickEvent() += [dlg]()
+    item->ClickEvent() += [dlg](auto)
         {
             dlg->close();
         };

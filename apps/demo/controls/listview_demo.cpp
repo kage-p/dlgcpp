@@ -1,4 +1,5 @@
 #include "listview_demo.h"
+#include <map>
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -16,21 +17,38 @@ void controls_listview_demo(ISharedDialog parent)
     auto label = std::make_shared<Label>("Right click on list for options", Position{ 10, 10, 430, 15 });
     dlg->add(label);
 
-    auto listview = std::make_shared<ListViewDemoImpl>();
-    listview->p(Position{ 10, 25, 430, 315 });
-    listview->colors(Color::Black, Color::Orange);
-    dlg->add(listview);
+    auto listView = std::make_shared<ListViewDemoImpl>();
+    listView->p(Position{ 10, 25, 430, 315 });
+    listView->colors(Color::Teal, Color::White);
+    dlg->add(listView);
 
-    auto menu = createMenu(listview);
+    auto menu = createMenu(listView);
 
-    listview->wantMouseActions(true);
+    // explicitly enabled these events so the handlers get fired
+    listView->wantKeyboardEvents(true);
+    listView->wantMouseEvents(true);
 
-    listview->MouseDownEvent() +=
+    listView->MouseDownEvent() +=
         [menu](ISharedControl control, MouseEvent event)
         {
             // show the menu on right click
             if (event.button == MouseButton::Right)
                 menu->popup(control, event.point);
+        };
+
+    listView->KeyDownEvent() +=
+        [listView](ISharedControl, KeyboardEvent event)
+        {
+            if (event.key == Key::Enter)
+            {
+                // user pressed enter key in the ListView
+                if (listView->selectedIndex() > -1)
+                {
+                    listView->beginEditing(
+                        listView->selectedIndex(),
+                        ListViewDemoImpl::RoleId::Column1);
+                }
+            }
         };
 
     auto items = std::vector<ListViewDemoImpl::ListViewDemoItem>
@@ -47,7 +65,7 @@ void controls_listview_demo(ISharedDialog parent)
         { "Item 10", "Value 10.1", "Value 10.2"}
     };
 
-    listview->setItems(items);
+    listView->setItems(items);
 
     dlg->exec();
 }
@@ -61,7 +79,7 @@ std::shared_ptr<Menu> createMenu(
     item = std::make_shared<MenuItem>("Switch view");
     menu->add(item);
     item->checked(listview->multiselect());
-    item->ClickEvent() += [listview](ISharedMenuItem m)
+    item->ClickEvent() += [listview](ISharedMenuItem)
         {
             switch (listview->display())
             {
@@ -83,15 +101,6 @@ std::shared_ptr<Menu> createMenu(
     item = std::make_shared<MenuItem>();
     menu->add(item);
 
-    item = std::make_shared<MenuItem>("Multi-select list");
-    menu->add(item);
-    item->checked(listview->multiselect());
-    item->ClickEvent() += [listview](ISharedMenuItem m)
-        {
-            listview->multiselect(!listview->multiselect());
-            m->checked(listview->multiselect());
-        };
-
     item = std::make_shared<MenuItem>("Show check boxes");
     menu->add(item);
     item->checked(listview->checkboxes());
@@ -110,20 +119,59 @@ std::shared_ptr<Menu> createMenu(
             m->checked(listview->gridlines());
         };
 
+    item = std::make_shared<MenuItem>("Multi-select list");
+    menu->add(item);
+    item->checked(listview->multiselect());
+    item->ClickEvent() += [listview](ISharedMenuItem m)
+        {
+            listview->multiselect(!listview->multiselect());
+            m->checked(listview->multiselect());
+        };
 
     return menu;
 }
 
-std::vector<ISharedListViewColumn> ListViewDemoImpl::columns() const
+ListViewDemoImpl::ListViewDemoImpl() :
+    ListView()
 {
-    std::vector<ISharedListViewColumn> r;
-    r.push_back(std::make_shared<ListViewColumn>("Column 1", RoleId::Column1, 45));
-    r.push_back(std::make_shared<ListViewColumn>("Column 2", RoleId::Column2, 80));
-    r.push_back(std::make_shared<ListViewColumn>("Column 3", RoleId::Column3, 45));
-    return r;
+    _roleMap =
+    {
+        { 0, RoleId::Column1 },
+        { 1, RoleId::Column2 },
+        { 2, RoleId::Column3 }
+    };
+    _columnMap =
+    {
+        { RoleId::Column1, ListViewColumn("Column 1", 45) },
+        { RoleId::Column2, ListViewColumn("Column 2", 80) },
+        { RoleId::Column3, ListViewColumn("Column 3", 45) }
+    };
 }
 
-std::string ListViewDemoImpl::data(size_t row, int role) const
+int ListViewDemoImpl::roleData(int column) const
+{
+    auto it = _roleMap.find(column);
+    if (it != _roleMap.end())
+        return it->second;
+    // Invalid role
+    return -1;
+}
+
+ListViewColumn ListViewDemoImpl::columnData(int role) const
+{
+    auto it = _columnMap.find(role);
+    if (it != _columnMap.end())
+        return it->second;
+    // return an empty column if role not found
+    return ListViewColumn();
+}
+
+size_t ListViewDemoImpl::columnCount() const
+{
+    return _columnMap.size();
+}
+
+std::string ListViewDemoImpl::rowData(size_t row, int role) const
 {
     if (row >= _items.size())
         return std::string();
@@ -142,9 +190,64 @@ std::string ListViewDemoImpl::data(size_t row, int role) const
     return std::string();
 }
 
-size_t ListViewDemoImpl::count() const
+size_t ListViewDemoImpl::rowCount() const
 {
     return _items.size();
+}
+
+bool ListViewDemoImpl::beginEdit(
+    size_t row,
+    int role,
+    std::string& text)
+{
+    if (row >= _items.size())
+        return false;
+
+    auto& item = _items.at(row);
+
+    // return text for edit operation
+    switch ((RoleId)role)
+    {
+    case RoleId::Column1:
+        text = item.col1;
+        break;
+    case RoleId::Column2:
+        text = item.col2;
+        break;
+    case RoleId::Column3:
+        text = item.col3;
+        break;
+    default:
+        // not valid
+        return false;
+    }
+
+    // to prevent editing, return false
+    return true;
+}
+
+void ListViewDemoImpl::endEdit(
+    size_t row,
+    int role,
+    const std::string& text,
+    bool confirmed)
+{
+    if (row >= _items.size())
+        return;
+
+    auto& item = _items.at(row);
+    switch ((RoleId)role)
+    {
+    case RoleId::Column1:
+        item.col1 = text;
+        break;
+    case RoleId::Column2:
+        item.col2 = text;
+        break;
+    case RoleId::Column3:
+        item.col3 = text;
+        break;
+    }
 }
 
 bool ListViewDemoImpl::checked(size_t row) const
@@ -169,5 +272,5 @@ void ListViewDemoImpl::checked(size_t row, bool checked)
 void ListViewDemoImpl::setItems(const std::vector<ListViewDemoItem>& items)
 {
     _items = items;
-    ItemsChangedEvent().invoke(shared_from_this());
+    RowsChangedEvent().invoke();
 }

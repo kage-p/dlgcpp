@@ -26,11 +26,12 @@ void Slider::rebuild()
     auto hwnd = reinterpret_cast<HWND>(handle());
 
     // apply the properties
+    auto clrPair = Control::colors();
     SendMessage(hwnd, SLM_SETDIRECTION, 0, _props->vertical ? SLS_VERTICAL : SLS_HORIZONTAL);
     SendMessage(hwnd, SLM_SETRANGE, (WPARAM)_props->range.first, (LPARAM)_props->range.second);
     SendMessage(hwnd, SLM_SETPOS, (WPARAM)_props->value, TRUE);
-    SendMessage(hwnd, SLM_SETTEXTCOLOR, 0, (LPARAM)colors().first);
-    SendMessage(hwnd, SLM_SETBKCOLOR, 0, (LPARAM)colors().second);
+    SendMessage(hwnd, SLM_SETTEXTCOLOR, 0, (LPARAM)clrPair.first);
+    SendMessage(hwnd, SLM_SETBKCOLOR, 0, (LPARAM)clrPair.second);
     SendMessage(hwnd, SLM_SETBARCOLOR, 0, (LPARAM)_props->barColor);
 }
 
@@ -106,13 +107,9 @@ void Slider::range(int from, int to)
 
     if (handle() == nullptr)
         return;
+
     auto hwnd = reinterpret_cast<HWND>(handle());
     SendMessage(hwnd, SLM_SETRANGE, (WPARAM)_props->range.first, (LPARAM)_props->range.second);
-}
-
-std::pair<Color, Color> Slider::colors() const
-{
-    return Control::colors();
 }
 
 void Slider::colors(Color fgColor, Color bgColor)
@@ -121,9 +118,11 @@ void Slider::colors(Color fgColor, Color bgColor)
 
     if (handle() == nullptr)
         return;
+
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, SLM_SETTEXTCOLOR, 0, (LPARAM)colors().first);
-    SendMessage(hwnd, SLM_SETBKCOLOR, 0, (LPARAM)colors().second);
+    auto clrPair = Control::colors();
+    SendMessage(hwnd, SLM_SETTEXTCOLOR, 0, (LPARAM)clrPair.first);
+    SendMessage(hwnd, SLM_SETBKCOLOR, 0, (LPARAM)clrPair.second);
 }
 
 Color Slider::barColor() const

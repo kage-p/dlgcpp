@@ -13,9 +13,10 @@ namespace dlgcpp
         ISharedDialog parent;
         bool enabled = true;
         bool visible = true;
-        bool wantKeyboardActions = false;
-        bool wantMouseActions = false;
-        bool wantSizingActions = false;
+        bool wantInternalEvents = false;
+        bool wantKeyboardEvents = false;
+        bool wantMouseEvents = false;
+        bool wantSizingEvents = false;
         Position p;
         BorderStyle borderStyle = BorderStyle::None;
         std::string text;

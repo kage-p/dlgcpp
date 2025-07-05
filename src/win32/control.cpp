@@ -118,7 +118,7 @@ void Control::notify(ctl_message& msg)
 {
     HWND hwndParent = GetParent(_pi->state.hwnd);
 
-    if (_pi->props.wantKeyboardActions)
+    if (_pi->props.wantKeyboardEvents)
     {
         switch (msg.wMsg)
         {
@@ -136,10 +136,13 @@ void Control::notify(ctl_message& msg)
             KeyUpEvent().invoke(shared_from_this(), event);
             break;
         }
+        case WM_GETDLGCODE:
+            msg.result = DLGC_WANTALLKEYS | DLGC_WANTCHARS | DLGC_WANTTAB;
+            return;
         }
     }
 
-    if (_pi->props.wantMouseActions)
+    if (_pi->props.wantMouseEvents)
     {
         static const std::map<UINT, MouseButton> mouseMsgButtonMap =
         {
@@ -207,7 +210,7 @@ void Control::notify(ctl_message& msg)
         }
     }
 
-    if (_pi->props.wantSizingActions)
+    if (_pi->props.wantSizingEvents)
     {
         switch (msg.wMsg)
         {
@@ -492,42 +495,81 @@ void Control::cursor(Cursor value)
     _pi->props.cursor = value;
 }
 
-bool Control::wantKeyboardActions() const
+/// <summary>
+/// Checks whether the control receives internal events (messages).
+/// </summary>
+bool Control::wantInternalEvents() const
 {
-    return _pi->props.wantKeyboardActions;
+    return _pi->props.wantInternalEvents;
 }
 
-void Control::wantKeyboardActions(bool value)
+/// <summary>
+/// Enables the control to receive internal event messages through subclassing.
+/// Note: notify(ctl_msg) may still be called if subclass is enabled elsewhere.
+/// </summary>
+void Control::wantInternalEvents(bool value)
 {
-    if (_pi->props.wantKeyboardActions == value)
+    if (_pi->props.wantInternalEvents == value)
         return;
-    _pi->props.wantKeyboardActions = value;
+    _pi->props.wantInternalEvents = value;
     rebuild();
 }
 
-bool Control::wantMouseActions() const
+/// <summary>
+/// Checks whether the control receives keyboard events.
+/// </summary>
+bool Control::wantKeyboardEvents() const
 {
-    return _pi->props.wantMouseActions;
+    return _pi->props.wantKeyboardEvents;
 }
 
-void Control::wantMouseActions(bool value)
+/// <summary>
+/// Enables the control to receive keyboard events through subclassing.
+/// </summary>
+void Control::wantKeyboardEvents(bool value)
 {
-    if (_pi->props.wantMouseActions == value)
+    if (_pi->props.wantKeyboardEvents == value)
         return;
-    _pi->props.wantMouseActions = value;
+    _pi->props.wantKeyboardEvents = value;
     rebuild();
 }
 
-bool Control::wantSizingActions() const
+/// <summary>
+/// Checks whether the control receives mouse events.
+/// </summary>
+bool Control::wantMouseEvents() const
 {
-    return _pi->props.wantSizingActions;
+    return _pi->props.wantMouseEvents;
 }
 
-void Control::wantSizingActions(bool value)
+/// <summary>
+/// Enables the control to receive mouse events through subclassing.
+/// </summary>
+void Control::wantMouseEvents(bool value)
 {
-    if (_pi->props.wantSizingActions == value)
+    if (_pi->props.wantMouseEvents == value)
         return;
-    _pi->props.wantSizingActions = value;
+    _pi->props.wantMouseEvents = value;
+    rebuild();
+}
+
+/// <summary>
+/// Checks whether the control receives move/size events.
+/// </summary>
+bool Control::wantSizingEvents() const
+{
+    return _pi->props.wantSizingEvents;
+}
+
+/// <summary>
+/// Enables the control to receive move/size messages through subclassing.
+/// </summary>
+/// <param name="value"></param>
+void Control::wantSizingEvents(bool value)
+{
+    if (_pi->props.wantSizingEvents == value)
+        return;
+    _pi->props.wantSizingEvents = value;
     rebuild();
 }
 
@@ -581,6 +623,11 @@ unsigned int Control::exStyles() const
     }
 
     return styles;
+}
+
+const ctl_priv* Control::priv() const
+{
+    return _pi;
 }
 
 void Control::redraw()
@@ -639,14 +686,12 @@ void Control::rebuild()
 /// </summary>
 bool mustBeSubclassed(const ctl_props& props)
 {
-    bool subclass = false;
+    bool subclass =
+        props.wantKeyboardEvents ||
+        props.wantMouseEvents ||
+        props.wantSizingEvents ||
+        props.wantInternalEvents;
 
-    if (props.wantKeyboardActions)
-        subclass = true;
-    if (props.wantMouseActions)
-        subclass = true;
-    if (props.wantSizingActions)
-        subclass = true;
     return subclass;
 }
 

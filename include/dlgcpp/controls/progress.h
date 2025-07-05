@@ -17,14 +17,13 @@ namespace dlgcpp
             void value(int value);
             std::pair<int, int> range() const;
             void range(int from, int to);
-            std::pair<Color, Color> colors() const override;
             void colors(Color fgColor, Color bgColor) override;
 
             IEvent<ISharedControl>& ChangedEvent();
 
         private:
             struct progress_props* _props;
-            void rebuild() override;            
+            void rebuild() override;
             std::string className() const override;
             unsigned int styles() const override;
             void notify(dlg_message&) override;

@@ -33,12 +33,12 @@ namespace dlgcpp
         virtual void font(const Font& value) = 0;
         virtual Cursor cursor() const = 0;
         virtual void cursor(Cursor value) = 0;
-        virtual bool wantKeyboardActions() const = 0;
-        virtual void wantKeyboardActions(bool value) = 0;
-        virtual bool wantMouseActions() const = 0;
-        virtual void wantMouseActions(bool value) = 0;
-        virtual bool wantSizingActions() const = 0;
-        virtual void wantSizingActions(bool value) = 0;
+        virtual bool wantKeyboardEvents() const = 0;
+        virtual void wantKeyboardEvents(bool value) = 0;
+        virtual bool wantMouseEvents() const = 0;
+        virtual void wantMouseEvents(bool value) = 0;
+        virtual bool wantSizingEvents() const = 0;
+        virtual void wantSizingEvents(bool value) = 0;
         virtual void* handle() const = 0;
         virtual void* user() const = 0;
         virtual void user(void* value) = 0;
@@ -66,6 +66,7 @@ namespace dlgcpp
         public std::enable_shared_from_this<Control>
     {
     public:
+        // control specific
         virtual void notify(struct ctl_message&);
 
         // IChildControl impl.
@@ -101,12 +102,12 @@ namespace dlgcpp
         void font(const Font& value) override;
         Cursor cursor() const override;
         void cursor(Cursor value) override;
-        bool wantKeyboardActions() const override;
-        void wantKeyboardActions(bool value) override;
-        bool wantMouseActions() const override;
-        void wantMouseActions(bool value) override;
-        bool wantSizingActions() const override;
-        void wantSizingActions(bool value) override;
+        bool wantKeyboardEvents() const override;
+        void wantKeyboardEvents(bool value) override;
+        bool wantMouseEvents() const override;
+        void wantMouseEvents(bool value) override;
+        bool wantSizingEvents() const override;
+        void wantSizingEvents(bool value) override;
         void* handle() const override;
         void* user() const override;
         void user(void* value) override;
@@ -131,10 +132,15 @@ namespace dlgcpp
         explicit Control(const std::string& text, const Position& p);
         virtual ~Control();
 
+        // exposed to derived class only
+        bool wantInternalEvents() const;
+        void wantInternalEvents(bool value);
+
         // overridable by derived class
         virtual std::string className() const;
         virtual unsigned int styles() const;
         virtual unsigned int exStyles() const;
+        const struct ctl_priv* priv() const;
 
     private:
         struct ctl_priv* _pi = nullptr;

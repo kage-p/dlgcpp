@@ -58,7 +58,7 @@ void dialogs_child_demo(ISharedDialog parent)
     label->clickable(false);
     subDlg->add(label);
 
-    dlg->SizeEvent() += [subDlg]()
+    dlg->SizeEvent() += [subDlg](auto)
         {
             int margin = 10;
             subDlg->move({ margin, margin });
@@ -74,7 +74,7 @@ void dialogs_child_demo(ISharedDialog parent)
                 std::to_string(event.point.y()));
         };
 
-    button->ClickEvent() += [subDlg]()
+    button->ClickEvent() += [subDlg](auto)
         {
             auto color = subDlg->color() == Color::Red ? Color::Blue : Color::Red;
             subDlg->color(color);

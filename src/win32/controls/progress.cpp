@@ -25,10 +25,11 @@ void Progress::rebuild()
     auto hwnd = reinterpret_cast<HWND>(handle());
 
     // apply the properties
+    auto clrPair = Control::colors();
     SendMessage(hwnd, PBM_SETRANGE32, (WPARAM)_props->range.first, (LPARAM)_props->range.second);
     SendMessage(hwnd, PBM_SETPOS, (WPARAM)_props->value, FALSE);
-    SendMessage(hwnd, PBM_SETBARCOLOR, 0, (LPARAM)colors().first);
-    SendMessage(hwnd, PBM_SETBKCOLOR, 0, (LPARAM)colors().second);
+    SendMessage(hwnd, PBM_SETBARCOLOR, 0, (LPARAM)clrPair.first);
+    SendMessage(hwnd, PBM_SETBKCOLOR, 0, (LPARAM)clrPair.second);
 }
 
 std::string Progress::className() const
@@ -120,18 +121,15 @@ void Progress::range(int from, int to)
     SendMessage(hwnd, PBM_SETRANGE32, (WPARAM)_props->range.first, (LPARAM)_props->range.second);
 }
 
-std::pair<Color, Color> Progress::colors() const
-{
-    return Control::colors();
-}
-
 void Progress::colors(Color fgColor, Color bgColor)
 {
     Control::colors(fgColor, bgColor);
 
     if (handle() == nullptr)
         return;
+
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, PBM_SETBARCOLOR, 0, (LPARAM)colors().first);
-    SendMessage(hwnd, PBM_SETBKCOLOR, 0, (LPARAM)colors().second);
+    auto clrPair = Control::colors();
+    SendMessage(hwnd, PBM_SETBARCOLOR, 0, (LPARAM)clrPair.first);
+    SendMessage(hwnd, PBM_SETBKCOLOR, 0, (LPARAM)clrPair.second);
 }

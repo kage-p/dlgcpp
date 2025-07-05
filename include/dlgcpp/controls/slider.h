@@ -17,7 +17,6 @@ namespace dlgcpp
             void value(int value);
             std::pair<int, int> range() const;
             void range(int from, int to);
-            std::pair<Color, Color> colors() const override;
             void colors(Color fgColor, Color bgColor) override;
             Color barColor() const;
             void barColor(Color value);

@@ -6,16 +6,39 @@ using namespace dlgcpp::controls;
 struct dlgcpp::controls::listview_col_priv
 {
     std::string text;
-    int role = 0;
     int width = 0;
 };
 
-ListViewColumn::ListViewColumn(const std::string& text, int role, int width) :
+ListViewColumn::ListViewColumn() :
     _priv(new listview_col_priv())
 {
+}
+
+ListViewColumn::ListViewColumn(
+    const std::string& text,
+    int width) :
+    ListViewColumn()
+{
     _priv->text = text;
-    _priv->role = role;
     _priv->width = width;
+}
+
+ListViewColumn::ListViewColumn(
+    const ListViewColumn& other) :
+    ListViewColumn()
+{
+    _priv->text = other.text();
+    _priv->width = other.width();
+}
+
+ListViewColumn& ListViewColumn::operator=(const ListViewColumn& other)
+{
+    if (this != &other)
+    {
+        _priv->text = other.text();
+        _priv->width = other.width();
+    }
+    return *this;
 }
 
 ListViewColumn::~ListViewColumn()
@@ -31,16 +54,6 @@ const std::string& ListViewColumn::text() const
 void ListViewColumn::text(const std::string& value)
 {
     _priv->text = value;
-}
-
-int ListViewColumn::role() const
-{
-    return _priv->role;
-}
-
-void ListViewColumn::role(int value)
-{
-    _priv->role = value;
 }
 
 int ListViewColumn::width() const
