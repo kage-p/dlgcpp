@@ -59,6 +59,7 @@ namespace dlgcpp
         virtual IEvent<ISharedControl>& MouseCaptureLostEvent() = 0;
         virtual IEvent<ISharedControl>& MoveEvent() = 0;
         virtual IEvent<ISharedControl>& SizeEvent() = 0;
+        virtual IEvent<int>& UserEvent() = 0;
     };
 
     class Control : public IChildControl,
@@ -127,6 +128,7 @@ namespace dlgcpp
         IEvent<ISharedControl>& MouseCaptureLostEvent() override;
         IEvent<ISharedControl>& MoveEvent() override;
         IEvent<ISharedControl>& SizeEvent() override;
+        IEvent<int>& UserEvent() override;
 
     protected:
         explicit Control(const std::string& text, const Position& p);

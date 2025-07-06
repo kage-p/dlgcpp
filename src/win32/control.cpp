@@ -796,3 +796,8 @@ IEvent<ISharedControl>& Control::SizeEvent()
 {
     return _pi->props.sizeEvent;
 }
+
+IEvent<int>& Control::UserEvent()
+{
+    return _pi->props.userEvent;
+}

@@ -41,6 +41,7 @@ namespace dlgcpp
         Event<ISharedControl> mouseCaptureLost;
         Event<ISharedControl> moveEvent;
         Event<ISharedControl> sizeEvent;
+        Event<int> userEvent;
     };
 
     struct ctl_state
