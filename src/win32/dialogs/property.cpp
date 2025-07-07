@@ -64,7 +64,7 @@ bool PropertyDialog::show()
             auto width = dlg->p().width();
             auto height = dlg->p().height();
 
-            // ##### PROPDLG1: complete property dialog
+            // TODO: complete property dialog
             Position pos;
 
             pos = Position{ 10,10, _props->sectionWidth, (height - 20) };

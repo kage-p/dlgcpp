@@ -5,23 +5,21 @@ namespace dlgcpp
 {
     namespace controls
     {
-        class CheckBox : public dlgcpp::Control
+        class OptionButton : public dlgcpp::Control
         {
         public:
-            explicit CheckBox(const std::string& text = std::string(), const Position& p = Position());
-            ~CheckBox() override;
+            explicit OptionButton(const std::string& text = std::string(), const Position& p = Position());
+            ~OptionButton() override;
 
             bool checked() const;
             void checked(bool value);
-            bool autoCheck() const;
-            void autoCheck(bool value);
             HorizontalAlign horizontalAlignment() const;
             void horizontalAlignment(HorizontalAlign value);
             VerticalAlign verticalAlignment() const;
             void verticalAlignment(VerticalAlign value);
 
         private:
-            struct checkbox_props* _props;
+            struct optionbtn_props* _props;
 
             void rebuild() override;
             std::string className() const override;

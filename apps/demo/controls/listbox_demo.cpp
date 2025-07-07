@@ -13,7 +13,6 @@ void controls_listbox_demo(ISharedDialog parent)
     auto listbox = std::make_shared<ListBox>(Position{ 10, 10, 180, 105 });
     listbox->colors(Color::Black, Color::Orange);
     listbox->items(std::vector<std::string>{ "Option A", "Option B", "Option C", "Option D", "Option E"});
-    listbox->font(Font{ "sans serif", 10, true });
     dlg->add(listbox);
 
     listbox->DoubleClickEvent() += [dlg, listbox](auto)

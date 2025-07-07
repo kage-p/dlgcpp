@@ -116,6 +116,27 @@ unsigned int ComboBox::styles() const
     return styles;
 }
 
+bool ComboBox::isHandleEqual(void* otherHandle) const
+{
+    if (Control::isHandleEqual(otherHandle))
+        return true;
+
+    auto hwnd = reinterpret_cast<HWND>(handle());
+    if (hwnd == 0)
+        return false;
+
+    // match the handle with the list box portion
+    auto cbInfo = COMBOBOXINFO();
+    cbInfo.cbSize = sizeof(cbInfo);
+    if (GetComboBoxInfo(hwnd, &cbInfo))
+    {
+        if (cbInfo.hwndList == otherHandle)
+        {
+            return true;
+        }
+    }
+}
+
 int ComboBox::currentIndex() const
 {
     return _props->currentIndex;

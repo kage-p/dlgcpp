@@ -1,5 +1,5 @@
-#include "dlgcpp/controls/toolbar_item.h"
 #include "../event_p.h"
+#include "dlgcpp/controls/toolbar_item.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -15,10 +15,14 @@ struct dlgcpp::controls::toolbar_item_priv
     Event<ISharedToolBarItem> clickEvent;
 };
 
-ToolBarItem::ToolBarItem(const ImageSource& image, const std::string& toolTipText) :
+ToolBarItem::ToolBarItem(
+    const ImageSource& image,
+    const std::string& text,
+    const std::string& toolTipText) :
     _priv(new toolbar_item_priv())
 {
     _priv->image = image;
+    _priv->text = text;
     _priv->toolTipText = toolTipText;
     _priv->separator = image.id.empty();
 }

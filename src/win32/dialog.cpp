@@ -919,7 +919,7 @@ void Dialog::notify(dlg_message& msg)
 
         if (nmhdr.code == TTN_NEEDTEXT)
         {
-            // ##### TODO: ToolTips - idFrom is a toolbar button; the hwndFrom is the tooltip
+            // TODO: ToolTips - idFrom is a toolbar button; the hwndFrom is the tooltip
             // either: 1) implement reserved id ranges and perform lookup within range
             //            note: we need id ranges as conflicts will occur with multiple controls
             //
@@ -1348,15 +1348,19 @@ std::shared_ptr<IChildControl> findControl(dlg_priv& pi, int id, HWND hwnd)
         // by HWND
         for (auto& child : pi.props.controls)
         {
-            if ((HWND)child->control()->handle() == hwnd)
+            if ((HWND)child->control()->isHandleEqual(hwnd))
                 return child;
         }
 
-        // by HWND (PARENT)
-        for (auto& child : pi.props.controls)
+        // by parent HWND 
+        auto hwndParent = GetParent(hwnd);
+        if (hwndParent != 0)
         {
-            if (GetParent((HWND)child->control()->handle()) == hwnd)
-                return child;
+            for (auto& child : pi.props.controls)
+            {
+                if ((HWND)child->control()->isHandleEqual(hwndParent))
+                    return child;
+            }
         }
     }
 

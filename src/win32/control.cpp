@@ -578,6 +578,11 @@ void* Control::handle() const
     return _pi->state.hwnd;
 }
 
+bool Control::isHandleEqual(void* otherHandle) const
+{
+    return ((HWND)otherHandle == _pi->state.hwnd);
+}
+
 void* Control::user() const
 {
     return _pi->props.user;

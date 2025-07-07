@@ -134,7 +134,10 @@ namespace dlgcpp
         Brown = 0x2A2AA5
     };
 
-#define MakeColor(r,g,b) (dlgcpp::Color) (((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff));
+    inline Color MakeColor(int8_t r, int8_t g, int8_t b)
+    {
+        return (Color)(((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff));
+    }
 
     typedef struct Font
     {

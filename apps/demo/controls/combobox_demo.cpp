@@ -14,7 +14,6 @@ void controls_combobox_demo(ISharedDialog parent)
     auto combo1 = std::make_shared<ComboBox>(Position{ 10, 10, 180, 100 });
     combo1->colors(Color::Black, Color::Orange);
     combo1->items(std::vector<std::string>{ "Option A", "Option B", "Option C", "Option D", "Option E"});
-    combo1->font(Font{ "sans serif", 10, true });
     dlg->add(combo1);
 
     combo1->DoubleClickEvent() += [dlg, combo1](auto)
@@ -27,7 +26,6 @@ void controls_combobox_demo(ISharedDialog parent)
     combo2->dropDown(true);
     combo2->colors(Color::Black, Color::Orange);
     combo2->items(std::vector<std::string>{ "Option A", "Option B", "Option C", "Option D", "Option E"});
-    combo2->font(Font{ "sans serif", 10, true });
     dlg->add(combo2);
 
     // list drop-down
@@ -36,7 +34,6 @@ void controls_combobox_demo(ISharedDialog parent)
     combo3->editable(false);
     combo3->colors(Color::Black, Color::Orange);
     combo3->items(std::vector<std::string>{ "Option A", "Option B", "Option C", "Option D", "Option E"});
-    combo3->font(Font{ "sans serif", 10, true });
     dlg->add(combo3);
 
     dlg->exec();

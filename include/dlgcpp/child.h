@@ -21,6 +21,8 @@ namespace dlgcpp
         virtual void rebuild() = 0;
     };
 
+    struct ctl_state;
+
     class IChildControl : public IChild
     {
     public:
@@ -28,7 +30,7 @@ namespace dlgcpp
 
         // TODO: remove control state access and use notify only.
         // it is possible to use a custom (reserved) message to communicate
-        virtual struct ctl_state state() = 0;
+        virtual ctl_state state() = 0;
     };
 
     class IChildDialog : public IChild

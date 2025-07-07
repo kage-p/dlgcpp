@@ -29,6 +29,7 @@ set(src_files
     dlgcpp/controls/textbox.h
     dlgcpp/controls/toolbar.h
     dlgcpp/controls/toolbar_item.h
+	dlgcpp/controls/trackbar.h
     dlgcpp/dialogs/about.h
     dlgcpp/dialogs/file.h
     dlgcpp/dialogs/folder.h

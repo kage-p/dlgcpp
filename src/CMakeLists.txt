@@ -32,6 +32,8 @@ set(src_files ${src_files}
     win32/controls/listview.cpp
     win32/controls/listview_col.cpp
     win32/controls/listview_p.h
+    win32/controls/option_btn.cpp
+    win32/controls/option_btn_p.h
     win32/controls/progress.cpp
     win32/controls/progress_p.h
     win32/controls/slider.cpp
@@ -46,6 +48,8 @@ set(src_files ${src_files}
     win32/controls/toolbar.cpp
     win32/controls/toolbar_item.cpp
     win32/controls/toolbar_p.h
+    win32/controls/trackbar.cpp
+    win32/controls/trackbar_p.h
     win32/dialog.cpp
     win32/dialog_p.h
     win32/dialogs/about.cpp

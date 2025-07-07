@@ -1,21 +1,21 @@
 #include "../dlgmsg.h"
-#include "checkbox_p.h"
+#include "option_btn_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-CheckBox::CheckBox(const std::string& text, const Position& p) :
+OptionButton::OptionButton(const std::string& text, const Position& p) :
     Control(text, p),
-    _props(new checkbox_props())
+    _props(new optionbtn_props())
 {
 }
 
-CheckBox::~CheckBox()
+OptionButton::~OptionButton()
 {
     delete _props;
 }
 
-void CheckBox::rebuild()
+void OptionButton::rebuild()
 {
     Control::rebuild();
 
@@ -25,16 +25,18 @@ void CheckBox::rebuild()
     SendMessage(hwnd, BM_SETCHECK, (WPARAM)_props->checked, 0);
 }
 
-std::string CheckBox::className() const
+std::string OptionButton::className() const
 {
     return "BUTTON";
 }
 
-unsigned int CheckBox::styles() const
+unsigned int OptionButton::styles() const
 {
     auto styles = Control::styles();
 
-    styles |= (_props->autoCheck ? BS_AUTOCHECKBOX : BS_CHECKBOX) | BS_NOTIFY;
+    // note: auto style is not supported as we don't have a simple
+    // method of reading the state from other controls in a group.
+    styles |= BS_RADIOBUTTON | BS_NOTIFY;
 
     switch (_props->horzAlign)
     {
@@ -65,20 +67,12 @@ unsigned int CheckBox::styles() const
     return styles;
 }
 
-void CheckBox::notify(dlg_message& msg)
+void OptionButton::notify(dlg_message& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {
         if (HIWORD(msg.wParam) == BN_CLICKED)
         {
-            if (_props->autoCheck)
-            {
-                // handle auto check state
-                auto hwnd = (HWND)handle();
-                auto state = SendMessage(hwnd, BM_GETCHECK, 0, 0);
-                checked(state);
-            }
-
             ClickEvent().invoke(shared_from_this());
         }
         else if (HIWORD(msg.wParam) == BN_DBLCLK)
@@ -98,12 +92,12 @@ void CheckBox::notify(dlg_message& msg)
     Control::notify(msg);
 }
 
-bool CheckBox::checked() const
+bool OptionButton::checked() const
 {
     return _props->checked;
 }
 
-void CheckBox::checked(bool value)
+void OptionButton::checked(bool value)
 {
     if (_props->checked == value)
         return;
@@ -111,34 +105,16 @@ void CheckBox::checked(bool value)
 
     if (handle() == nullptr)
         return;
-
     auto hwnd = reinterpret_cast<HWND>(handle());
     SendMessage(hwnd, BM_SETCHECK, (WPARAM)_props->checked, 0);
 }
 
-bool CheckBox::autoCheck() const
-{
-    return _props->autoCheck;
-}
-
-void CheckBox::autoCheck(bool value)
-{
-    if (_props->autoCheck == value)
-        return;
-    _props->autoCheck = value;
-
-    if (handle() == nullptr)
-        return;
-
-    rebuild();
-}
-
-HorizontalAlign CheckBox::horizontalAlignment() const
+HorizontalAlign OptionButton::horizontalAlignment() const
 {
     return _props->horzAlign;
 }
 
-void CheckBox::horizontalAlignment(HorizontalAlign value)
+void OptionButton::horizontalAlignment(HorizontalAlign value)
 {
     if (_props->horzAlign == value)
         return;
@@ -146,12 +122,12 @@ void CheckBox::horizontalAlignment(HorizontalAlign value)
     rebuild();
 }
 
-VerticalAlign CheckBox::verticalAlignment() const
+VerticalAlign OptionButton::verticalAlignment() const
 {
     return _props->vertAlign;
 }
 
-void CheckBox::verticalAlignment(VerticalAlign value)
+void OptionButton::verticalAlignment(VerticalAlign value)
 {
     if (_props->vertAlign == value)
         return;

@@ -35,6 +35,7 @@ namespace dlgcpp
             std::string className() const override;
             void notify(dlg_message&) override;
             unsigned int styles() const override;
+            bool isHandleEqual(void* otherHandle) const override;
 
             void readInput();
             void readSelection();

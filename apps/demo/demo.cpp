@@ -14,10 +14,13 @@
 #include "controls/label_demo.h"
 #include "controls/listbox_demo.h"
 #include "controls/listview_demo.h"
+#include "controls/optionbtn_demo.h"
 #include "controls/progress_demo.h"
 #include "controls/slider_demo.h"
 #include "controls/tabs_demo.h"
 #include "controls/textbox_demo.h"
+#include "controls/toolbar_demo.h"
+#include "controls/trackbar_demo.h"
 
 #include "dialogs/about_demo.h"
 #include "dialogs/dialog_demo.h"
@@ -89,6 +92,10 @@ int main()
     item->ClickEvent() += [mainDlg](ISharedMenuItem) { controls_listview_demo(mainDlg); };
     controls->add(item);
 
+    item = std::make_shared<MenuItem>("OptionButton control");
+    item->ClickEvent() += [mainDlg](ISharedMenuItem) { controls_optionbtn_demo(mainDlg); };
+    controls->add(item);
+
     item = std::make_shared<MenuItem>("Progress control");
     item->ClickEvent() += [mainDlg](ISharedMenuItem) { controls_progress_demo(mainDlg); };
     controls->add(item);
@@ -103,6 +110,14 @@ int main()
 
     item = std::make_shared<MenuItem>("TextBox control");
     item->ClickEvent() += [mainDlg](ISharedMenuItem) { controls_textbox_demo(mainDlg); };
+    controls->add(item);
+
+    item = std::make_shared<MenuItem>("ToolBar control");
+    item->ClickEvent() += [mainDlg](ISharedMenuItem) { controls_toolbar_demo(mainDlg); };
+    controls->add(item);
+
+    item = std::make_shared<MenuItem>("TrackBar control");
+    item->ClickEvent() += [mainDlg](ISharedMenuItem) { controls_trackbar_demo(mainDlg); };
     controls->add(item);
 
     item = std::make_shared<MenuItem>("");

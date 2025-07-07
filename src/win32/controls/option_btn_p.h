@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dlgcpp/controls/checkbox.h"
+#include "dlgcpp/controls/option_btn.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -10,10 +10,9 @@ namespace dlgcpp
 {
     namespace controls
     {
-        struct checkbox_props
+        struct optionbtn_props
         {
             bool checked = false;
-            bool autoCheck = true;
             HorizontalAlign horzAlign = HorizontalAlign::Left;
             VerticalAlign vertAlign = VerticalAlign::Center;
         };

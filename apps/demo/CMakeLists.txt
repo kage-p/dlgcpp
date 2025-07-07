@@ -30,6 +30,8 @@ set(src_files
     controls/listbox_demo.h
     controls/listview_demo.cpp
     controls/listview_demo.h
+    controls/optionbtn_demo.cpp    
+    controls/optionbtn_demo.h
     controls/progress_demo.cpp
     controls/progress_demo.h
     controls/slider_demo.cpp
@@ -38,6 +40,10 @@ set(src_files
     controls/tabs_demo.h
     controls/textbox_demo.cpp
     controls/textbox_demo.h
+    controls/toolbar_demo.cpp
+    controls/toolbar_demo.h
+    controls/trackbar_demo.cpp
+    controls/trackbar_demo.h
     dialogs/about_demo.cpp
     dialogs/about_demo.h
     dialogs/dialog_demo.cpp

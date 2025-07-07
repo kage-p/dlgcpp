@@ -40,6 +40,7 @@ namespace dlgcpp
         virtual bool wantSizingEvents() const = 0;
         virtual void wantSizingEvents(bool value) = 0;
         virtual void* handle() const = 0;
+        virtual bool isHandleEqual(void* handle) const = 0;
         virtual void* user() const = 0;
         virtual void user(void* value) = 0;
         virtual ISharedDialog parent() const = 0;
@@ -77,7 +78,7 @@ namespace dlgcpp
         void id(int value) override;
         int idRange() const override;
         std::shared_ptr<IControl> control() override;
-        struct ctl_state state() override;
+        ctl_state state() override;
         void notify(dlg_message&) override;
         void rebuild() override;
 
@@ -110,6 +111,7 @@ namespace dlgcpp
         bool wantSizingEvents() const override;
         void wantSizingEvents(bool value) override;
         void* handle() const override;
+        bool isHandleEqual(void* otherHandle) const override;
         void* user() const override;
         void user(void* value) override;
         void redraw() override;

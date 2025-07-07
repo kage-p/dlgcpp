@@ -41,7 +41,7 @@ void ToolBar::notify(dlg_message& msg)
                 return;
 
             // find button
-            int index = ctlId - id();
+            int index = ctlId - firstId;
             if (index < 0 || index >= (int)_props->items.size())
                 return;
 
@@ -114,8 +114,7 @@ const std::vector<ISharedToolBarItem>& ToolBar::items() const
 
 void ToolBar::items(const std::vector<ISharedToolBarItem>& items)
 {
-
-    //##### LIMIT TO toolbarIdRange
+    // TODO: LIMIT TO toolbarIdRange
     _props->items = items;
 
     updateItems();
