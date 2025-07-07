@@ -128,13 +128,12 @@ bool ComboBox::isHandleEqual(void* otherHandle) const
     // match the handle with the list box portion
     auto cbInfo = COMBOBOXINFO();
     cbInfo.cbSize = sizeof(cbInfo);
-    if (GetComboBoxInfo(hwnd, &cbInfo))
+    if (GetComboBoxInfo(hwnd, &cbInfo) &&
+        cbInfo.hwndList == otherHandle)
     {
-        if (cbInfo.hwndList == otherHandle)
-        {
-            return true;
-        }
+        return true;
     }
+    return false;
 }
 
 int ComboBox::currentIndex() const
