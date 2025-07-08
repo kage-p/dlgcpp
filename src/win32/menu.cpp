@@ -59,7 +59,7 @@ void Menu::notify(dlg_message& msg)
 
         // search the menu tree for the id
         auto id = (int)LOWORD(msg.wParam);
-        auto item = _state->idMap[id];
+        auto& item = _state->idMap[id];
         if (item != nullptr)
             item->ClickEvent().invoke(item);
     }
@@ -189,7 +189,7 @@ void createMenuItems(
             nextItemId,
             state))
         {
-            DLGCPP_CERR("Failed to insert menu itemId " << itemId);
+            DLGCPP_CERR("Failed to insert menu with itemId " << nextItemId);
             break;
         }
     }
