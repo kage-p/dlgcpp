@@ -1,7 +1,8 @@
-#include "../control_p.h"
-#include "../dlgmsg.h"
-#include "../utility.h"
+#include "control_p.h"
 #include "listview_p.h"
+#include "utility/message.h"
+#include "utility/string.h"
+#include "utility/units.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;

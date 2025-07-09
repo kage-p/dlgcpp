@@ -1,5 +1,9 @@
 #include "folder_p.h"
-#include "../utility.h"
+#include "utility/string.h"
+
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 #include <Shlobj.h>
 
 using namespace dlgcpp;
@@ -99,7 +103,7 @@ bool FolderDialog::show(unsigned int flags)
     auto pidlList = SHBrowseForFolderW(&bi);
 
     std::wstring buf(MAX_PATH, 0);
-    if ((pidlList == NULL) || (SHGetPathFromIDListW(pidlList, &buf[0]) == FALSE) )
+    if ((pidlList == NULL) || (SHGetPathFromIDListW(pidlList, &buf[0]) == FALSE))
         return false;
 
     _props->folderName = toBytes(buf.c_str());

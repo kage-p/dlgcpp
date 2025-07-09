@@ -1,4 +1,3 @@
-#include "../utility.h"
 #include "property_p.h"
 
 using namespace dlgcpp;

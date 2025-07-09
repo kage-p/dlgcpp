@@ -16,13 +16,14 @@ namespace dlgcpp
     struct dlg_props
     {
         ISharedDialog parent;
+        DialogType type = DialogType::Application;
         int id = 0;
         bool enabled = true;
-        bool visible = false;  // hidden by default
+        bool visible = false;
+        DisplayState displayState = DisplayState::Normal;
+        Position p = Position(0, 0, 600, 400);
         bool dropTarget = false;
-        DialogType type = DialogType::Application;
         bool showHelp = false;
-        Position p;
         std::string title;
         ImageSource image;
         std::shared_ptr<IChildMenu> menu;
@@ -39,13 +40,19 @@ namespace dlgcpp
         } timer;
         void* user = nullptr;
 
+        // event inhibitors
+        bool _inhibitSizeAndMoveEvents = false;
+
+        // events
+        Event<ISharedDialog> confirmEvent;
+        Event<ISharedDialog> cancelEvent;
         Event<ISharedDialog, KeyboardEvent> keyDownEvent;
         Event<ISharedDialog, KeyboardEvent> keyUpEvent;
         Event<ISharedDialog, MouseEvent> mouseDownEvent;
         Event<ISharedDialog, MouseEvent> mouseUpEvent;
         Event<ISharedDialog, MouseEvent> mouseMoveEvent;
         Event<ISharedDialog, MouseEvent> mouseDblClickEvent;
-        Event<ISharedDialog> mouseCaptureLost;
+        Event<ISharedDialog> mouseCaptureLostEvent;
         Event<ISharedDialog, std::vector<std::string>> dropEvent;
         Event<ISharedDialog> focusEvent;
         Event<ISharedDialog> helpEvent;

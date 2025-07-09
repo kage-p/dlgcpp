@@ -1,5 +1,5 @@
-#include "../dlgmsg.h"
 #include "option_btn_p.h"
+#include "utility/message.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;

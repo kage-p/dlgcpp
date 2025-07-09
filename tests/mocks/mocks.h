@@ -10,18 +10,15 @@ namespace dlgcpp
         class MockDialog : public IDialog
         {
         public:
+            // properties
             MOCK_METHOD(bool, enabled, (), (const, override));
             MOCK_METHOD(void, enabled, (bool), (override));
             MOCK_METHOD(bool, visible, (), (const, override));
             MOCK_METHOD(void, visible, (bool value), (override));
+            MOCK_METHOD(DisplayState, displayState, (), (const, override));
+            MOCK_METHOD(void, displayState, (DisplayState value), (override));
             MOCK_METHOD(const Position&, p, (), (const, override));
             MOCK_METHOD(void, p, (const Position&), (override));
-            MOCK_METHOD(void, move, (const Point& point), (override));
-            MOCK_METHOD(void, resize, (const Size& size), (override));
-            MOCK_METHOD(void, center, (), (override));
-            MOCK_METHOD(void, setFocus, (), (override));
-            MOCK_METHOD(void, bringToFront, (), (override));
-            MOCK_METHOD(void, sendToBack, (), (override));
             MOCK_METHOD(DialogType, type, (), (const, override));
             MOCK_METHOD(bool, showHelp, (), (const, override));
             MOCK_METHOD(void, showHelp, (bool value), (override));
@@ -43,7 +40,16 @@ namespace dlgcpp
             MOCK_METHOD(void*, user, (), (const, override));
             MOCK_METHOD(void, user, (void* value), (override));
             MOCK_METHOD(ISharedDialog, parent, (), (override));
+
+            // actions
+            MOCK_METHOD(void, show, (), (override));
             MOCK_METHOD(void, close, (int result), (override));
+            MOCK_METHOD(void, setFocus, (), (override));
+            MOCK_METHOD(void, bringToFront, (), (override));
+            MOCK_METHOD(void, sendToBack, (), (override));
+            MOCK_METHOD(void, move, (const Point& point), (override));
+            MOCK_METHOD(void, resize, (const Size& size), (override));
+            MOCK_METHOD(void, center, (), (override));
             MOCK_METHOD(void, message, (const std::string& message, const std::string& title), (override));
             MOCK_METHOD(void, timer, (int timeout), (override));
             MOCK_METHOD(void, sendUserEvent, (int param), (override));
@@ -57,6 +63,12 @@ namespace dlgcpp
             MOCK_METHOD(std::vector<ISharedDialog>, dialogs, (), (const, override));
 
             // events
+            MOCK_METHOD((IEvent<ISharedDialog>&), ConfirmEvent, (), (override));
+            MOCK_METHOD((IEvent<ISharedDialog>&), CancelEvent, (), (override));
+            MOCK_METHOD((IEvent<ISharedDialog>&), HelpEvent, (), (override));
+            MOCK_METHOD((IEvent<ISharedDialog>&), MoveEvent, (), (override));
+            MOCK_METHOD((IEvent<ISharedDialog>&), SizeEvent, (), (override));
+            MOCK_METHOD((IEvent<ISharedDialog>&), TimerEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog, KeyboardEvent>&), KeyDownEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog, KeyboardEvent>&), KeyUpEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog, MouseEvent>&), MouseDownEvent, (), (override));
@@ -65,10 +77,6 @@ namespace dlgcpp
             MOCK_METHOD((IEvent<ISharedDialog, MouseEvent>&), MouseDoubleClickEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog>&), MouseCaptureLostEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog, std::vector<std::string>>&), DropEvent, (), (override));
-            MOCK_METHOD((IEvent<ISharedDialog>&), HelpEvent, (), (override));
-            MOCK_METHOD((IEvent<ISharedDialog>&), MoveEvent, (), (override));
-            MOCK_METHOD((IEvent<ISharedDialog>&), SizeEvent, (), (override));
-            MOCK_METHOD((IEvent<ISharedDialog>&), TimerEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog, int>&), UserEvent, (), (override));
         };
 

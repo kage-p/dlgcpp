@@ -25,7 +25,7 @@ void dialogs_modeless_demo(ISharedDialog parent)
     dlg->resize({ 240,120 });
     dlg->center();
 
-    dlg->visible(true);
+    dlg->show();
 }
 
 void dialogs_tool_demo(ISharedDialog parent)
@@ -35,7 +35,7 @@ void dialogs_tool_demo(ISharedDialog parent)
     dlg->move({ parent->p().x() + parent->p().width(), parent->p().y() });
     dlg->resize({ 80,parent->p().height() });
 
-    dlg->visible(true);
+    dlg->show();
 }
 
 void dialogs_child_demo(ISharedDialog parent)

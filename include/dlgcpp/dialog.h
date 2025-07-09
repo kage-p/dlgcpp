@@ -11,6 +11,10 @@
 
 namespace dlgcpp
 {
+
+    /// <summary>
+    /// Dialog type
+    /// </summary>
     enum class DialogType
     {
         Application,
@@ -19,11 +23,12 @@ namespace dlgcpp
         Tool
     };
 
-    enum class DialogState
+    /// <summary>
+    /// Dialog display state when visible
+    /// </summary>
+    enum class DisplayState
     {
-        // TODO: impl
-        Hidden = 0,
-        Normal,
+        Normal = 0,
         Minimized,
         Maximized
     };
@@ -31,18 +36,15 @@ namespace dlgcpp
     class IDialog
     {
     public:
+        // properties
         virtual bool enabled() const = 0;
         virtual void enabled(bool value) = 0;
         virtual bool visible() const = 0;
         virtual void visible(bool value) = 0;
+        virtual DisplayState displayState() const = 0;
+        virtual void displayState(DisplayState value) = 0;
         virtual const Position& p() const = 0;
         virtual void p(const Position& p) = 0;
-        virtual void move(const Point& point) = 0;
-        virtual void resize(const Size& size) = 0;
-        virtual void center() = 0;
-        virtual void setFocus() = 0;
-        virtual void bringToFront() = 0;
-        virtual void sendToBack() = 0;
         virtual DialogType type() const = 0;
         virtual bool showHelp() const = 0;
         virtual void showHelp(bool value) = 0;
@@ -64,7 +66,16 @@ namespace dlgcpp
         virtual void* user() const = 0;
         virtual void user(void* value) = 0;
         virtual ISharedDialog parent() = 0;
+
+        // actions
+        virtual void show() = 0;
         virtual void close(int result = 0) = 0;
+        virtual void setFocus() = 0;
+        virtual void bringToFront() = 0;
+        virtual void sendToBack() = 0;
+        virtual void move(const Point& point) = 0;
+        virtual void resize(const Size& size) = 0;
+        virtual void center() = 0;
         virtual void message(const std::string& message, const std::string& title = std::string()) = 0;
         virtual void sendUserEvent(int param = 0) = 0;
         virtual void timer(int timeout) = 0;
@@ -78,6 +89,12 @@ namespace dlgcpp
         virtual std::vector<ISharedDialog> dialogs() const = 0;
 
         // events
+        virtual IEvent<ISharedDialog>& ConfirmEvent() = 0;
+        virtual IEvent<ISharedDialog>& CancelEvent() = 0;
+        virtual IEvent<ISharedDialog>& HelpEvent() = 0;
+        virtual IEvent<ISharedDialog>& MoveEvent() = 0;
+        virtual IEvent<ISharedDialog>& SizeEvent() = 0;
+        virtual IEvent<ISharedDialog>& TimerEvent() = 0;
         virtual IEvent<ISharedDialog, KeyboardEvent>& KeyDownEvent() = 0;
         virtual IEvent<ISharedDialog, KeyboardEvent>& KeyUpEvent() = 0;
         virtual IEvent<ISharedDialog, MouseEvent>& MouseDownEvent() = 0;
@@ -86,10 +103,6 @@ namespace dlgcpp
         virtual IEvent<ISharedDialog, MouseEvent>& MouseDoubleClickEvent() = 0;
         virtual IEvent<ISharedDialog>& MouseCaptureLostEvent() = 0;
         virtual IEvent<ISharedDialog, std::vector<std::string>>& DropEvent() = 0;
-        virtual IEvent<ISharedDialog>& HelpEvent() = 0;
-        virtual IEvent<ISharedDialog>& MoveEvent() = 0;
-        virtual IEvent<ISharedDialog>& SizeEvent() = 0;
-        virtual IEvent<ISharedDialog>& TimerEvent() = 0;
         virtual IEvent<ISharedDialog, int>& UserEvent() = 0;
     };
 
@@ -98,7 +111,8 @@ namespace dlgcpp
         public std::enable_shared_from_this<Dialog>
     {
     public:
-        explicit Dialog(DialogType type = DialogType::Application,
+        explicit Dialog(
+            DialogType type = DialogType::Application,
             ISharedDialog parent = nullptr);
         virtual ~Dialog();
         int exec();
@@ -108,7 +122,7 @@ namespace dlgcpp
         void parent(ISharedDialog) override;
         int id() const override;
         void id(int value) override;
-        int idRange() const override { return 1; } // no id range for dialogs, only for controls
+        int idRange() const override;
         ISharedDialog dialog() override;
         void notify(dlg_message&) override;
         void rebuild() override;
@@ -118,14 +132,10 @@ namespace dlgcpp
         void enabled(bool value) override;
         bool visible() const override;
         void visible(bool value) override;
+        DisplayState displayState() const override;
+        void displayState(DisplayState value) override;
         const Position& p() const override;
         void p(const Position& p) override;
-        void move(const Point& point) override;
-        void resize(const Size& size) override;
-        void center() override;
-        void setFocus() override;
-        void bringToFront() override;
-        void sendToBack() override;
         DialogType type() const override;
         bool showHelp() const override;
         void showHelp(bool value) override;
@@ -147,7 +157,16 @@ namespace dlgcpp
         void* user() const override;
         void user(void* value) override;
         ISharedDialog parent() override;
+
+        // actions
+        void show() override;
         void close(int result = 0) override;
+        void setFocus() override;
+        void bringToFront() override;
+        void sendToBack() override;
+        void move(const Point& point) override;
+        void resize(const Size& size) override;
+        void center() override;
         void message(const std::string& message, const std::string& title = std::string()) override;
         void sendUserEvent(int param = 0) override;
         void timer(int timeout) override;
@@ -161,6 +180,12 @@ namespace dlgcpp
         std::vector<ISharedDialog> dialogs() const override;
 
         // events
+        IEvent<ISharedDialog>& ConfirmEvent() override;
+        IEvent<ISharedDialog>& CancelEvent() override;
+        IEvent<ISharedDialog>& HelpEvent() override;
+        IEvent<ISharedDialog>& MoveEvent() override;
+        IEvent<ISharedDialog>& SizeEvent() override;
+        IEvent<ISharedDialog>& TimerEvent() override;
         IEvent<ISharedDialog, std::vector<std::string>>& DropEvent() override;
         IEvent<ISharedDialog, KeyboardEvent>& KeyDownEvent() override;
         IEvent<ISharedDialog, KeyboardEvent>& KeyUpEvent() override;
@@ -169,10 +194,6 @@ namespace dlgcpp
         IEvent<ISharedDialog, MouseEvent>& MouseMoveEvent() override;
         IEvent<ISharedDialog, MouseEvent>& MouseDoubleClickEvent() override;
         IEvent<ISharedDialog>& MouseCaptureLostEvent() override;
-        IEvent<ISharedDialog>& HelpEvent() override;
-        IEvent<ISharedDialog>& MoveEvent() override;
-        IEvent<ISharedDialog>& SizeEvent() override;
-        IEvent<ISharedDialog>& TimerEvent() override;
         IEvent<ISharedDialog, int>& UserEvent() override;
 
     protected:
@@ -184,5 +205,14 @@ namespace dlgcpp
 
     private:
         struct dlg_priv* _pi = nullptr;
+
+        int nextId(int reservedRange = 1);
+        void updateDisplayState();
+        void updateIcon();
+        void updatePosition();
+        void updateTimer();
+        void updateVisibility();
+        void destruct();
+        void quit(int result = 0);
     };
 }

@@ -1,8 +1,9 @@
 #include "dlgcpp/control.h"
 #include "dlgcpp/dialog.h"
-#include "dlgmsg.h"
 #include "menu_p.h"
-#include "utility.h"
+#include "utility/message.h"
+#include "utility/string.h"
+#include "utility/units.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX

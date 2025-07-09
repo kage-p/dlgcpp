@@ -15,6 +15,11 @@ if (WIN32)
 set(src_files ${src_files}
     win32/control.cpp
     win32/control_p.h
+    win32/dialog.cpp
+    win32/dialog_p.h
+    win32/event_p.h
+    win32/menu.cpp
+    win32/menu_p.h
     win32/controls/button.cpp
     win32/controls/button_p.h
     win32/controls/checkbox.cpp
@@ -50,8 +55,6 @@ set(src_files ${src_files}
     win32/controls/toolbar_p.h
     win32/controls/trackbar.cpp
     win32/controls/trackbar_p.h
-    win32/dialog.cpp
-    win32/dialog_p.h
     win32/dialogs/about.cpp
     win32/dialogs/about_p.h
     win32/dialogs/file.cpp
@@ -64,14 +67,18 @@ set(src_files ${src_files}
     win32/dialogs/property_p.h
     win32/dialogs/splash.cpp
     win32/dialogs/splash_p.h
-    win32/dlgmsg.h
-    win32/event_p.h
-    win32/keys_p.h
-    win32/menu.cpp
-    win32/menu_p.h
-	win32/message_p.h
-    win32/utility.cpp
-    win32/utility.h
+    win32/utility/font.cpp
+    win32/utility/font.h
+    win32/utility/image.cpp
+    win32/utility/image.h
+    win32/utility/keys.cpp
+    win32/utility/keys.h
+	win32/utility/message.cpp
+	win32/utility/message.h
+    win32/utility/string.cpp
+    win32/utility/string.h
+    win32/utility/units.cpp
+    win32/utility/units.h
 )
 endif()
 
@@ -81,6 +88,11 @@ add_library(${target} STATIC ${src_files})
 
 # requires unicode
 target_compile_definitions(${target} PRIVATE UNICODE _UNICODE)
+
+if (WIN32)
+    # include root path
+    target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/win32)
+endif()
 
 # consumers need the header target
 target_include_directories(${target} PUBLIC "$<TARGET_PROPERTY:dlgcpp,SOURCE_DIR>")

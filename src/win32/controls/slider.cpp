@@ -1,5 +1,5 @@
-#include "../dlgmsg.h"
 #include "slider_p.h"
+#include "utility/message.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;

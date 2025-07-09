@@ -1,6 +1,8 @@
-#include "../dlgmsg.h"
-#include "../utility.h"
 #include "label_p.h"
+#include "utility/font.h"
+#include "utility/message.h"
+#include "utility/string.h"
+#include "utility/units.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -141,8 +143,8 @@ void Label::updateAutoSize()
     HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
     auto f = Control::font();
-    if (!f.faceName.empty())
-        hFont = (HFONT)makeFont(f);
+    if (!f.family.empty())
+        hFont = toGdiFont(f);
 
     auto hdc = CreateCompatibleDC(NULL);
     auto szl = SIZE();

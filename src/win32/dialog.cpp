@@ -1,9 +1,9 @@
 #include "control_p.h"
 #include "dialog_p.h"
-#include "dlgmsg.h"
-#include "keys_p.h"
-#include "message_p.h"
-#include "utility.h"
+#include "utility/keys.h"
+#include "utility/message.h"
+#include "utility/string.h"
+#include "utility/units.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -13,12 +13,7 @@
 
 using namespace dlgcpp;
 
-// private functions
-int nextId(dlg_priv& pi, int reservedRange = 1);
-void updateImage(dlg_priv& pi);
-void updateTimer(dlg_priv& pi);
-void destruct(dlg_priv& pi);
-void quit(dlg_priv& pi, int result = 0);
+// private functions (winspec)
 std::shared_ptr<IChildControl> findControl(dlg_priv& pi, int id, HWND hwnd = NULL);
 LRESULT onSetCursor(dlg_priv& pi, HWND hwndChild);
 LRESULT onColorDlg(dlg_priv& pi, HDC hdc);
@@ -40,7 +35,6 @@ Dialog::Dialog(DialogType type, ISharedDialog parent) :
     // this dialog has a parent; but is not a child of the parent.
     _pi->props.type = type;
     _pi->props.parent = parent;
-    _pi->props.p = Position(0, 0, 600, 400);
 
     if (parent != nullptr)
     {
@@ -52,7 +46,7 @@ Dialog::Dialog(DialogType type, ISharedDialog parent) :
 
 Dialog::~Dialog()
 {
-    destruct(*_pi);
+    destruct();
 
     if (_pi->state.hbrBgColor != NULL)
     {
@@ -91,15 +85,21 @@ void Dialog::id(int value)
     _pi->props.id = value;
 }
 
+int Dialog::idRange() const
+{
+    // no id range for dialogs, only for controls
+    return 1;
+}
+
 ISharedDialog Dialog::dialog()
 {
     return shared_from_this();
 }
 
-int nextId(dlg_priv& pi, int reservedRange)
+int Dialog::nextId(int reservedRange)
 {
-    auto id = pi.props.nextId;
-    pi.props.nextId += reservedRange;
+    auto id = _pi->props.nextId;
+    _pi->props.nextId += reservedRange;
     return id;
 }
 
@@ -108,17 +108,9 @@ int Dialog::exec()
     if (_pi->props.execRunning)
         return 0;
 
+    show();
     if (_pi->state.hwnd == NULL)
-    {
-        // build failed
-        rebuild();
-        if (_pi->state.hwnd == NULL)
-            return 0;
-    }
-
-    // show dialog
-    if (!_pi->props.visible)
-        visible(true);
+        return 0;
 
     // disable parent
     _pi->state.execParentEnabled = false;
@@ -137,9 +129,9 @@ int Dialog::exec()
     return result;
 }
 
-void quit(dlg_priv& pi, int result)
+void Dialog::quit(int result)
 {
-    if (pi.props.execRunning)
+    if (_pi->props.execRunning)
     {
         // assumed our message loop is running
         PostQuitMessage(result);
@@ -175,17 +167,21 @@ void Dialog::visible(bool value)
         return;
 
     _pi->props.visible = value;
+    updateVisibility();
+}
 
-    if (_pi->state.hwnd == NULL)
-    {
-        // build failed
-        rebuild();
-        if (_pi->state.hwnd == NULL)
-            return;
-    }
-    ShowWindow(
-        _pi->state.hwnd,
-        _pi->props.visible ? SW_SHOW : SW_HIDE);
+DisplayState Dialog::displayState() const
+{
+    return _pi->props.displayState;
+}
+
+void Dialog::displayState(DisplayState value)
+{
+    if (_pi->props.displayState == value)
+        return;
+    _pi->props.displayState = value;
+
+    updateDisplayState();
 }
 
 const Position& Dialog::p() const
@@ -195,126 +191,11 @@ const Position& Dialog::p() const
 
 void Dialog::p(const Position& p)
 {
+    if (_pi->props.p == p)
+        return;
+
     _pi->props.p = p;
-
-    if (_pi->state.hwnd == NULL)
-        return;
-
-    Position px;
-    if (_pi->props.id > 0)
-    {
-        // child dialog; use parent client
-        HWND hwndParent = (HWND)_pi->props.parent->handle();
-        px = toPixels(hwndParent, p, true);
-    }
-    else
-    {
-        px = toPixels(_pi->state.hwnd, p, false);
-    }
-
-    SetWindowPos(_pi->state.hwnd,
-        0,
-        px.x(),
-        px.y(),
-        px.width(),
-        px.height(),
-        SWP_NOZORDER);
-}
-
-void Dialog::move(const Point& point)
-{
-    _pi->props.p.x(point.x());
-    _pi->props.p.y(point.y());
-
-    if (_pi->state.hwnd == NULL)
-        return;
-
-    Point pxPos = point;
-    if (_pi->props.id > 0)
-    {
-        // child dialog; use parent client
-        HWND hwndParent = (HWND)_pi->props.parent->handle();
-        toPixels(hwndParent, pxPos, true);
-    }
-    else
-    {
-        toPixels(_pi->state.hwnd, pxPos, false);
-    }
-
-    SetWindowPos(
-        _pi->state.hwnd,
-        0,
-        pxPos.x(),
-        pxPos.y(),
-        0,
-        0,
-        SWP_NOZORDER | SWP_NOSIZE);
-}
-
-void Dialog::resize(const Size& size)
-{
-    _pi->props.p.width(size.width());
-    _pi->props.p.height(size.height());
-
-    if (_pi->state.hwnd == NULL)
-        return;
-
-    Size pxSize = size;
-    toPixels(_pi->state.hwnd, pxSize, false);
-
-    SetWindowPos(_pi->state.hwnd,
-        0,
-        0,
-        0,
-        pxSize.width(),
-        pxSize.height(),
-        SWP_NOZORDER | SWP_NOMOVE);
-}
-
-void Dialog::center()
-{
-    // TODO: if child, center in parent
-    if (_pi->props.id > 0)
-        return;
-
-    // use dialog-independent mapping to units
-    auto screenSize = Size(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
-    toUnits(HWND_DESKTOP, screenSize);
-
-    Point p((screenSize.width() / 2) - (_pi->props.p.width() / 2),
-        (screenSize.height() / 2) - (_pi->props.p.height() / 2));
-
-    move(p);
-}
-
-void Dialog::setFocus()
-{
-    if (_pi->state.hwnd == NULL)
-        return;
-
-    SetFocus(_pi->state.hwnd);
-}
-
-void Dialog::bringToFront()
-{
-    if (_pi->state.hwnd == NULL)
-        return;
-
-    SetWindowPos(_pi->state.hwnd,
-        HWND_TOP,
-        0, 0, 0, 0,
-        SWP_NOMOVE | SWP_NOSIZE);
-}
-
-void Dialog::sendToBack()
-{
-    if (_pi->state.hwnd == NULL)
-        return;
-
-    SetWindowPos(_pi->state.hwnd,
-        HWND_BOTTOM,
-        0, 0, 0, 0,
-        SWP_NOMOVE | SWP_NOSIZE);
+    updatePosition();
 }
 
 DialogType Dialog::type() const
@@ -367,40 +248,7 @@ void Dialog::image(const ImageSource& image)
         return;
 
     _pi->props.image = image;
-    updateImage(*_pi);
-}
-
-void updateImage(dlg_priv& pi)
-{
-    if (pi.state.hImage != NULL)
-    {
-        DeleteObject(pi.state.hImage);
-        pi.state.hImage = NULL;
-    }
-
-    if (pi.state.hwnd == NULL)
-        return;
-
-    if (pi.props.image.id.empty())
-    {
-        SendMessage(pi.state.hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)NULL);
-        SendMessage(pi.state.hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)NULL);
-        return;
-    }
-
-    auto hInstRes = GetModuleHandle(NULL);
-    auto imageType = (pi.props.image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
-    pi.state.hImage = LoadImageW(hInstRes,
-        toWide(pi.props.image.id).c_str(),
-        imageType,
-        0,
-        0,
-        LR_DEFAULTSIZE | (pi.props.image.isFile ? LR_LOADFROMFILE : 0));
-    if (pi.state.hImage == NULL)
-        return;
-
-    SendMessage(pi.state.hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)pi.state.hImage);
-    SendMessage(pi.state.hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)pi.state.hImage);
+    updateIcon();
 }
 
 std::shared_ptr<IMenu> Dialog::menu() const
@@ -462,73 +310,6 @@ void Dialog::cursor(Cursor value)
     _pi->props.cursor = value;
 }
 
-void* Dialog::handle() const
-{
-    return _pi->state.hwnd;
-}
-
-void* Dialog::user() const
-{
-    return _pi->props.user;
-}
-
-void Dialog::user(void* value)
-{
-    _pi->props.user = value;
-}
-
-ISharedDialog Dialog::parent()
-{
-    return _pi->props.parent;
-}
-
-void Dialog::close(int result)
-{
-    // we must re-enable parent before destroying this dialog.
-    // if we don't do this then the parent recedes into the background.
-    if (_pi->props.execRunning &&
-        _pi->props.parent != nullptr)
-    {
-        _pi->props.parent->enabled(_pi->state.execParentEnabled);
-    }
-
-    destruct(*_pi);
-    quit(*_pi, result);
-}
-
-void Dialog::message(const std::string& message, const std::string& title)
-{
-    // this function only supports OK button; see dlgcpp/dialogs/message for full implementation
-    UINT flags = MB_ICONINFORMATION | MB_OK;
-
-    std::wstring titleText = toWide(title);
-    if (titleText.empty())
-        titleText = toWide(_pi->props.title);
-
-    std::wstring messageText = toWide(message);
-
-    MessageBoxW(_pi->state.hwnd,
-        messageText.c_str(),
-        titleText.c_str(), flags);
-}
-
-void Dialog::sendUserEvent(int param)
-{
-    if (_pi->state.hwnd == NULL)
-        return;
-    PostMessage(_pi->state.hwnd, WM_DLGCPP_USER, (WPARAM)param, 0);
-}
-
-void Dialog::timer(int timeout)
-{
-    if (_pi->props.timer.id == 0)
-        _pi->props.timer.id = nextId(*_pi);
-
-    // if timeout is negative the timer is removed.
-    _pi->props.timer.timeout = timeout;
-    updateTimer(*_pi);
-}
-
 bool Dialog::dropTarget() const
 {
     return _pi->props.dropTarget;
@@ -565,23 +346,167 @@ void Dialog::mouseCapture(bool value)
     }
 }
 
-void updateTimer(dlg_priv& pi)
+void* Dialog::handle() const
 {
-    if (pi.state.hwnd == NULL)
+    return _pi->state.hwnd;
+}
+
+void* Dialog::user() const
+{
+    return _pi->props.user;
+}
+
+void Dialog::user(void* value)
+{
+    _pi->props.user = value;
+}
+
+ISharedDialog Dialog::parent()
+{
+    return _pi->props.parent;
+}
+
+/// <summary>
+/// Constructs and shows the dialog
+/// </summary>
+void Dialog::show()
+{
+    // ensure visible
+    if (!_pi->props.visible)
+        visible(true);
+
+    // ensure constructed
+    if (_pi->state.hwnd == NULL)
+    {
+        rebuild();
+
+        // failed to construct
+        if (_pi->state.hwnd == NULL)
+            return;
+    }
+}
+
+/// <summary>
+/// Close the dialog, removing it from view.
+/// </summary>
+void Dialog::close(int result)
+{
+    // we must re-enable parent before destroying this dialog.
+    // if we don't do this then the parent recedes into the background.
+    if (_pi->props.execRunning &&
+        _pi->props.parent != nullptr)
+    {
+        _pi->props.parent->enabled(_pi->state.execParentEnabled);
+    }
+
+    destruct();
+    quit(result);
+}
+
+void Dialog::setFocus()
+{
+    if (_pi->state.hwnd == NULL)
         return;
 
-    if (pi.props.timer.timeout > 0)
-    {
-        SetTimer(pi.state.hwnd,
-            pi.props.timer.id,
-            pi.props.timer.timeout,
-            NULL);
-    }
-    else
-    {
-        if (pi.props.timer.id > 0)
-            KillTimer(pi.state.hwnd, (UINT_PTR)pi.props.timer.id);
-    }
+    SetFocus(_pi->state.hwnd);
+}
+
+void Dialog::bringToFront()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    SetWindowPos(_pi->state.hwnd,
+        HWND_TOP,
+        0, 0, 0, 0,
+        SWP_NOMOVE | SWP_NOSIZE);
+}
+
+void Dialog::sendToBack()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    SetWindowPos(_pi->state.hwnd,
+        HWND_BOTTOM,
+        0, 0, 0, 0,
+        SWP_NOMOVE | SWP_NOSIZE);
+}
+
+void Dialog::move(const Point& point)
+{
+    if (_pi->props.p.point() == point)
+        return;
+
+    _pi->props.p.x(point.x());
+    _pi->props.p.y(point.y());
+
+    updatePosition();
+}
+
+void Dialog::resize(const Size& size)
+{
+    if (_pi->props.p.size() == size)
+        return;
+
+    _pi->props.p.width(size.width());
+    _pi->props.p.height(size.height());
+
+    updatePosition();
+}
+
+void Dialog::center()
+{
+    // TODO: if child, center in parent
+    if (_pi->props.id > 0)
+        return;
+
+    // use dialog-independent mapping to units
+    auto screenSize = Size(
+        GetSystemMetrics(SM_CXSCREEN),
+        GetSystemMetrics(SM_CYSCREEN));
+    toUnits(HWND_DESKTOP, screenSize);
+
+    Point p(
+        (screenSize.width() / 2) - (_pi->props.p.width() / 2),
+        (screenSize.height() / 2) - (_pi->props.p.height() / 2));
+
+    move(p);
+}
+
+void Dialog::message(
+    const std::string& message,
+    const std::string& title)
+{
+    // this function only supports OK button; see dlgcpp/dialogs/message for full implementation
+    UINT flags = MB_ICONINFORMATION | MB_OK;
+
+    std::wstring titleText = toWide(title);
+    if (titleText.empty())
+        titleText = toWide(_pi->props.title);
+
+    std::wstring messageText = toWide(message);
+
+    MessageBoxW(_pi->state.hwnd,
+        messageText.c_str(),
+        titleText.c_str(), flags);
+}
+
+void Dialog::sendUserEvent(int param)
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+    PostMessage(_pi->state.hwnd, WM_DLGCPP_USER, (WPARAM)param, 0);
+}
+
+void Dialog::timer(int timeout)
+{
+    if (_pi->props.timer.id == 0)
+        _pi->props.timer.id = nextId();
+
+    // if timeout is negative the timer is removed.
+    _pi->props.timer.timeout = timeout;
+    updateTimer();
 }
 
 void Dialog::add(std::shared_ptr<IChildControl> child)
@@ -596,7 +521,7 @@ void Dialog::add(std::shared_ptr<IChildControl> child)
     _pi->props.controls.push_back(child);
 
     child->parent(shared_from_this());
-    child->id(nextId(*_pi, child->idRange()));
+    child->id(nextId(child->idRange()));
     child->rebuild();
 }
 
@@ -631,7 +556,7 @@ void Dialog::add(std::shared_ptr<IChildDialog> child)
     _pi->props.dialogs.push_back(child);
 
     child->parent(shared_from_this());
-    child->id(nextId(*_pi));
+    child->id(nextId());
     child->rebuild();
 }
 
@@ -669,7 +594,9 @@ void Dialog::redraw(bool drawChildren)
 
 void Dialog::rebuild()
 {
-    destruct(*_pi);
+    MessageInhibitor sizeAndMoveLock(_pi->props._inhibitSizeAndMoveEvents);
+
+    destruct();
 
     // safety checks
     if (_pi->props.id > 0 && _pi->props.parent == nullptr)
@@ -691,19 +618,21 @@ void Dialog::rebuild()
 
     dlg.style = styles();
     dlg.dwExtendedStyle = exStyles();
-    dlg.x = 0; //(short)_pi->props.p._x;
-    dlg.y = 0; //(short)_pi->props.p._y;
-    dlg.cx = 0; //(short)_pi->props.p._cx;
-    dlg.cy = 0; //(short)_pi->props.p._cy;
+
+    // don't set dialog position
+    dlg.x = 0;
+    dlg.y = 0;
+    dlg.cx = 0;
+    dlg.cy = 0;
 
     // WSTR:
     size_t offset = sizeof(DLGTEMPLATE);
 
     // menu
-    offset += 2; // Terminator
+    offset += 2;
 
     // dialog class
-    offset += 2; // Terminator
+    offset += 2;
 
     // caption
     if (cbCaption > 0)
@@ -711,7 +640,7 @@ void Dialog::rebuild()
         memcpy(&buf[offset], text.c_str(), (cbCaption * 2));
         offset += (cbCaption * 2);
     }
-    offset += 2; // Terminator
+    offset += 2;
 
     if (cbFont > 0)
     {
@@ -721,7 +650,7 @@ void Dialog::rebuild()
         memcpy(&buf[offset], fontFace.c_str(), (cbFont * 2));
         //offset += (cbFont * 2);
     }
-    //offset += 2; // Terminator
+    //offset += 2;
 
     HWND hwndParent = NULL;
     if (_pi->props.parent != nullptr)
@@ -739,8 +668,8 @@ void Dialog::rebuild()
     SetPropW(hwnd, L"this", this);
     _pi->state.hwnd = hwnd;
 
-    move(_pi->props.p);
-    resize(_pi->props.p);
+    updatePosition();
+    updateDisplayState();
 
     for (auto& c : _pi->props.controls)
     {
@@ -753,30 +682,28 @@ void Dialog::rebuild()
     }
 
     DragAcceptFiles(_pi->state.hwnd, _pi->props.dropTarget);
-    updateImage(*_pi);
-    updateTimer(*_pi);
+    updateIcon();
+    updateTimer();
 
     if (_pi->props.menu != nullptr)
         _pi->props.menu->rebuild();
 
-    // the dialog does not erase the background automatically
-    if (_pi->props.visible)
-        redraw(true);
+    updateVisibility();
 
     // always fire the size event
     SizeEvent().invoke(shared_from_this());
 }
 
-void destruct(dlg_priv& pi)
+void Dialog::destruct()
 {
-    if (pi.state.hwnd == NULL)
+    if (_pi->state.hwnd == NULL)
         return;
 
     // it does not use EndDialog as we may be simulating a model dialog with exec()
-    if (pi.props.timer.id > 0)
-        KillTimer(pi.state.hwnd, pi.props.timer.id);
-    DestroyWindow(pi.state.hwnd);
-    pi.state.hwnd = NULL;
+    if (_pi->props.timer.id > 0)
+        KillTimer(_pi->state.hwnd, _pi->props.timer.id);
+    DestroyWindow(_pi->state.hwnd);
+    _pi->state.hwnd = NULL;
 }
 
 unsigned int Dialog::styles() const
@@ -812,9 +739,6 @@ unsigned int Dialog::styles() const
 
     if (!_pi->props.enabled)
         styles |= WS_DISABLED;
-
-    if (_pi->props.visible)
-        styles |= WS_VISIBLE;
 
     return styles;
 }
@@ -875,10 +799,41 @@ void Dialog::notify(dlg_message& msg)
         auto id = (int)LOWORD(wParam);
         if (id != 0)
         {
-            if (lParam == 0)
+            if (lParam != NULL)
             {
+                // message sent from a control
+
+                // locate the sender; we may need to use the HWND
+                auto child = findControl(*_pi, id, (HWND)lParam);
+
+                if (child != nullptr)
+                {
+                    // wrap message and send to child for processing
+                    // a result code is supported.
+                    child->notify(msg);
+                    return;
+                }
+            }
+            else
+            {
+                // message sent from a menu, accelerator, or default key.
+
                 if (HIWORD(wParam) == 0)
                 {
+                    // default keys for confirm/cancel
+                    if (id == IDOK)
+                    {
+                        // Confirm event (ENTER)
+                        _pi->props.confirmEvent.invoke();
+                        return;
+                    }
+                    else if (id == IDCANCEL)
+                    {
+                        // Cancel event (ESC)
+                        _pi->props.cancelEvent.invoke();
+                        return;
+                    }
+
                     // menu item
                     if (_pi->props.menu != nullptr)
                     {
@@ -886,29 +841,13 @@ void Dialog::notify(dlg_message& msg)
                         return;
                     }
                 }
-                else if (HIWORD(wParam) == 0)
+                else if (HIWORD(wParam) == 1)
                 {
                     // accelerator
-
+                    DLGCPP_CMSG("WM_COMMAND: accel key " << id);
                 }
-                return;
             }
 
-            // locate the sender; we may need to use the HWND
-            auto child = findControl(*_pi, id, (HWND)lParam);
-
-            if (child != nullptr)
-            {
-                // wrap message and send to child for processing
-                // a result code is supported.
-                child->notify(msg);
-                return;
-            }
-            //else if (id == IDOK)
-                // TODO: Confirm event
-            else if (id == IDCANCEL)
-                // TODO: Close event
-                close();
         }
         break;
     }
@@ -916,24 +855,6 @@ void Dialog::notify(dlg_message& msg)
     case WM_NOTIFY:
     {
         auto& nmhdr = *((NMHDR*)lParam);
-
-        if (nmhdr.code == TTN_NEEDTEXT)
-        {
-            // TODO: ToolTips - idFrom is a toolbar button; the hwndFrom is the tooltip
-            // either: 1) implement reserved id ranges and perform lookup within range
-            //            note: we need id ranges as conflicts will occur with multiple controls
-            //
-            //         2) implement find(HWND) from IChild to explicitly look for this HWND.
-
-
-            DLGCPP_CMSG("WM_NOTIFY: idFrom=" << nmhdr.idFrom <<
-                " code=" << nmhdr.code <<
-                " hwndID=" << GetDlgCtrlID(nmhdr.hwndFrom) <<
-                " hwndFrom=" << nmhdr.hwndFrom <<
-                " toolbarHWND = " << (HWND)_pi->props.controls.at(0)->control()->handle() <<
-                " toolTipHWND = " << (HWND)SendMessage((HWND)_pi->props.controls.at(0)->control()->handle(), TB_GETTOOLTIPS, 0, 0));
-
-        }
 
         // locate the sender; we may need to use the HWND
         auto child = findControl(*_pi, nmhdr.idFrom, nmhdr.hwndFrom);
@@ -988,14 +909,14 @@ void Dialog::notify(dlg_message& msg)
     case WM_KEYDOWN:
     {
         KeyboardEvent event;
-        event.key = TranslateKey(static_cast<UINT>(msg.wParam));
+        event.key = MapToKey(static_cast<UINT>(msg.wParam));
         KeyDownEvent().invoke(shared_from_this(), event);
         break;
     }
     case WM_KEYUP:
     {
         KeyboardEvent event;
-        event.key = TranslateKey(static_cast<UINT>(msg.wParam));
+        event.key = MapToKey(static_cast<UINT>(msg.wParam));
         KeyUpEvent().invoke(shared_from_this(), event);
         break;
     }
@@ -1079,47 +1000,81 @@ void Dialog::notify(dlg_message& msg)
 
     case WM_SETCURSOR:
         msg.result = onSetCursor(*_pi, (HWND)wParam);
-        return;
+        break;
 
     case WM_MOVE:
     {
+        if (_pi->props._inhibitSizeAndMoveEvents)
+            break;
+
+        // only store the position when dialog is in "normal" display state.
+        if (IsIconic(hDlg) || IsZoomed(hDlg))
+            break;
+
         // translate using mapped value and store
         Point posPx((int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
         Point posDu(posPx);
         toUnits(_pi->state.hwnd, posDu);
 
-        DLGCPP_CMSG("WM_MOVE: " <<
-            "x = " << posDu.x() << " (" << posPx.x() << ") " <<
-            "y = " << posDu.y() << " (" << posPx.y() << ") " <<
-            "title = " + _pi->props.title);
-
         _pi->props.p.x(posDu.x());
         _pi->props.p.y(posDu.y());
         MoveEvent().invoke(shared_from_this());
+
+        DLGCPP_CMSG("WM_MOVE: " <<
+            "x = " << _pi->props.p.x() << " " <<
+            "y = " << _pi->props.p.y() << " " <<
+            "title = " + _pi->props.title);
+
         break;
     }
 
     case WM_SIZE:
     {
-        // translate using mapped value and store
-        Size sizePx({ (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam) });
-        Size sizeDu(sizePx);
-        toUnits(_pi->state.hwnd, sizeDu);
+        if (_pi->props._inhibitSizeAndMoveEvents)
+            break;
+
+        auto state = (UINT)wParam;
+        switch (state)
+        {
+        case SIZE_RESTORED:
+            _pi->props.displayState = DisplayState::Normal;
+            break;
+        case SIZE_MINIMIZED:
+            _pi->props.displayState = DisplayState::Minimized;
+            break;
+        case SIZE_MAXIMIZED:
+            _pi->props.displayState = DisplayState::Maximized;
+            break;
+        };
+
+        if (state == SIZE_RESTORED ||
+            state == SIZE_MAXIMIZED)
+        {
+            // only store the size when dialog is not minimized.
+            // note: we have to capture maximized state, as it will affect any potential child positioning
+
+            // translate using mapped value and store
+            Size sizePx({ (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam) });
+            Size sizeDu(sizePx);
+            toUnits(_pi->state.hwnd, sizeDu);
+
+            _pi->props.p.width(sizeDu.width());
+            _pi->props.p.height(sizeDu.height());
+            SizeEvent().invoke(shared_from_this());
+        }
 
         DLGCPP_CMSG("WM_SIZE: " <<
-            "width = " << sizeDu.width() << " (" << sizePx.width() << ") " <<
-            "height = " << sizeDu.height() << " (" << sizePx.height() << ") " <<
+            "displayState = " << (int)_pi->props.displayState << " "
+            "width = " << _pi->props.p.width() << " " <<
+            "height = " << _pi->props.p.height() << " " <<
             "title = " + _pi->props.title);
 
-        _pi->props.p.width(sizeDu.width());
-        _pi->props.p.height(sizeDu.height());
-        SizeEvent().invoke(shared_from_this());
         break;
     }
 
     case WM_CTLCOLORDLG:
         msg.result = onColorDlg(*_pi, (HDC)wParam);
-        return;
+        break;
 
     case WM_CTLCOLORSTATIC:
     case WM_CTLCOLORBTN:
@@ -1127,7 +1082,7 @@ void Dialog::notify(dlg_message& msg)
     case WM_CTLCOLORLISTBOX:
     case WM_CTLCOLORSCROLLBAR:
         msg.result = onColorCtl(*_pi, (HDC)wParam, (HWND)lParam);
-        return;
+        break;
 
     case WM_SYSCOMMAND:
         // Close X button on dialog...
@@ -1143,7 +1098,7 @@ void Dialog::notify(dlg_message& msg)
         auto hDrop = (HDROP)wParam;
         auto fileCount = (int)DragQueryFileW(hDrop, 0xFFFFFFFF, NULL, 0);
         if (fileCount == 0)
-            return;
+            break;
 
         std::vector<std::string> files;
         for (int i = 0; i < fileCount; i++)
@@ -1153,9 +1108,8 @@ void Dialog::notify(dlg_message& msg)
                 continue;
             files.push_back(toBytes(wfile.data()));
         }
-        if (files.empty())
-            return;
-        DropEvent().invoke(shared_from_this(), files);
+        if (!files.empty())
+            DropEvent().invoke(shared_from_this(), files);
         break;
     }
 
@@ -1325,6 +1279,11 @@ LRESULT onColorCtl(dlg_priv& pi, HDC hdc, HWND hwndChild)
 
 std::shared_ptr<IChildControl> findControl(dlg_priv& pi, int id, HWND hwnd)
 {
+    // TODO: findControl performance impact
+    // Use map<handle,Child> with all child hwnd / id > child for quick lookup
+
+    //DLGCPP_CMSG("findControl: id = " << id << "  hwnd = " << hwnd);
+
     if (id > 0)
     {
         // by explicit identifier
@@ -1367,6 +1326,36 @@ std::shared_ptr<IChildControl> findControl(dlg_priv& pi, int id, HWND hwnd)
     return nullptr;
 }
 
+IEvent<ISharedDialog>& Dialog::ConfirmEvent()
+{
+    return _pi->props.confirmEvent;
+}
+
+IEvent<ISharedDialog>& Dialog::CancelEvent()
+{
+    return _pi->props.cancelEvent;
+}
+
+IEvent<ISharedDialog>& Dialog::HelpEvent()
+{
+    return _pi->props.helpEvent;
+}
+
+IEvent<ISharedDialog>& Dialog::MoveEvent()
+{
+    return _pi->props.moveEvent;
+}
+
+IEvent<ISharedDialog>& Dialog::SizeEvent()
+{
+    return _pi->props.sizeEvent;
+}
+
+IEvent<ISharedDialog>& Dialog::TimerEvent()
+{
+    return _pi->props.timerEvent;
+}
+
 IEvent<ISharedDialog, KeyboardEvent>& Dialog::KeyDownEvent()
 {
     return _pi->props.keyDownEvent;
@@ -1399,7 +1388,7 @@ IEvent<ISharedDialog, MouseEvent>& Dialog::MouseDoubleClickEvent()
 
 IEvent<ISharedDialog>& Dialog::MouseCaptureLostEvent()
 {
-    return _pi->props.mouseCaptureLost;
+    return _pi->props.mouseCaptureLostEvent;
 }
 
 IEvent<ISharedDialog, std::vector<std::string>>& Dialog::DropEvent()
@@ -1407,27 +1396,122 @@ IEvent<ISharedDialog, std::vector<std::string>>& Dialog::DropEvent()
     return _pi->props.dropEvent;
 }
 
-IEvent<ISharedDialog>& Dialog::HelpEvent()
-{
-    return _pi->props.helpEvent;
-}
-
-IEvent<ISharedDialog>& Dialog::MoveEvent()
-{
-    return _pi->props.moveEvent;
-}
-
-IEvent<ISharedDialog>& Dialog::SizeEvent()
-{
-    return _pi->props.sizeEvent;
-}
-
-IEvent<ISharedDialog>& Dialog::TimerEvent()
-{
-    return _pi->props.timerEvent;
-}
-
 IEvent<ISharedDialog, int>& Dialog::UserEvent()
 {
     return _pi->props.userEvent;
+}
+
+void Dialog::updateDisplayState()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    // use SetWindowPlacement which does not show the dialog
+    WINDOWPLACEMENT wp = { sizeof(WINDOWPLACEMENT) };
+    GetWindowPlacement(_pi->state.hwnd, &wp);
+    switch (_pi->props.displayState)
+    {
+    case DisplayState::Normal:    wp.showCmd = SW_SHOWNORMAL;    break;
+    case DisplayState::Minimized: wp.showCmd = SW_SHOWMINIMIZED; break;
+    case DisplayState::Maximized: wp.showCmd = SW_SHOWMAXIMIZED; break;
+    }
+    SetWindowPlacement(_pi->state.hwnd, &wp);
+}
+
+void Dialog::updateIcon()
+{
+    if (_pi->state.hImage != NULL)
+    {
+        DeleteObject(_pi->state.hImage);
+        _pi->state.hImage = NULL;
+    }
+
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    if (_pi->props.image.id.empty())
+    {
+        SendMessage(_pi->state.hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)NULL);
+        SendMessage(_pi->state.hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)NULL);
+        return;
+    }
+
+    auto hInstRes = GetModuleHandle(NULL);
+    auto imageType = (_pi->props.image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
+    _pi->state.hImage = LoadImageW(hInstRes,
+        toWide(_pi->props.image.id).c_str(),
+        imageType,
+        0,
+        0,
+        LR_DEFAULTSIZE | (_pi->props.image.isFile ? LR_LOADFROMFILE : 0));
+    if (_pi->state.hImage == NULL)
+        return;
+
+    SendMessage(_pi->state.hwnd, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)_pi->state.hImage);
+    SendMessage(_pi->state.hwnd, WM_SETICON, (WPARAM)ICON_SMALL, (LPARAM)_pi->state.hImage);
+}
+
+void Dialog::updatePosition()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    Position posPx;
+    if (_pi->props.id > 0)
+    {
+        // child dialog; use parent client
+        HWND hwndParent = (HWND)_pi->props.parent->handle();
+        posPx = toPixels(hwndParent, _pi->props.p, true);
+    }
+    else
+    {
+        posPx = toPixels(_pi->state.hwnd, _pi->props.p, true);
+    }
+
+    // map the size dimensions to non-client
+    RECT rc = { 0, 0, posPx.width(), posPx.height() };
+    AdjustWindowRectEx(
+        &rc,
+        GetWindowLong(_pi->state.hwnd, GWL_STYLE),
+        GetMenu(_pi->state.hwnd) != NULL,
+        GetWindowLong(_pi->state.hwnd, GWL_EXSTYLE));
+
+    SetWindowPos(
+        _pi->state.hwnd,
+        0,
+        posPx.x(),
+        posPx.y(),
+        rc.right - rc.left,
+        rc.bottom - rc.top,
+        SWP_NOZORDER);
+}
+
+void Dialog::updateTimer()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    if (_pi->props.timer.timeout > 0)
+    {
+        SetTimer(
+            _pi->state.hwnd,
+            _pi->props.timer.id,
+            _pi->props.timer.timeout,
+            NULL);
+    }
+    else
+    {
+        if (_pi->props.timer.id > 0)
+            KillTimer(_pi->state.hwnd, (UINT_PTR)_pi->props.timer.id);
+    }
+}
+
+void Dialog::updateVisibility()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    ShowWindow(
+        _pi->state.hwnd,
+        _pi->props.visible ? SW_SHOW : SW_HIDE);
 }

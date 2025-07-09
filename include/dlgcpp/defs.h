@@ -5,8 +5,8 @@
 
 #ifdef DLGCPP_DEBUG
 #include <iostream>
-#define DLGCPP_CMSG(m_args) std::cout << m_args << std::endl
-#define DLGCPP_CERR(m_args) std::cerr << m_args << std::endl
+#define DLGCPP_CMSG(m_args) std::cout << __func__ << ": " << m_args << std::endl
+#define DLGCPP_CERR(m_args) std::cerr << __func__ << ": " << m_args << std::endl
 #else
 #define DLGCPP_CMSG(m_args)
 #define DLGCPP_CERR(m_args)
@@ -141,7 +141,7 @@ namespace dlgcpp
 
     typedef struct Font
     {
-        std::string faceName;
+        std::string family;
         int pointSize = 8;
         bool bold = false;
         bool underline = false;

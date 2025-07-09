@@ -1,6 +1,7 @@
-#include "../dlgmsg.h"
-#include "../utility.h"
 #include "image_p.h"
+#include "utility/image.h"
+#include "utility/message.h"
+#include "utility/units.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;

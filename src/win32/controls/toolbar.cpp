@@ -1,6 +1,9 @@
-#include "../dlgmsg.h"
-#include "../utility.h"
 #include "toolbar_p.h"
+#include "utility/image.h"
+#include "utility/message.h"
+#include "utility/string.h"
+#include "utility/units.h"
+#include <strsafe.h>
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -35,34 +38,29 @@ void ToolBar::notify(dlg_message& msg)
         {
             auto ctlId = (int)LOWORD(msg.wParam);
 
-            // must be within id reserved range
-            int firstId = id() + 1;
-            if (ctlId < firstId || ctlId > firstId + idRange())
+            // find toolbar item
+            auto item = findItemById(ctlId);
+            if (item == nullptr)
                 return;
 
-            // find button
-            int index = ctlId - firstId;
-            if (index < 0 || index >= (int)_props->items.size())
-                return;
-
-            auto& item = _props->items.at(index);
             item->ClickEvent().invoke(item);
         }
     }
     else if (msg.wMsg == WM_NOTIFY)
     {
-        auto tdi = (NMTTDISPINFO*)msg.lParam;
-        if (tdi->hdr.code == TTN_NEEDTEXT)
+        auto ttdi = (NMTTDISPINFO*)msg.lParam;
+        if (ttdi->hdr.code == TTN_NEEDTEXT)
         {
-            auto id = tdi->hdr.idFrom;
-        }
-        if (tdi->hdr.code == TTN_NEEDTEXTA)
-        {
-            auto id = tdi->hdr.idFrom;
-        }
-        if (tdi->hdr.code == TTN_NEEDTEXTW)
-        {
-            auto id = tdi->hdr.idFrom;
+            auto ctlId = ttdi->hdr.idFrom;
+
+            // find toolbar item
+            auto item = findItemById(ctlId);
+            if (item == nullptr)
+                return;
+
+            // use own buffer
+            _props->tooltipBuf = toWide(item->toolTipText());
+            ttdi->lpszText = _props->tooltipBuf.data();
         }
     }
 
@@ -96,6 +94,22 @@ unsigned int ToolBar::styles() const
     return styles;
 }
 
+bool ToolBar::isHandleEqual(void* otherHandle) const
+{
+    if (handle() == nullptr)
+        return false;
+
+    if (Control::isHandleEqual(otherHandle))
+        return true;
+
+    auto hwnd = reinterpret_cast<HWND>(handle());
+    auto hwndOther = reinterpret_cast<HWND>(otherHandle);
+    if (hwndOther = (HWND)SendMessage(hwnd, TB_GETTOOLTIPS, 0, 0))
+        return true;
+
+    return false;
+}
+
 const Size& ToolBar::buttonSize() const
 {
     return _props->buttonSize;
@@ -104,6 +118,17 @@ const Size& ToolBar::buttonSize() const
 void ToolBar::buttonSize(const Size& value)
 {
     _props->buttonSize = value;
+    updateItems();
+}
+
+const Size& ToolBar::imageSize() const
+{
+    return _props->imageSize;
+}
+
+void ToolBar::imageSize(const Size& value)
+{
+    _props->imageSize = value;
     updateItems();
 }
 
@@ -120,11 +145,28 @@ void ToolBar::items(const std::vector<ISharedToolBarItem>& items)
     updateItems();
 }
 
+ISharedToolBarItem ToolBar::findItemById(int ctlId) const
+{
+    // must be within id reserved range
+    int firstId = id() + 1;
+    if (ctlId < firstId || ctlId > firstId + idRange())
+        return nullptr;
+
+    int index = ctlId - firstId;
+    if (index < 0 || index >= (int)_props->items.size())
+        return nullptr;
+
+    return _props->items.at(index);
+}
+
+
 void ToolBar::updateItems()
 {
     if (handle() == nullptr)
         return;
+
     auto hwnd = reinterpret_cast<HWND>(handle());
+    auto hDlg = GetParent(hwnd);
 
     // delete previous buttons
     int buttonCount = (int)SendMessage(hwnd, TB_BUTTONCOUNT, 0, 0);
@@ -133,8 +175,17 @@ void ToolBar::updateItems()
 
     SendMessage(hwnd, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
 
-    // TODO: imageSize customisation
-    HIMAGELIST hImageList = ImageList_Create(32, 32, ILC_COLOR32 | ILC_MASK, _props->items.size(), 0);
+    Size imageSize = _props->imageSize;
+    toPixels(hDlg, imageSize);
+
+    auto hImageList = ImageList_Create(
+        imageSize.width(),
+        imageSize.height(),
+        ILC_COLOR32 | ILC_MASK,
+        _props->items.size(),
+        0);
+
+    auto clrPair = colors();
 
     int index = 0;
     int imageListId = 0;
@@ -164,8 +215,10 @@ void ToolBar::updateItems()
         if (!item->image().id.empty())
         {
             // add the image to the image list
-            Size imgSize; // TODO: imageSize customisation
-            HANDLE hImage = loadImage(item->image(), imgSize);
+            HANDLE hImage = loadImage(
+                item->image(),
+                imageSize,
+                clrPair.second);
 
             if (item->image().isIcon)
             {
@@ -174,7 +227,7 @@ void ToolBar::updateItems()
             }
             else
             {
-                imageId = ImageList_AddMasked(hImageList, (HBITMAP)hImage, 0xFF00FF);
+                imageId = ImageList_AddMasked(hImageList, (HBITMAP)hImage, (COLORREF)clrPair.second);
                 DeleteObject(hImage);
             }
         }
@@ -192,7 +245,7 @@ void ToolBar::updateItems()
     if (!_props->buttonSize.empty())
     {
         Size size = _props->buttonSize;
-        toPixels(GetParent(hwnd), size);
+        toPixels(hDlg, size);
         SendMessage(hwnd, TB_SETBUTTONSIZE, 0, MAKELPARAM(size.width(), size.height()));
     }
 

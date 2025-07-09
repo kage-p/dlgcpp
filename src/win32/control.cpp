@@ -1,8 +1,10 @@
 #include "control_p.h"
 #include "dlgcpp/dialog.h"
-#include "dlgmsg.h"
-#include "keys_p.h"
-#include "utility.h"
+#include "utility/font.h"
+#include "utility/keys.h"
+#include "utility/message.h"
+#include "utility/string.h"
+#include "utility/units.h"
 #include <map>
 
 #define WIN32_LEAN_AND_MEAN
@@ -23,12 +25,10 @@ Control::Control(const std::string& text, const Position& p) :
 {
     _pi->props.p = p;
     _pi->props.text = text;
-    _pi->state.hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
-    // TODO: translate and store system font
-    //auto lfw = LOGFONTW();
-    //GetObject(_pi->state.font, sizeof(LOGFONTW), &lfw);
-    //_pi->props.font = Font{};
+    // use system default font, but store the value
+    _pi->state.hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+    _pi->props.font = toFont(_pi->state.hFont);
 }
 
 Control::~Control()
@@ -125,14 +125,14 @@ void Control::notify(ctl_message& msg)
         case WM_KEYDOWN:
         {
             KeyboardEvent event;
-            event.key = TranslateKey(static_cast<UINT>(msg.wParam));
+            event.key = MapToKey(static_cast<UINT>(msg.wParam));
             KeyDownEvent().invoke(shared_from_this(), event);
             break;
         }
         case WM_KEYUP:
         {
             KeyboardEvent event;
-            event.key = TranslateKey(static_cast<UINT>(msg.wParam));
+            event.key = MapToKey(static_cast<UINT>(msg.wParam));
             KeyUpEvent().invoke(shared_from_this(), event);
             break;
         }
@@ -474,8 +474,8 @@ void Control::font(const Font& value)
     if (_pi->state.hFont != NULL)
         DeleteObject(_pi->state.hFont);
 
-    if (!_pi->props.font.faceName.empty())
-        _pi->state.hFont = makeFont(_pi->props.font);
+    if (!_pi->props.font.family.empty())
+        _pi->state.hFont = toGdiFont(_pi->props.font);
     else
         _pi->state.hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
@@ -580,7 +580,8 @@ void* Control::handle() const
 
 bool Control::isHandleEqual(void* otherHandle) const
 {
-    return ((HWND)otherHandle == _pi->state.hwnd);
+    auto hwndOther = reinterpret_cast<HWND>(otherHandle);
+    return (hwndOther == _pi->state.hwnd);
 }
 
 void* Control::user() const

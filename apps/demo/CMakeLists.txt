@@ -63,7 +63,7 @@ set(src_files
 if (WIN32)
    enable_language("RC")
    set(other
-       win32/demo.rc)
+       assets/win32/demo.rc)
 endif()
 
 add_executable(${target} ${src_files} ${other})
@@ -76,3 +76,11 @@ target_link_libraries(${target} libdlgcpp)
 if (MSVC)
     target_link_options(${target} PRIVATE /manifest:NO /ENTRY:mainCRTStartup)
 endif()
+
+# copy assets
+add_custom_command(TARGET ${target} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_CURRENT_SOURCE_DIR}/assets/images"
+            "$<TARGET_FILE_DIR:${target}>/images"
+    COMMENT "Copying entire images folder to build output"
+)

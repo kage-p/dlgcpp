@@ -1,6 +1,6 @@
-#include "../dlgmsg.h"
-#include "../utility.h"
 #include "textbox_p.h"
+#include "utility/message.h"
+#include "utility/string.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
