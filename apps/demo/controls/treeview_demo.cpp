@@ -64,8 +64,14 @@ void controls_treeview_demo(ISharedDialog parent)
         { "Root/Group2", "Group 2" },
         { "Root/Group3", "Group 3" },
         { "Root/Group1/Item1", "Group 1 - Item 1" },
+        { "Root/Group1/Item1/Leaf1", "Leaf 1" },
         { "Root/Group2/Item1", "Group 2 - Item 1" },
-        { "Root/Group3/Item1", "Group 3 - Item 1" }
+        { "Root/Group2/Item1/Leaf1", "Leaf 1" },
+        { "Root/Group2/Item1/Leaf2", "Leaf 2" },
+        { "Root/Group3/Item1", "Group 3 - Item 1" },
+        { "Root/Group3/Item1/Leaf1", "Leaf 1" },
+        { "Root/Group3/Item1/Leaf2", "Leaf 2" },
+        { "Root/Group3/Item1/Leaf3", "Leaf 3" }
     };
     treeView->setItems(items);
 

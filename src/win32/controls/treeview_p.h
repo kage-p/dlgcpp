@@ -32,6 +32,7 @@ namespace dlgcpp
             Event<ISharedControl> selChangedEvent;
             Event<ISharedControl, std::shared_ptr<TreeViewNode>> itemClickEvent;
             Event<ISharedControl, std::shared_ptr<TreeViewNode>> itemDblClickEvent;
+            Event<std::shared_ptr<TreeViewNode>> expandNodePrivateEvent;
         };
     }
 }

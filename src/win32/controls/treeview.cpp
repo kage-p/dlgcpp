@@ -25,6 +25,7 @@ TreeView::TreeView(const Position& p) :
     Control::border(BorderStyle::Sunken);
 
     _priv->rootNodeChangedEvent += [this](ISharedControl) { onRootNodeChanged(); };
+    _priv->expandNodePrivateEvent += [this](std::shared_ptr<TreeViewNode> node) { expand(node, true); };
 }
 
 TreeView::~TreeView()
@@ -655,7 +656,9 @@ void TreeView::expand(
         hitem = TreeView_GetChild(hwnd, hitem);
         while (hitem != NULL)
         {
-            TreeView_Expand(hwnd, hitem, TVE_EXPAND);
+            // expand further with the event
+            _priv->expandNodePrivateEvent.invoke(nodeFromItem(*_priv, hitem));
+
             hitem = TreeView_GetNextSibling(hwnd, hitem);
         }
     }
