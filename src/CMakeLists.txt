@@ -55,6 +55,9 @@ set(src_files ${src_files}
     win32/controls/toolbar_p.h
     win32/controls/trackbar.cpp
     win32/controls/trackbar_p.h
+    win32/controls/treeview.cpp
+    win32/controls/treeview_node.cpp
+    win32/controls/treeview_p.h
     win32/dialogs/about.cpp
     win32/dialogs/about_p.h
     win32/dialogs/file.cpp
@@ -102,5 +105,5 @@ if (DLGCPP_DEBUG)
 endif()
 
 if (WIN32)
-    target_link_libraries(${target} PUBLIC comctl32.lib)
+    target_link_libraries(${target} PUBLIC comctl32.lib gdiplus.lib)
 endif()

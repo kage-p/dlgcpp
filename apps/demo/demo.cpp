@@ -21,6 +21,7 @@
 #include "controls/textbox_demo.h"
 #include "controls/toolbar_demo.h"
 #include "controls/trackbar_demo.h"
+#include "controls/treeview_demo.h"
 
 #include "dialogs/about_demo.h"
 #include "dialogs/dialog_demo.h"
@@ -118,6 +119,10 @@ int main()
 
     item = std::make_shared<MenuItem>("TrackBar control");
     item->ClickEvent() += [mainDlg](ISharedMenuItem) { controls_trackbar_demo(mainDlg); };
+    controls->add(item);
+
+    item = std::make_shared<MenuItem>("TreeView control");
+    item->ClickEvent() += [mainDlg](ISharedMenuItem) { controls_treeview_demo(mainDlg); };
     controls->add(item);
 
     item = std::make_shared<MenuItem>("");

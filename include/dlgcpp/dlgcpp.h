@@ -32,6 +32,7 @@
 #include "controls/textbox.h"
 #include "controls/toolbar.h"
 #include "controls/trackbar.h"
+#include "controls/treeview.h"
 
 #include "dialogs/about.h"
 #include "dialogs/file.h"
