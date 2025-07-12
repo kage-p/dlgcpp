@@ -78,7 +78,6 @@ std::shared_ptr<Menu> createMenu(
 
     item = std::make_shared<MenuItem>("Switch view");
     menu->add(item);
-    item->checked(listview->multiselect());
     item->ClickEvent() += [listview](ISharedMenuItem)
         {
             switch (listview->display())
@@ -119,7 +118,7 @@ std::shared_ptr<Menu> createMenu(
             m->checked(listview->gridlines());
         };
 
-    item = std::make_shared<MenuItem>("Multi-select list");
+    item = std::make_shared<MenuItem>("Multi-select items");
     menu->add(item);
     item->checked(listview->multiselect());
     item->ClickEvent() += [listview](ISharedMenuItem m)
@@ -197,43 +196,34 @@ size_t ListViewDemoImpl::rowCount() const
 
 bool ListViewDemoImpl::beginEdit(
     size_t row,
-    int role,
-    std::string& text)
+    int role)
 {
     if (row >= _items.size())
         return false;
 
     auto& item = _items.at(row);
 
-    // return text for edit operation
     switch ((RoleId)role)
     {
     case RoleId::Column1:
-        text = item.col1;
-        break;
     case RoleId::Column2:
-        text = item.col2;
-        break;
     case RoleId::Column3:
-        text = item.col3;
+        // these columns are editable
+        return true;
         break;
-    default:
-        // not valid
-        return false;
     }
 
     // to prevent editing, return false
-    return true;
+    return false;
 }
 
-void ListViewDemoImpl::endEdit(
+bool ListViewDemoImpl::endEdit(
     size_t row,
     int role,
-    const std::string& text,
-    bool confirmed)
+    const std::string& text)
 {
     if (row >= _items.size())
-        return;
+        return false;
 
     auto& item = _items.at(row);
     switch ((RoleId)role)
@@ -248,6 +238,7 @@ void ListViewDemoImpl::endEdit(
         item.col3 = text;
         break;
     }
+    return true;
 }
 
 bool ListViewDemoImpl::checked(size_t row) const

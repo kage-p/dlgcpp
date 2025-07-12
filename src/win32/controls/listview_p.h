@@ -30,10 +30,10 @@ namespace dlgcpp
             bool checkboxes = false;
             bool gridlines = false;
             bool multiselect = false;
-            ListViewDisplay _disp = ListViewDisplay::Details;
+            ListViewDisplay displayType = ListViewDisplay::Details;
             int selectedIndex = -1;
             std::vector<int> selectedIndexes;
-            std::wstring _displayBuffer;
+            std::wstring displayBuffer;
             std::map<int, int> columnRoles;
 
             // edit state

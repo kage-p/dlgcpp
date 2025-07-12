@@ -50,7 +50,7 @@ unsigned int ListView::styles() const
     if (!_priv->multiselect)
         styles |= LVS_SINGLESEL;
 
-    switch (_priv->_disp)
+    switch (_priv->displayType)
     {
     case ListViewDisplay::Details:
         styles |= LVS_REPORT;
@@ -126,8 +126,8 @@ void ListView::notify(dlg_message& msg)
                 int role = roleData(nmdi.item.iSubItem);
                 auto text = rowData(nmdi.item.iItem, role);
 
-                _priv->_displayBuffer = toWide(text);
-                nmdi.item.pszText = _priv->_displayBuffer.data();
+                _priv->displayBuffer = toWide(text);
+                nmdi.item.pszText = _priv->displayBuffer.data();
             }
 
             if (nmdi.item.mask & LVIF_STATE)
@@ -223,7 +223,7 @@ void ListView::rebuild()
     updateColumns();
     updateRows();
     updateDisplayStyles();
-    updateListStyles();
+    updateExtStyles();
     updateSelection();
 }
 
@@ -337,8 +337,7 @@ void ListView::checkboxes(bool value)
     if (handle() == nullptr)
         return;
 
-    // update list styles
-    updateListStyles();
+    updateExtStyles();
 }
 
 bool ListView::editing() const
@@ -348,6 +347,10 @@ bool ListView::editing() const
 
 bool ListView::beginEditing(size_t row, int role)
 {
+    if (handle() == nullptr)
+        return false;
+    auto hwnd = reinterpret_cast<HWND>(handle());
+
     if (_priv->editState.editing)
     {
         if (_priv->editState.row == row &&
@@ -359,19 +362,18 @@ bool ListView::beginEditing(size_t row, int role)
     }
 
     // request to edit the item
-    std::string pretext;
-    if (!beginEdit(row, role, pretext))
+    if (!beginEdit(row, role))
         return false;
+
+    std::string pretext = rowData(row, role);
 
     // get column from role
     auto column = _priv->columnRoles.at(role);
 
-    auto hwndListView = (HWND)handle();
-
     RECT rc = { 0 };
     rc.top = column;
     rc.left = LVIR_LABEL;
-    if (SendMessage(hwndListView, LVM_GETSUBITEMRECT, (WPARAM)row, (LPARAM)&rc) == 0)
+    if (SendMessage(hwnd, LVM_GETSUBITEMRECT, (WPARAM)row, (LPARAM)&rc) == 0)
     {
         // cannot get item rect
         return false;
@@ -386,7 +388,7 @@ bool ListView::beginEditing(size_t row, int role)
         rc.top > 0 ? rc.top - 1 : 0,
         (rc.right - rc.left) + 2,
         (rc.bottom - rc.top) + 3,
-        hwndListView,
+        hwnd,
         reinterpret_cast<HMENU>(static_cast<INT_PTR>(_priv->editState.idEditor)),
         NULL,
         NULL);
@@ -403,7 +405,7 @@ bool ListView::beginEditing(size_t row, int role)
         1,
         reinterpret_cast<DWORD_PTR>(&_priv->editState));
 
-    auto font = (HFONT)SendMessage(hwndListView, WM_GETFONT, 0, 0);
+    auto font = (HFONT)SendMessage(hwnd, WM_GETFONT, 0, 0);
     SendMessage(hwndEditor, WM_SETFONT, (WPARAM)font, 0);
 
     SetWindowPos(
@@ -418,6 +420,7 @@ bool ListView::beginEditing(size_t row, int role)
     _priv->editState.column = column;
     _priv->editState.role = role;
     _priv->editState.editing = true;
+
     return true;
 }
 
@@ -435,11 +438,20 @@ void ListView::confirmEditing()
 
     auto text = toBytes(buf.data());
 
-    endEdit(
+    bool changed = endEdit(
         _priv->editState.row,
         _priv->editState.role,
-        text,
-        _priv->editState.confirmed);
+        text);
+
+    if (changed && handle() != nullptr)
+    {
+        auto hwnd = reinterpret_cast<HWND>(handle());
+
+        ListView_RedrawItems(
+            hwnd,
+            (int)_priv->editState.row,
+            (int)_priv->editState.row);
+    }
 
     cancelEditing();
 }
@@ -477,8 +489,7 @@ void ListView::gridlines(bool value)
     if (handle() == nullptr)
         return;
 
-    // update list styles
-    updateListStyles();
+    updateExtStyles();
 }
 
 bool ListView::multiselect() const
@@ -507,15 +518,15 @@ void ListView::multiselect(bool value)
 
 ListViewDisplay ListView::display() const
 {
-    return _priv->_disp;
+    return _priv->displayType;
 }
 
 void ListView::display(ListViewDisplay value)
 {
-    if (_priv->_disp == value)
+    if (_priv->displayType == value)
         return;
 
-    _priv->_disp = value;
+    _priv->displayType = value;
 
     if (handle() == nullptr)
         return;
@@ -557,19 +568,18 @@ size_t ListView::rowCount() const
 
 bool ListView::beginEdit(
     size_t row,
-    int role,
-    std::string& text)
+    int role)
 {
     return false;
 }
 
-void ListView::endEdit(
+bool ListView::endEdit(
     size_t row,
     int role,
-    const std::string& text,
-    bool confirmed)
+    const std::string& text)
 {
     // placeholder
+    return false;
 }
 
 bool ListView::checked(size_t row) const
@@ -602,7 +612,7 @@ void ListView::updateDisplayStyles()
     ListView_SetTextColor(hwnd, textColor);
 }
 
-void ListView::updateListStyles()
+void ListView::updateExtStyles()
 {
     auto hwnd = reinterpret_cast<HWND>(handle());
     auto dwStyle = (UINT)SendMessage(hwnd, LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);

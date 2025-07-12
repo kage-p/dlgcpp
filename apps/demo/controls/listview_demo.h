@@ -31,16 +31,14 @@ public:
     size_t columnCount() const override;
     std::string rowData(size_t row, int role) const override;
     size_t rowCount() const override;
-    bool beginEdit(size_t row, int role, std::string& text) override;
-    void endEdit(size_t row, int role, const std::string& text, bool confirmed) override;
+    bool beginEdit(size_t row, int role) override;
+    bool endEdit(size_t row, int role, const std::string& text) override;
     bool checked(size_t row) const override;
     void checked(size_t row, bool checked) override;
 
     void setItems(const std::vector<ListViewDemoItem>& items);
 
 private:
-
-
     std::map<int, int> _roleMap;
     std::map<int, dlgcpp::controls::ListViewColumn> _columnMap;
     std::vector<ListViewDemoItem> _items;

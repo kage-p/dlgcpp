@@ -24,11 +24,8 @@ namespace dlgcpp
         class IListView
         {
         public:
-            virtual int selectedIndex() const = 0;
-            virtual void selectedIndex(int value) = 0;
-
-            virtual const std::vector<int>& selectedIndexes() const = 0;
-            virtual void selectedIndexes(const std::vector<int>& indexes) = 0;
+            virtual ListViewDisplay display() const = 0;
+            virtual void display(ListViewDisplay value) = 0;
 
             virtual bool checkboxes() const = 0;
             virtual void checkboxes(bool value) = 0;
@@ -43,9 +40,10 @@ namespace dlgcpp
 
             virtual bool multiselect() const = 0;
             virtual void multiselect(bool value) = 0;
-
-            virtual ListViewDisplay display() const = 0;
-            virtual void display(ListViewDisplay value) = 0;
+            virtual int selectedIndex() const = 0;
+            virtual void selectedIndex(int value) = 0;
+            virtual const std::vector<int>& selectedIndexes() const = 0;
+            virtual void selectedIndexes(const std::vector<int>& indexes) = 0;
 
             // list data handling
             virtual int roleData(int column) const = 0;
@@ -53,8 +51,8 @@ namespace dlgcpp
             virtual size_t columnCount() const = 0;
             virtual std::string rowData(size_t row, int role) const = 0;
             virtual size_t rowCount() const = 0;
-            virtual bool beginEdit(size_t row, int role, std::string& text) = 0;
-            virtual void endEdit(size_t row, int role, const std::string& text, bool confirmed) = 0;
+            virtual bool beginEdit(size_t row, int role) = 0;
+            virtual bool endEdit(size_t row, int role, const std::string& text) = 0;
 
             // checkbox handling
             virtual bool checked(size_t row) const = 0;
@@ -81,11 +79,8 @@ namespace dlgcpp
             void colors(Color fgColor, Color bgColor) override;
 
             // IListView impl.
-            int selectedIndex() const override;
-            void selectedIndex(int value) override;
-
-            const std::vector<int>& selectedIndexes() const override;
-            void selectedIndexes(const std::vector<int>& indexes) override;
+            ListViewDisplay display() const override;
+            void display(ListViewDisplay value) override;
 
             bool checkboxes() const override;
             void checkboxes(bool value) override;
@@ -100,9 +95,10 @@ namespace dlgcpp
 
             bool multiselect() const override;
             void multiselect(bool value) override;
-
-            ListViewDisplay display() const override;
-            void display(ListViewDisplay value) override;
+            int selectedIndex() const override;
+            void selectedIndex(int value) override;
+            const std::vector<int>& selectedIndexes() const override;
+            void selectedIndexes(const std::vector<int>& indexes) override;
 
             // placeholders
             int roleData(int column) const override;
@@ -110,8 +106,8 @@ namespace dlgcpp
             size_t columnCount() const override;
             std::string rowData(size_t row, int role) const override;
             size_t rowCount() const override;
-            bool beginEdit(size_t row, int role, std::string& text) override;
-            void endEdit(size_t row, int role, const std::string& text, bool confirmed) override;
+            bool beginEdit(size_t row, int role) override;
+            bool endEdit(size_t row, int role, const std::string& text) override;
             bool checked(size_t row) const override;
             void checked(size_t row, bool checked);
 
@@ -135,7 +131,7 @@ namespace dlgcpp
             void updateColumns();
             void updateRows();
             void updateDisplayStyles();
-            void updateListStyles();
+            void updateExtStyles();
 
             void onColumnsChanged();
             void onRowsChanged();
