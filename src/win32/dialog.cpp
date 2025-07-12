@@ -15,9 +15,6 @@ using namespace dlgcpp;
 
 // private functions (winspec)
 std::shared_ptr<IChildControl> findControl(dlg_priv& pi, int id, HWND hwnd = NULL);
-LRESULT onSetCursor(dlg_priv& pi, HWND hwndChild);
-LRESULT onColorDlg(dlg_priv& pi, HDC hdc);
-LRESULT onColorCtl(dlg_priv& pi, HDC hdc, HWND hwndChild);
 LRESULT CALLBACK dialogWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
 
 
@@ -594,7 +591,7 @@ void Dialog::redraw(bool drawChildren)
 
 void Dialog::rebuild()
 {
-    MessageInhibitor sizeAndMoveLock(_pi->props._inhibitSizeAndMoveEvents);
+    MessageLocker sizeAndMoveLock(_pi->props.inhibitSizeAndMoveMessages);
 
     destruct();
 
@@ -774,14 +771,19 @@ LRESULT CALLBACK dialogWndProc(HWND hDlg, UINT wMsg, WPARAM wParam, LPARAM lPara
 {
     auto pthis = reinterpret_cast<Dialog*>(GetPropW(hDlg, L"this"));
 
-    if (pthis != nullptr)
+    if (pthis == nullptr)
+        return FALSE;
+
+    // wrap and transfer the message directly to the class.
+    auto msg = dlg_message{ wMsg, wParam, lParam, 0 ,0 };
+    pthis->notify(msg);
+
+    if (msg.dlgResult != 0)
     {
-        // wrap and transfer the message directly to the class.
-        auto msg = dlg_message{ wMsg, wParam, lParam };
-        pthis->notify(msg);
-        return msg.result;
+        // return the message result code, if any
+        SetWindowLongPtr(hDlg, DWLP_MSGRESULT, msg.msgResult);
     }
-    return 0;
+    return msg.dlgResult;
 }
 
 // intercepts dialog messages and performs the default actions.
@@ -999,12 +1001,12 @@ void Dialog::notify(dlg_message& msg)
     }
 
     case WM_SETCURSOR:
-        msg.result = onSetCursor(*_pi, (HWND)wParam);
+        onSetCursor(msg);
         break;
 
     case WM_MOVE:
     {
-        if (_pi->props._inhibitSizeAndMoveEvents)
+        if (_pi->props.inhibitSizeAndMoveMessages.get())
             break;
 
         // only store the position when dialog is in "normal" display state.
@@ -1030,7 +1032,7 @@ void Dialog::notify(dlg_message& msg)
 
     case WM_SIZE:
     {
-        if (_pi->props._inhibitSizeAndMoveEvents)
+        if (_pi->props.inhibitSizeAndMoveMessages.get())
             break;
 
         auto state = (UINT)wParam;
@@ -1073,7 +1075,7 @@ void Dialog::notify(dlg_message& msg)
     }
 
     case WM_CTLCOLORDLG:
-        msg.result = onColorDlg(*_pi, (HDC)wParam);
+        onColorDlg(msg);
         break;
 
     case WM_CTLCOLORSTATIC:
@@ -1081,7 +1083,7 @@ void Dialog::notify(dlg_message& msg)
     case WM_CTLCOLOREDIT:
     case WM_CTLCOLORLISTBOX:
     case WM_CTLCOLORSCROLLBAR:
-        msg.result = onColorCtl(*_pi, (HDC)wParam, (HWND)lParam);
+        onColorCtl(msg);
         break;
 
     case WM_SYSCOMMAND:
@@ -1137,15 +1139,16 @@ void Dialog::notify(dlg_message& msg)
     }
 }
 
-LRESULT onSetCursor(dlg_priv& pi, HWND hwndChild)
+void Dialog::onSetCursor(dlg_message& msg)
 {
-    auto child = findControl(pi, 0, hwndChild);
+    auto hwndChild = reinterpret_cast<HWND>(msg.wParam);
+    auto child = findControl(*_pi, 0, hwndChild);
 
     auto cursor = Cursor::Default;
     if (child != nullptr)
         cursor = child->control()->cursor();
     else
-        cursor = pi.props.cursor;
+        cursor = _pi->props.cursor;
 
     auto cursorId = IDC_ARROW;
     switch (cursor)
@@ -1175,34 +1178,35 @@ LRESULT onSetCursor(dlg_priv& pi, HWND hwndChild)
         cursorId = IDC_NO;
         break;
     default:
-        return FALSE;
+        return;
     }
 
     HCURSOR hCursor = LoadCursor(NULL, cursorId);
     if (hCursor != NULL)
     {
         SetCursor(hCursor);
-        SetWindowLong(pi.state.hwnd, DWLP_MSGRESULT, TRUE);
-        return TRUE;
+        msg.dlgResult = TRUE;
     }
-    return FALSE;
 }
 
-LRESULT onColorDlg(dlg_priv& pi, HDC hdc)
+void Dialog::onColorDlg(dlg_message& msg)
 {
+    auto hdc = reinterpret_cast<HDC>(msg.wParam);
+
     // always return a brush
     bool usingSysDefault = false;
-    if (pi.props.backColor == Color::Default)
+    if (_pi->props.backColor == Color::Default)
     {
         usingSysDefault = true;
     }
-    else if (pi.props.backColor == Color::None)
+    else if (_pi->props.backColor == Color::None)
     {
-        if (pi.props.parent != nullptr)
+        if (_pi->props.parent != nullptr)
         {
             // use parent brush; the message will call this same function for the parent.
-            auto hwndParent = reinterpret_cast<HWND>(pi.props.parent->handle());
-            return SendMessage(hwndParent, WM_CTLCOLORDLG, (WPARAM)hdc, (LPARAM)hwndParent);
+            auto hwndParent = reinterpret_cast<HWND>(_pi->props.parent->handle());
+            msg.dlgResult = SendMessage(hwndParent, WM_CTLCOLORDLG, (WPARAM)hdc, (LPARAM)hwndParent);
+            return;
         }
         usingSysDefault = true;
     }
@@ -1211,18 +1215,22 @@ LRESULT onColorDlg(dlg_priv& pi, HDC hdc)
     {
         // use system default
         SetBkColor(hdc, GetSysColor(COLOR_BTNFACE));
-        return (LRESULT)GetSysColorBrush(COLOR_BTNFACE);
+        msg.dlgResult = (LRESULT)GetSysColorBrush(COLOR_BTNFACE);
+        return;
     }
 
-    SetBkColor(hdc, (COLORREF)pi.props.backColor);
-    return (LRESULT)pi.state.hbrBgColor;
+    SetBkColor(hdc, (COLORREF)_pi->props.backColor);
+    msg.dlgResult = (LRESULT)_pi->state.hbrBgColor;
 }
 
-LRESULT onColorCtl(dlg_priv& pi, HDC hdc, HWND hwndChild)
+void Dialog::onColorCtl(dlg_message& msg)
 {
-    auto child = findControl(pi, 0, hwndChild);
+    auto hdc = reinterpret_cast<HDC>(msg.wParam);
+    auto hwndChild = reinterpret_cast<HWND>(msg.lParam);
+
+    auto child = findControl(*_pi, 0, hwndChild);
     if (child == nullptr)
-        return 0;
+        return;
 
     // color handler. Returns a brush handle if required.
 
@@ -1233,7 +1241,7 @@ LRESULT onColorCtl(dlg_priv& pi, HDC hdc, HWND hwndChild)
     if (fgColor == Color::Default &&
         bgColor == Color::Default)
         // not using colors
-        return 0;
+        return;
 
     if (fgColor != Color::Default)
     {
@@ -1244,9 +1252,9 @@ LRESULT onColorCtl(dlg_priv& pi, HDC hdc, HWND hwndChild)
         {
             // using system default
             int sysClr = COLOR_BTNFACE;
-            auto msg = MSG();
-            PeekMessage(&msg, pi.state.hwnd, 0, 0, 0);
-            switch (msg.message)
+            auto tagMsg = MSG();
+            PeekMessage(&tagMsg, _pi->state.hwnd, 0, 0, 0);
+            switch (tagMsg.message)
             {
             case WM_CTLCOLOREDIT:
             case WM_CTLCOLORLISTBOX:
@@ -1259,22 +1267,25 @@ LRESULT onColorCtl(dlg_priv& pi, HDC hdc, HWND hwndChild)
                 sysClr = COLOR_BTNFACE;
                 break;
             default:
-                return 0;
+                return;
             }
             SetBkColor(hdc, GetSysColor(sysClr));
-            return (LRESULT)GetSysColorBrush(sysClr);
+
+            msg.dlgResult = (LRESULT)GetSysColorBrush(sysClr);
+            return;
         }
     }
 
     if (bgColor == Color::None)
     {
         // use parent brush
-        return onColorDlg(pi, hdc);
+        onColorDlg(msg);
+        return;
     }
 
     // the child manages the background brush
     SetBkColor(hdc, (COLORREF)bgColor);
-    return (LRESULT)child->state().hbrBack;
+    msg.dlgResult = (LRESULT)child->state().hbrBack;
 }
 
 std::shared_ptr<IChildControl> findControl(dlg_priv& pi, int id, HWND hwnd)

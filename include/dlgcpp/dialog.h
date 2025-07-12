@@ -106,7 +106,8 @@ namespace dlgcpp
         virtual IEvent<ISharedDialog, int>& UserEvent() = 0;
     };
 
-    class Dialog : public IChildDialog,
+    class Dialog :
+        public IChildDialog,
         public IDialog,
         public std::enable_shared_from_this<Dialog>
     {
@@ -212,6 +213,9 @@ namespace dlgcpp
         void updatePosition();
         void updateTimer();
         void updateVisibility();
+        void onSetCursor(dlg_message& msg);
+        void onColorDlg(dlg_message& msg);
+        void onColorCtl(dlg_message& msg);
         void destruct();
         void quit(int result = 0);
     };

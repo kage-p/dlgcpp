@@ -13,25 +13,49 @@ namespace dlgcpp
         UINT wMsg = 0;
         WPARAM wParam = 0;
         LPARAM lParam = 0;
-        LRESULT result = 0;
+
+        // the message result code
+        LONG_PTR msgResult = 0;
+        // the dialog proc result
+        LRESULT dlgResult = 0;
     };
 
-    class MessageInhibitor
+    class MessageLockValue
     {
+        friend class MessageLocker;
+
     public:
-        inline MessageInhibitor(bool& f)
-            : _flag(f)
+        inline bool get() const
         {
-            _flag = true;
+            return _value;
         }
 
-        inline ~MessageInhibitor()
+    protected:
+        inline void set(bool value)
         {
-            _flag = false;
+            _value = value;
         }
 
     private:
-        bool& _flag;
+        bool _value = false;
+    };
+
+    class MessageLocker
+    {
+    public:
+        inline MessageLocker(MessageLockValue& f)
+            : _flag(f)
+        {
+            _flag.set(true);
+        }
+
+        inline ~MessageLocker()
+        {
+            _flag.set(false);
+        }
+
+    private:
+        MessageLockValue& _flag;
     };
 
     class MessageProcessor

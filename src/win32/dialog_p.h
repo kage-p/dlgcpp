@@ -1,6 +1,7 @@
 #pragma once
 #include "dlgcpp/dialog.h"
 #include "event_p.h"
+#include "utility/message.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -41,7 +42,7 @@ namespace dlgcpp
         void* user = nullptr;
 
         // event inhibitors
-        bool _inhibitSizeAndMoveEvents = false;
+        MessageLockValue inhibitSizeAndMoveMessages;
 
         // events
         Event<ISharedDialog> confirmEvent;
