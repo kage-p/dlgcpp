@@ -19,6 +19,8 @@ namespace dlgcpp
             std::pair<int, int> range = { 0,100 };
             int pageSize = 1;
             TrackBarTickMark tickMarks = TrackBarTickMark::Above;
+            Color thumbColor = Color::Default;
+            Color barColor = Color::Default;
             Event<ISharedControl> changedEvent;
         };
     }
