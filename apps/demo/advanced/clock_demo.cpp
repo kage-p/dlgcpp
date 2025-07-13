@@ -26,7 +26,6 @@ void advanced_clock_demo(ISharedDialog parent)
         {
             label->resize(dlg->p());
         };
-    dlg->SizeEvent().invoke(dlg);
 
     dlg->timer(1000);
     dlg->TimerEvent() += [label](auto)
