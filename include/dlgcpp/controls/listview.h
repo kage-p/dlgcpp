@@ -126,7 +126,6 @@ namespace dlgcpp
             void notify(dlg_message&) override;
             void rebuild() override;
 
-            void readSelection(int row, bool selected);
             void updateSelection();
             void updateColumns();
             void updateRows();

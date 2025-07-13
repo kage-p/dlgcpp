@@ -48,8 +48,8 @@ set(src_files
     controls/toolbar_demo.h
     controls/trackbar_demo.cpp
     controls/trackbar_demo.h
-	controls/treeview_demo.cpp
-	controls/treeview_demo.h
+    controls/treeview_demo.cpp
+    controls/treeview_demo.h
     dialogs/about_demo.cpp
     dialogs/about_demo.h
     dialogs/dialog_demo.cpp

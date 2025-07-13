@@ -3,7 +3,7 @@
 #include "dlgcpp/dlgcpp.h"
 #include <map>
 
-void controls_treeview_demo(std::shared_ptr<dlgcpp::IDialog> parent);
+void controls_treeview_demo(dlgcpp::ISharedDialog parent);
 
 struct TreeViewDemoItem
 {

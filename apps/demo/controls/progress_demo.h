@@ -2,4 +2,4 @@
 
 #include "dlgcpp/dlgcpp.h"
 
-void controls_progress_demo(std::shared_ptr<dlgcpp::IDialog> parent);
+void controls_progress_demo(dlgcpp::ISharedDialog parent);

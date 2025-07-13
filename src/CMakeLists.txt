@@ -70,15 +70,16 @@ set(src_files ${src_files}
     win32/dialogs/property_p.h
     win32/dialogs/splash.cpp
     win32/dialogs/splash_p.h
-	win32/gfx/context.cpp
+    win32/gfx/context.cpp
+    win32/gfx/context.h
     win32/utility/font.cpp
     win32/utility/font.h
     win32/utility/image.cpp
     win32/utility/image.h
     win32/utility/keys.cpp
     win32/utility/keys.h
-	win32/utility/message.cpp
-	win32/utility/message.h
+    win32/utility/message.cpp
+    win32/utility/message.h
     win32/utility/string.cpp
     win32/utility/string.h
     win32/utility/units.cpp

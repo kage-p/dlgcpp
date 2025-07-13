@@ -718,7 +718,6 @@ void Control::redraw()
     if (_pi->state.hwnd == NULL)
         return;
 
-    //RedrawWindow(_pi->state.hwnd, NULL, 0, RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW);
     RedrawWindow(_pi->state.hwnd, NULL, 0, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 

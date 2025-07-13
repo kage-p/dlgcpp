@@ -2,4 +2,4 @@
 
 #include "dlgcpp/dlgcpp.h"
 
-void controls_custom_demo(std::shared_ptr<dlgcpp::IDialog> parent);
+void controls_custom_demo(dlgcpp::ISharedDialog parent);

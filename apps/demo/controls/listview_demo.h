@@ -3,7 +3,7 @@
 #include "dlgcpp/dlgcpp.h"
 #include <map>
 
-void controls_listview_demo(std::shared_ptr<dlgcpp::IDialog> parent);
+void controls_listview_demo(dlgcpp::ISharedDialog parent);
 
 class ListViewDemoImpl : public dlgcpp::controls::ListView
 {
