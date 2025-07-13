@@ -142,7 +142,7 @@ void AboutDialog::show()
         auto webLink = std::make_shared<Label>(_props->homePageLink, Position{ 7 + cxLogoOffset, 36 + cyLogoOffset, 150, 12 });
         webLink->colors(Color::Blue, Color::None);
         webLink->cursor(Cursor::Hand);
-        webLink->font(Font{ "MS Sans Serif", 8, false, true });
+        webLink->font(Font{ "MS Sans Serif", 8, false, false, true });
         webLink->autoSize(true);
 
         auto homtPageText = toWide(_props->homePageLink);
