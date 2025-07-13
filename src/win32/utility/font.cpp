@@ -15,6 +15,7 @@ HFONT dlgcpp::toGdiFont(const Font& font)
     ReleaseDC(nullptr, hdc);
 
     lf.lfWeight = font.bold ? FW_BOLD : FW_NORMAL;
+    lf.lfItalic = font.italic ? TRUE : FALSE;
     lf.lfUnderline = font.underline;
     lf.lfCharSet = font.symbolType ? SYMBOL_CHARSET : DEFAULT_CHARSET;
 
@@ -47,6 +48,7 @@ Font dlgcpp::toFont(HFONT gdiFont)
 
     // Set style flags
     font.bold = (lf.lfWeight >= FW_BOLD);
+    font.italic = lf.lfItalic != FALSE;
     font.underline = lf.lfUnderline != FALSE;
 
     // Symbol font detection (basic)
