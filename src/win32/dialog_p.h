@@ -59,6 +59,7 @@ namespace dlgcpp
         Event<ISharedDialog> helpEvent;
         Event<ISharedDialog> moveEvent;
         Event<ISharedDialog> sizeEvent;
+        Event<ISharedDialog, ISharedDrawingContext> paintEvent;
         Event<ISharedDialog> timerEvent;
         Event<ISharedDialog, int> userEvent;
     };

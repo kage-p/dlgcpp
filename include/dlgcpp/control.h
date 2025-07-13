@@ -3,6 +3,7 @@
 #include "child.h"
 #include "defs.h"
 #include "event.h"
+#include "gfx/context.h"
 
 #include <memory>
 #include <string>
@@ -33,10 +34,14 @@ namespace dlgcpp
         virtual void font(const Font& value) = 0;
         virtual Cursor cursor() const = 0;
         virtual void cursor(Cursor value) = 0;
+        virtual bool mouseCapture() const = 0;
+        virtual void mouseCapture(bool value) = 0;
         virtual bool wantKeyboardEvents() const = 0;
         virtual void wantKeyboardEvents(bool value) = 0;
         virtual bool wantMouseEvents() const = 0;
         virtual void wantMouseEvents(bool value) = 0;
+        virtual bool wantPaintEvents() const = 0;
+        virtual void wantPaintEvents(bool value) = 0;
         virtual bool wantSizingEvents() const = 0;
         virtual void wantSizingEvents(bool value) = 0;
         virtual void* handle() const = 0;
@@ -60,6 +65,7 @@ namespace dlgcpp
         virtual IEvent<ISharedControl>& MouseCaptureLostEvent() = 0;
         virtual IEvent<ISharedControl>& MoveEvent() = 0;
         virtual IEvent<ISharedControl>& SizeEvent() = 0;
+        virtual IEvent<ISharedControl, ISharedDrawingContext>& PaintEvent() = 0;
         virtual IEvent<int>& UserEvent() = 0;
     };
 
@@ -104,10 +110,14 @@ namespace dlgcpp
         void font(const Font& value) override;
         Cursor cursor() const override;
         void cursor(Cursor value) override;
+        bool mouseCapture() const override;
+        void mouseCapture(bool value) override;
         bool wantKeyboardEvents() const override;
         void wantKeyboardEvents(bool value) override;
         bool wantMouseEvents() const override;
         void wantMouseEvents(bool value) override;
+        bool wantPaintEvents() const override;
+        void wantPaintEvents(bool value) override;
         bool wantSizingEvents() const override;
         void wantSizingEvents(bool value) override;
         void* handle() const override;
@@ -130,6 +140,7 @@ namespace dlgcpp
         IEvent<ISharedControl>& MouseCaptureLostEvent() override;
         IEvent<ISharedControl>& MoveEvent() override;
         IEvent<ISharedControl>& SizeEvent() override;
+        IEvent<ISharedControl, ISharedDrawingContext>& PaintEvent() override;
         IEvent<int>& UserEvent() override;
 
     protected:

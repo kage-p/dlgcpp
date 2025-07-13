@@ -70,6 +70,7 @@ set(src_files ${src_files}
     win32/dialogs/property_p.h
     win32/dialogs/splash.cpp
     win32/dialogs/splash_p.h
+	win32/gfx/context.cpp
     win32/utility/font.cpp
     win32/utility/font.h
     win32/utility/image.cpp

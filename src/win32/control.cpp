@@ -1,5 +1,6 @@
 #include "control_p.h"
 #include "dlgcpp/dialog.h"
+#include "gfx/context.h"
 #include "utility/font.h"
 #include "utility/keys.h"
 #include "utility/message.h"
@@ -13,6 +14,7 @@
 #include <CommCtrl.h>
 
 using namespace dlgcpp;
+using namespace dlgcpp::gfx;
 
 // private functions
 void destruct(ctl_priv& pi);
@@ -93,16 +95,16 @@ void Control::notify(dlg_message& msg)
         switch (nmhdr.code)
         {
         case NM_CLICK:
-            ClickEvent().invoke(shared_from_this());
+            _pi->props.clickEvent.invoke(shared_from_this());
             break;
         case NM_RCLICK:
-            RightClickEvent().invoke(shared_from_this());
+            _pi->props.rightClickEvent.invoke(shared_from_this());
             break;
         case NM_DBLCLK:
-            DoubleClickEvent().invoke(shared_from_this());
+            _pi->props.dblClickEvent.invoke(shared_from_this());
             break;
         case NM_RDBLCLK:
-            DoubleRightClickEvent().invoke(shared_from_this());
+            _pi->props.dblRightClickEvent.invoke(shared_from_this());
             break;
         }
     }
@@ -126,14 +128,14 @@ void Control::notify(ctl_message& msg)
         {
             KeyboardEvent event;
             event.key = MapToKey(static_cast<UINT>(msg.wParam));
-            KeyDownEvent().invoke(shared_from_this(), event);
+            _pi->props.keyDownEvent.invoke(shared_from_this(), event);
             break;
         }
         case WM_KEYUP:
         {
             KeyboardEvent event;
             event.key = MapToKey(static_cast<UINT>(msg.wParam));
-            KeyUpEvent().invoke(shared_from_this(), event);
+            _pi->props.keyUpEvent.invoke(shared_from_this(), event);
             break;
         }
         case WM_GETDLGCODE:
@@ -171,13 +173,13 @@ void Control::notify(ctl_message& msg)
             event.point = Point(LOWORD(msg.lParam), HIWORD(msg.lParam));
             toUnits(hwndParent, event.point);
 
-            MouseMoveEvent().invoke(shared_from_this(), event);
+            _pi->props.mouseMoveEvent.invoke(shared_from_this(), event);
             break;
         }
 
         case WM_CAPTURECHANGED:
         {
-            MouseCaptureLostEvent().invoke(shared_from_this());
+            _pi->props.mouseCaptureLostEvent.invoke(shared_from_this());
             break;
         }
 
@@ -193,17 +195,17 @@ void Control::notify(ctl_message& msg)
                 case WM_LBUTTONDOWN:
                 case WM_MBUTTONDOWN:
                 case WM_RBUTTONDOWN:
-                    MouseDownEvent().invoke(shared_from_this(), event);
+                    _pi->props.mouseDownEvent.invoke(shared_from_this(), event);
                     break;
                 case WM_LBUTTONUP:
                 case WM_MBUTTONUP:
                 case WM_RBUTTONUP:
-                    MouseUpEvent().invoke(shared_from_this(), event);
+                    _pi->props.mouseUpEvent.invoke(shared_from_this(), event);
                     break;
                 case WM_LBUTTONDBLCLK:
                 case WM_MBUTTONDBLCLK:
                 case WM_RBUTTONDBLCLK:
-                    MouseDoubleClickEvent().invoke(shared_from_this(), event);
+                    _pi->props.mouseDblClickEvent.invoke(shared_from_this(), event);
                     break;
                 }
             }
@@ -228,7 +230,7 @@ void Control::notify(ctl_message& msg)
 
             _pi->props.p.x(posDu.x());
             _pi->props.p.y(posDu.y());
-            MoveEvent().invoke(shared_from_this());
+            _pi->props.moveEvent.invoke(shared_from_this());
             break;
         }
         case WM_SIZE:
@@ -245,9 +247,45 @@ void Control::notify(ctl_message& msg)
 
             _pi->props.p.width(sizeDu.width());
             _pi->props.p.height(sizeDu.height());
-            SizeEvent().invoke(shared_from_this());
+            _pi->props.sizeEvent.invoke(shared_from_this());
             break;
         }
+        }
+    }
+
+    if (_pi->props.wantPaintEvents)
+    {
+        switch (msg.wMsg)
+        {
+        case WM_ERASEBKGND:
+            if (_pi->props.paintEvent.count() > 0)
+            {
+                // drawing is handled in WM_PAINT
+                msg.result = TRUE;
+                return;
+            }
+            break;
+
+        case WM_PAINT:
+            if (_pi->props.paintEvent.count() > 0)
+            {
+                auto ps = PAINTSTRUCT{};
+                BeginPaint(_pi->state.hwnd, &ps);
+
+                auto context = std::make_shared<DrawingContextGdip>(_pi->state.hwnd, ps.hdc);
+                _pi->props.paintEvent.invoke(shared_from_this(), context);
+                context->render();
+
+                EndPaint(_pi->state.hwnd, &ps);
+
+                if (context->handled())
+                {
+                    // no further drawing
+                    msg.result = 0;
+                    return;
+                }
+                break;
+            }
         }
     }
 
@@ -495,6 +533,25 @@ void Control::cursor(Cursor value)
     _pi->props.cursor = value;
 }
 
+bool Control::mouseCapture() const
+{
+    return (_pi->state.hwnd != NULL && GetCapture() == _pi->state.hwnd);
+}
+
+void Control::mouseCapture(bool value)
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    if (value)
+        SetCapture(_pi->state.hwnd);
+    else
+    {
+        if (GetCapture() == _pi->state.hwnd)
+            ReleaseCapture();
+    }
+}
+
 /// <summary>
 /// Checks whether the control receives internal events (messages).
 /// </summary>
@@ -516,7 +573,7 @@ void Control::wantInternalEvents(bool value)
 }
 
 /// <summary>
-/// Checks whether the control receives keyboard events.
+/// Checks whether the control receives all keyboard events.
 /// </summary>
 bool Control::wantKeyboardEvents() const
 {
@@ -524,7 +581,7 @@ bool Control::wantKeyboardEvents() const
 }
 
 /// <summary>
-/// Enables the control to receive keyboard events through subclassing.
+/// Enables the control to receive all keyboard events.
 /// </summary>
 void Control::wantKeyboardEvents(bool value)
 {
@@ -535,7 +592,7 @@ void Control::wantKeyboardEvents(bool value)
 }
 
 /// <summary>
-/// Checks whether the control receives mouse events.
+/// Checks whether the control receives all mouse events.
 /// </summary>
 bool Control::wantMouseEvents() const
 {
@@ -543,13 +600,33 @@ bool Control::wantMouseEvents() const
 }
 
 /// <summary>
-/// Enables the control to receive mouse events through subclassing.
+/// Enables the control to receive all mouse events.
 /// </summary>
 void Control::wantMouseEvents(bool value)
 {
     if (_pi->props.wantMouseEvents == value)
         return;
     _pi->props.wantMouseEvents = value;
+    rebuild();
+}
+
+
+/// <summary>
+/// Checks whether the control receives paint events.
+/// </summary>
+bool Control::wantPaintEvents() const
+{
+    return _pi->props.wantPaintEvents;
+}
+
+/// <summary>
+/// Enables the control to receive paint events.
+/// </summary>
+void Control::wantPaintEvents(bool value)
+{
+    if (_pi->props.wantPaintEvents == value)
+        return;
+    _pi->props.wantPaintEvents = value;
     rebuild();
 }
 
@@ -562,7 +639,7 @@ bool Control::wantSizingEvents() const
 }
 
 /// <summary>
-/// Enables the control to receive move/size messages through subclassing.
+/// Enables the control to receive move/size events.
 /// </summary>
 /// <param name="value"></param>
 void Control::wantSizingEvents(bool value)
@@ -641,7 +718,8 @@ void Control::redraw()
     if (_pi->state.hwnd == NULL)
         return;
 
-    RedrawWindow(_pi->state.hwnd, NULL, 0, RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW);
+    //RedrawWindow(_pi->state.hwnd, NULL, 0, RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW);
+    RedrawWindow(_pi->state.hwnd, NULL, 0, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
 void Control::rebuild()
@@ -695,6 +773,7 @@ bool mustBeSubclassed(const ctl_props& props)
     bool subclass =
         props.wantKeyboardEvents ||
         props.wantMouseEvents ||
+        props.wantPaintEvents ||
         props.wantSizingEvents ||
         props.wantInternalEvents;
 
@@ -790,7 +869,7 @@ IEvent<ISharedControl, MouseEvent>& Control::MouseDoubleClickEvent()
 
 IEvent<ISharedControl>& Control::MouseCaptureLostEvent()
 {
-    return _pi->props.mouseCaptureLost;
+    return _pi->props.mouseCaptureLostEvent;
 }
 
 IEvent<ISharedControl>& Control::MoveEvent()
@@ -801,6 +880,11 @@ IEvent<ISharedControl>& Control::MoveEvent()
 IEvent<ISharedControl>& Control::SizeEvent()
 {
     return _pi->props.sizeEvent;
+}
+
+IEvent<ISharedControl, ISharedDrawingContext>& Control::PaintEvent()
+{
+    return _pi->props.paintEvent;
 }
 
 IEvent<int>& Control::UserEvent()

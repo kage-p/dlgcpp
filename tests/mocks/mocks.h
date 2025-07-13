@@ -44,6 +44,7 @@ namespace dlgcpp
             // actions
             MOCK_METHOD(void, show, (), (override));
             MOCK_METHOD(void, close, (int result), (override));
+            MOCK_METHOD(void, redraw, (bool), (override));
             MOCK_METHOD(void, setFocus, (), (override));
             MOCK_METHOD(void, bringToFront, (), (override));
             MOCK_METHOD(void, sendToBack, (), (override));
@@ -76,6 +77,7 @@ namespace dlgcpp
             MOCK_METHOD((IEvent<ISharedDialog, MouseEvent>&), MouseMoveEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog, MouseEvent>&), MouseDoubleClickEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog>&), MouseCaptureLostEvent, (), (override));
+            MOCK_METHOD((IEvent<ISharedDialog, ISharedDrawingContext>&), PaintEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog, std::vector<std::string>>&), DropEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedDialog, int>&), UserEvent, (), (override));
         };

@@ -39,6 +39,7 @@ set(src_files
     dlgcpp/dialogs/message.h
     dlgcpp/dialogs/property.h
     dlgcpp/dialogs/splash.h
+    dlgcpp/gfx/context.h
 )
 
 add_library(${target} INTERFACE ${src_files})

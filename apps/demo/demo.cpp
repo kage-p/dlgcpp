@@ -3,6 +3,8 @@
 #include "dlgcpp/dlgcpp.h"
 
 #include "advanced/clock_demo.h"
+#include "advanced/drawing_demo.h"
+#include "advanced/graph_demo.h"
 #include "advanced/notes_demo.h"
 #include "advanced/popup_menu_demo.h"
 
@@ -41,17 +43,19 @@ int main()
     mainDlg->title("DLGCPP Demo Application");
     mainDlg->image(ImageSource{ "#100", true, false });
     mainDlg->color(Color::White);
-    mainDlg->resize({ 500,300 });
+    mainDlg->resize({ 650,500 });
     mainDlg->center();
 
     auto label = std::make_shared<Label>("Select a demo from the menu", Position(0, 0, mainDlg->p().width(), mainDlg->p().height()));
-    label->colors(Color::Gray, Color::White);
-    label->horizontalAlignment(HorizontalAlign::Center);
-    label->verticalAlignment(VerticalAlign::Center);
+    label->colors(Color::Gray, Color::None);
+    label->autoSize(true);
     mainDlg->add(label);
     mainDlg->SizeEvent() += [label](ISharedDialog dlg)
         {
-            label->p(Position(0, 0, dlg->p().width(), dlg->p().height()));
+            int x = (dlg->p().width() / 2) - (label->p().width() / 2);
+            int y = (dlg->p().height() / 2) - (label->p().height() / 2);
+
+            label->move(Position{ x,y });
             label->redraw();
         };
 
@@ -182,6 +186,14 @@ int main()
 
     item = std::make_shared<MenuItem>("Digital Clock Demo");
     item->ClickEvent() += [mainDlg](ISharedMenuItem) { advanced_clock_demo(mainDlg); };
+    advanced->add(item);
+
+    item = std::make_shared<MenuItem>("Graph Demo");
+    item->ClickEvent() += [mainDlg](ISharedMenuItem) { advanced_graph_demo(mainDlg); };
+    advanced->add(item);
+
+    item = std::make_shared<MenuItem>("Drawing Demo");
+    item->ClickEvent() += [mainDlg](ISharedMenuItem) { advanced_drawing_demo(mainDlg); };
     advanced->add(item);
 
     item = std::make_shared<MenuItem>("Note Keeper Demo");

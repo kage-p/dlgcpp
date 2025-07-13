@@ -1,5 +1,6 @@
 #pragma once
 #include "dlgcpp/control.h"
+#include "dlgcpp/gfx/context.h"
 #include "event_p.h"
 
 #define NOMINMAX
@@ -16,6 +17,7 @@ namespace dlgcpp
         bool wantInternalEvents = false;
         bool wantKeyboardEvents = false;
         bool wantMouseEvents = false;
+        bool wantPaintEvents = false;
         bool wantSizingEvents = false;
         Position p;
         BorderStyle borderStyle = BorderStyle::None;
@@ -38,9 +40,10 @@ namespace dlgcpp
         Event<ISharedControl, MouseEvent> mouseUpEvent;
         Event<ISharedControl, MouseEvent> mouseMoveEvent;
         Event<ISharedControl, MouseEvent> mouseDblClickEvent;
-        Event<ISharedControl> mouseCaptureLost;
+        Event<ISharedControl> mouseCaptureLostEvent;
         Event<ISharedControl> moveEvent;
         Event<ISharedControl> sizeEvent;
+        Event<ISharedControl, ISharedDrawingContext> paintEvent;
         Event<int> userEvent;
     };
 

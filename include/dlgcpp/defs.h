@@ -18,10 +18,12 @@ namespace dlgcpp
     class IDialog;
     class IMenu;
     class IControl;
+    class IDrawingContext;
     struct dlg_message;
 
     typedef std::shared_ptr<IDialog> ISharedDialog;
     typedef std::shared_ptr<IControl> ISharedControl;
+    typedef std::shared_ptr<IDrawingContext> ISharedDrawingContext;
 
     class Point
     {
@@ -76,6 +78,8 @@ namespace dlgcpp
         const Point& point() const { return *this; }
         const Size& size() const { return *this; }
     };
+
+    struct Rect { int x{ 0 }, y{ 0 }, w{ 0 }, h{ 0 }; };
 
     enum class HorizontalAlign
     {

@@ -70,6 +70,7 @@ namespace dlgcpp
         // actions
         virtual void show() = 0;
         virtual void close(int result = 0) = 0;
+        virtual void redraw(bool drawChildren = false) = 0;
         virtual void setFocus() = 0;
         virtual void bringToFront() = 0;
         virtual void sendToBack() = 0;
@@ -94,6 +95,7 @@ namespace dlgcpp
         virtual IEvent<ISharedDialog>& HelpEvent() = 0;
         virtual IEvent<ISharedDialog>& MoveEvent() = 0;
         virtual IEvent<ISharedDialog>& SizeEvent() = 0;
+        virtual IEvent<ISharedDialog, ISharedDrawingContext>& PaintEvent() = 0;
         virtual IEvent<ISharedDialog>& TimerEvent() = 0;
         virtual IEvent<ISharedDialog, KeyboardEvent>& KeyDownEvent() = 0;
         virtual IEvent<ISharedDialog, KeyboardEvent>& KeyUpEvent() = 0;
@@ -170,6 +172,7 @@ namespace dlgcpp
         void center() override;
         void message(const std::string& message, const std::string& title = std::string()) override;
         void sendUserEvent(int param = 0) override;
+        void redraw(bool drawChildren = false) override;
         void timer(int timeout) override;
 
         // child management
@@ -180,12 +183,18 @@ namespace dlgcpp
         void remove(std::shared_ptr<IChildDialog> child) override;
         std::vector<ISharedDialog> dialogs() const override;
 
+        // utility
+        Point toPixels(const Point& point) const;
+        Size toPixels(const Size& size) const;
+        Position toPixels(const Position& pos) const;
+
         // events
         IEvent<ISharedDialog>& ConfirmEvent() override;
         IEvent<ISharedDialog>& CancelEvent() override;
         IEvent<ISharedDialog>& HelpEvent() override;
         IEvent<ISharedDialog>& MoveEvent() override;
         IEvent<ISharedDialog>& SizeEvent() override;
+        IEvent<ISharedDialog, ISharedDrawingContext>& PaintEvent() override;
         IEvent<ISharedDialog>& TimerEvent() override;
         IEvent<ISharedDialog, std::vector<std::string>>& DropEvent() override;
         IEvent<ISharedDialog, KeyboardEvent>& KeyDownEvent() override;
@@ -196,9 +205,6 @@ namespace dlgcpp
         IEvent<ISharedDialog, MouseEvent>& MouseDoubleClickEvent() override;
         IEvent<ISharedDialog>& MouseCaptureLostEvent() override;
         IEvent<ISharedDialog, int>& UserEvent() override;
-
-    protected:
-        void redraw(bool drawChildren = false);
 
         // overridable by derived class
         virtual unsigned int styles() const;

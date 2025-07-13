@@ -1,5 +1,6 @@
 #include "control_p.h"
 #include "dialog_p.h"
+#include "gfx/context.h"
 #include "utility/keys.h"
 #include "utility/message.h"
 #include "utility/string.h"
@@ -12,6 +13,7 @@
 #include <shellapi.h>
 
 using namespace dlgcpp;
+using namespace dlgcpp::gfx;
 
 // private functions (winspec)
 std::shared_ptr<IChildControl> findControl(dlg_priv& pi, int id, HWND hwnd = NULL);
@@ -1074,6 +1076,40 @@ void Dialog::notify(dlg_message& msg)
         break;
     }
 
+    case WM_ERASEBKGND:
+        if (_pi->props.paintEvent.count() > 0)
+        {
+            // drawing is handled in WM_PAINT
+            msg.msgResult = TRUE;
+            msg.dlgResult = TRUE;
+        }
+        break;
+
+    case WM_PAINT:
+    {
+        if (_pi->props.paintEvent.count() > 0)
+        {
+            auto ps = PAINTSTRUCT{};
+            BeginPaint(_pi->state.hwnd, &ps);
+
+            auto context = std::make_shared<DrawingContextGdip>(_pi->state.hwnd, ps.hdc);
+            _pi->props.paintEvent.invoke(shared_from_this(), context);
+            context->render();
+
+            EndPaint(_pi->state.hwnd, &ps);
+
+            if (context->handled())
+            {
+                // no further drawing
+                msg.msgResult = TRUE;
+                msg.dlgResult = TRUE;
+                return;
+            }
+        }
+
+        break;
+    }
+
     case WM_CTLCOLORDLG:
         onColorDlg(msg);
         break;
@@ -1186,6 +1222,7 @@ void Dialog::onSetCursor(dlg_message& msg)
     {
         SetCursor(hCursor);
         msg.dlgResult = TRUE;
+        msg.msgResult = TRUE;
     }
 }
 
@@ -1362,6 +1399,11 @@ IEvent<ISharedDialog>& Dialog::SizeEvent()
     return _pi->props.sizeEvent;
 }
 
+IEvent<ISharedDialog, ISharedDrawingContext>& Dialog::PaintEvent()
+{
+    return _pi->props.paintEvent;
+}
+
 IEvent<ISharedDialog>& Dialog::TimerEvent()
 {
     return _pi->props.timerEvent;
@@ -1467,17 +1509,7 @@ void Dialog::updatePosition()
     if (_pi->state.hwnd == NULL)
         return;
 
-    Position posPx;
-    if (_pi->props.id > 0)
-    {
-        // child dialog; use parent client
-        HWND hwndParent = (HWND)_pi->props.parent->handle();
-        posPx = toPixels(hwndParent, _pi->props.p, true);
-    }
-    else
-    {
-        posPx = toPixels(_pi->state.hwnd, _pi->props.p, true);
-    }
+    Position posPx = toPixels(_pi->props.p);
 
     // map the size dimensions to non-client
     RECT rc = { 0, 0, posPx.width(), posPx.height() };
@@ -1525,4 +1557,52 @@ void Dialog::updateVisibility()
     ShowWindow(
         _pi->state.hwnd,
         _pi->props.visible ? SW_SHOW : SW_HIDE);
+}
+
+Point Dialog::toPixels(const Point& point) const
+{
+    Point pointPx;
+    if (_pi->props.id > 0)
+    {
+        // child dialog; use parent client
+        HWND hwndParent = (HWND)_pi->props.parent->handle();
+        pointPx = dlgcpp::toPixels(hwndParent, point, true);
+    }
+    else
+    {
+        pointPx = dlgcpp::toPixels(_pi->state.hwnd, point, true);
+    }
+    return pointPx;
+}
+
+Size Dialog::toPixels(const Size& size) const
+{
+    Size sizePx;
+    if (_pi->props.id > 0)
+    {
+        // child dialog; use parent client
+        HWND hwndParent = (HWND)_pi->props.parent->handle();
+        sizePx = dlgcpp::toPixels(hwndParent, size, true);
+    }
+    else
+    {
+        sizePx = dlgcpp::toPixels(_pi->state.hwnd, size, true);
+    }
+    return sizePx;
+}
+
+Position Dialog::toPixels(const Position& pos) const
+{
+    Position posPx;
+    if (_pi->props.id > 0)
+    {
+        // child dialog; use parent client
+        HWND hwndParent = (HWND)_pi->props.parent->handle();
+        posPx = dlgcpp::toPixels(hwndParent, pos, true);
+    }
+    else
+    {
+        posPx = dlgcpp::toPixels(_pi->state.hwnd, pos, true);
+    }
+    return posPx;
 }

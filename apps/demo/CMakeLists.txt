@@ -10,6 +10,10 @@ set(src_files
     demo.h
     advanced/clock_demo.cpp
     advanced/clock_demo.h
+    advanced/drawing_demo.cpp
+    advanced/drawing_demo.h
+    advanced/graph_demo.cpp
+    advanced/graph_demo.h
     advanced/notes_demo.cpp
     advanced/notes_demo.h
     advanced/popup_menu_demo.cpp
