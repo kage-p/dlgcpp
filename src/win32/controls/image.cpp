@@ -1,6 +1,7 @@
 #include "image_p.h"
-#include "../dlgmsg.h"
-#include "../utility.h"
+#include "utility/image.h"
+#include "utility/message.h"
+#include "utility/units.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -37,6 +38,7 @@ void Image::notify(dlg_message& msg)
             DoubleClickEvent().invoke(shared_from_this());
         }
     }
+    Control::notify(msg);
 }
 
 void Image::rebuild()

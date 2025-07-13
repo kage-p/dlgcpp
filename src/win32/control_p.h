@@ -1,5 +1,6 @@
 #pragma once
 #include "dlgcpp/control.h"
+#include "dlgcpp/gfx/context.h"
 #include "event_p.h"
 
 #define NOMINMAX
@@ -13,7 +14,11 @@ namespace dlgcpp
         ISharedDialog parent;
         bool enabled = true;
         bool visible = true;
-        bool subclass = false;
+        bool wantInternalEvents = false;
+        bool wantKeyboardEvents = false;
+        bool wantMouseEvents = false;
+        bool wantPaintEvents = false;
+        bool wantSizingEvents = false;
         Position p;
         BorderStyle borderStyle = BorderStyle::None;
         std::string text;
@@ -25,15 +30,21 @@ namespace dlgcpp
         void* user = nullptr;
 
         Event<ISharedControl> clickEvent;
+        Event<ISharedControl> rightClickEvent;
         Event<ISharedControl> dblClickEvent;
+        Event<ISharedControl> dblRightClickEvent;
         Event<ISharedControl, bool> focusEvent;
+        Event<ISharedControl, KeyboardEvent> keyDownEvent;
+        Event<ISharedControl, KeyboardEvent> keyUpEvent;
         Event<ISharedControl, MouseEvent> mouseDownEvent;
         Event<ISharedControl, MouseEvent> mouseUpEvent;
         Event<ISharedControl, MouseEvent> mouseMoveEvent;
         Event<ISharedControl, MouseEvent> mouseDblClickEvent;
-        Event<ISharedControl> mouseCaptureLost;
+        Event<ISharedControl> mouseCaptureLostEvent;
         Event<ISharedControl> moveEvent;
         Event<ISharedControl> sizeEvent;
+        Event<ISharedControl, ISharedDrawingContext> paintEvent;
+        Event<int> userEvent;
     };
 
     struct ctl_state

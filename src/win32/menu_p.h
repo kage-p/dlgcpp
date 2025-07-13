@@ -32,8 +32,9 @@ namespace dlgcpp
         bool checked = false;
         bool defaultItem = false;
         bool separator = false;
-        bool dirty = false;
         std::vector<ISharedMenuItem> items;
+
+        Event<ISharedMenuItem> changedEvent;
         Event<ISharedMenuItem> clickEvent;
     };
 }

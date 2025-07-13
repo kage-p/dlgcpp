@@ -13,6 +13,7 @@ namespace dlgcpp
         struct checkbox_props
         {
             bool checked = false;
+            bool autoCheck = true;
             HorizontalAlign horzAlign = HorizontalAlign::Left;
             VerticalAlign vertAlign = VerticalAlign::Center;
         };

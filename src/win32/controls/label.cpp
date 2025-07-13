@@ -1,12 +1,14 @@
 #include "label_p.h"
-#include "../utility.h"
-#include "../dlgmsg.h"
+#include "utility/font.h"
+#include "utility/message.h"
+#include "utility/string.h"
+#include "utility/units.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Label::Label(const std::string& text,
-             const Position& p) :
+    const Position& p) :
     Control(text, p),
     _props(new lbl_props())
 {
@@ -84,6 +86,7 @@ void Label::notify(dlg_message& msg)
             DoubleClickEvent().invoke(shared_from_this());
         }
     }
+    Control::notify(msg);
 }
 
 void Label::text(const std::string& value)
@@ -140,8 +143,8 @@ void Label::updateAutoSize()
     HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
     auto f = Control::font();
-    if (!f.faceName.empty())
-        hFont = (HFONT)makeFont(f);
+    if (!f.family.empty())
+        hFont = toGdiFont(f);
 
     auto hdc = CreateCompatibleDC(NULL);
     auto szl = SIZE();

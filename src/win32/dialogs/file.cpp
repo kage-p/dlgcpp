@@ -1,5 +1,9 @@
 #include "file_p.h"
-#include "../utility.h"
+#include "utility/string.h"
+
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 #include <CommDlg.h>
 
 using namespace dlgcpp::dialogs;
@@ -74,8 +78,8 @@ bool FileDialog::save()
 }
 
 bool FileDialog::show(bool isSaveFile,
-                      unsigned int flags,
-                      const std::string& title)
+    unsigned int flags,
+    const std::string& title)
 {
     _props->extErr = 0;
 
@@ -102,7 +106,7 @@ bool FileDialog::show(bool isSaveFile,
     {
         filters += "|All Files (*.*)|*.*||";
         wstrFilters.insert(0, toWide(filters));
-        for (auto &c : wstrFilters) // null-splitter
+        for (auto& c : wstrFilters) // null-splitter
             if (c == '|') c = 0;
         ofn.lpstrFilter = wstrFilters.c_str();
         ofn.nFilterIndex = _props->filterIndex;

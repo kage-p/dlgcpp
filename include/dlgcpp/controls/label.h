@@ -12,6 +12,7 @@ namespace dlgcpp
             explicit Label(const std::string& text = std::string(), const Position& p = Position());
             ~Label() override;
 
+            using dlgcpp::Control::p;
             void p(const Position& p) override;
             void text(const std::string& value) override;
             void font(const Font& value) override;

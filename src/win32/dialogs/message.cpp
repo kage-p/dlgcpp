@@ -1,5 +1,9 @@
 #include "message_p.h"
-#include "../utility.h"
+#include "utility/string.h"
+
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 
 using namespace dlgcpp;
 using namespace dlgcpp::dialogs;
@@ -159,9 +163,9 @@ MessageDialogButton MessageDialog::show()
     auto messageText = toWide(_props->message);
 
     auto buttonId = MessageBoxW(hwndParent,
-                                messageText.c_str(),
-                                titleText.c_str(),
-                                flags);
+        messageText.c_str(),
+        titleText.c_str(),
+        flags);
 
     // translate result
     MessageDialogButton result = MessageDialogButton::Undefined;

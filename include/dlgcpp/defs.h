@@ -5,8 +5,8 @@
 
 #ifdef DLGCPP_DEBUG
 #include <iostream>
-#define DLGCPP_CMSG(m_args) std::cout << m_args << std::endl
-#define DLGCPP_CERR(m_args) std::cerr << m_args << std::endl
+#define DLGCPP_CMSG(m_args) std::cout << __func__ << ": " << m_args << std::endl
+#define DLGCPP_CERR(m_args) std::cerr << __func__ << ": " << m_args << std::endl
 #else
 #define DLGCPP_CMSG(m_args)
 #define DLGCPP_CERR(m_args)
@@ -18,10 +18,12 @@ namespace dlgcpp
     class IDialog;
     class IMenu;
     class IControl;
+    class IDrawingContext;
     struct dlg_message;
 
     typedef std::shared_ptr<IDialog> ISharedDialog;
     typedef std::shared_ptr<IControl> ISharedControl;
+    typedef std::shared_ptr<IDrawingContext> ISharedDrawingContext;
 
     class Point
     {
@@ -76,6 +78,8 @@ namespace dlgcpp
         const Point& point() const { return *this; }
         const Size& size() const { return *this; }
     };
+
+    struct Rect { int x{ 0 }, y{ 0 }, w{ 0 }, h{ 0 }; };
 
     enum class HorizontalAlign
     {
@@ -134,13 +138,17 @@ namespace dlgcpp
         Brown = 0x2A2AA5
     };
 
-    #define MakeColor(r,g,b) (dlgcpp::Color) (((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff));
+    inline Color MakeColor(int8_t r, int8_t g, int8_t b)
+    {
+        return (Color)(((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff));
+    }
 
     typedef struct Font
     {
-        std::string faceName;
+        std::string family;
         int pointSize = 8;
         bool bold = false;
+        bool italic = false;
         bool underline = false;
         bool symbolType = false;
     } Font;
@@ -170,8 +178,8 @@ namespace dlgcpp
         inline bool operator==(const ImageSource& other) const
         {
             return (id == other.id &&
-                    isIcon == other.isIcon &&
-                    isFile == other.isFile);
+                isIcon == other.isIcon &&
+                isFile == other.isFile);
         }
         inline bool operator!=(const ImageSource& other) const
         {
@@ -181,14 +189,63 @@ namespace dlgcpp
 
     enum class MouseButton
     {
-        Left = 0,
+        None = 0,
+        Left,
         Right,
         Middle
     };
 
     struct MouseEvent
     {
-        MouseButton button = MouseButton::Left;
-        Point point = Point(0,0);
+        MouseButton button = MouseButton::None;
+        Point point = Point(0, 0);
+    };
+
+    enum class Key
+    {
+        Unknown,
+
+        // Letters
+        A, B, C, D, E, F, G, H, I, J, K, L, M,
+        N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
+
+        // Numbers
+        Num0, Num1, Num2, Num3, Num4,
+        Num5, Num6, Num7, Num8, Num9,
+
+        // Function keys
+        F1, F2, F3, F4, F5, F6,
+        F7, F8, F9, F10, F11, F12,
+        F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24,
+
+        // Control keys
+        Escape, Tab, CapsLock, Shift, Ctrl, Alt,
+        LeftShift, RightShift, LeftCtrl, RightCtrl, LeftAlt, RightAlt,
+        Space, Enter, Backspace,
+
+        // Arrows
+        Left, Up, Right, Down,
+
+        // Navigation
+        Insert, Delete, Home, End, PageUp, PageDown,
+
+        // Symbols
+        Apostrophe, Comma, Minus, Period, Slash,
+        Semicolon, Equal, BracketLeft, Backslash, BracketRight, Grave,
+
+        // Numpad
+        NumPad0, NumPad1, NumPad2, NumPad3, NumPad4,
+        NumPad5, NumPad6, NumPad7, NumPad8, NumPad9,
+        NumPadMultiply, NumPadAdd, NumPadSubtract,
+        NumPadDecimal, NumPadDivide, NumPadEnter, NumLock,
+
+        // Other
+        PrintScreen, ScrollLock, Pause,
+        Apps, LWin, RWin, Menu,
+    };
+
+    struct KeyboardEvent
+    {
+        Key key = Key::Unknown;
     };
 }

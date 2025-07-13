@@ -82,7 +82,7 @@ void SplashDialog::show()
 
     dlg->resize(imageSize);
     dlg->center();
-    dlg->visible(true);
+    dlg->show();
     SetWindowPos((HWND)dlg->handle(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
     logoImage->ClickEvent() += [](ISharedControl ctl)

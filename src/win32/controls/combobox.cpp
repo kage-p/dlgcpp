@@ -1,6 +1,6 @@
 #include "combobox_p.h"
-#include "../dlgmsg.h"
-#include "../utility.h"
+#include "utility/message.h"
+#include "utility/string.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -81,6 +81,8 @@ void ComboBox::notify(dlg_message& msg)
             FocusEvent().invoke(shared_from_this(), false);
         }
     }
+
+    Control::notify(msg);
 }
 
 void ComboBox::rebuild()
@@ -114,8 +116,28 @@ unsigned int ComboBox::styles() const
     return styles;
 }
 
+bool ComboBox::isHandleEqual(void* otherHandle) const
+{
+    if (Control::isHandleEqual(otherHandle))
+        return true;
+
+    auto hwnd = reinterpret_cast<HWND>(handle());
+    if (hwnd == 0)
+        return false;
+
+    // match the handle with the list box portion
+    auto cbInfo = COMBOBOXINFO();
+    cbInfo.cbSize = sizeof(cbInfo);
+    if (GetComboBoxInfo(hwnd, &cbInfo) &&
+        cbInfo.hwndList == otherHandle)
+    {
+        return true;
+    }
+    return false;
+}
+
 int ComboBox::currentIndex() const
-{    
+{
     return _props->currentIndex;
 }
 
@@ -132,11 +154,7 @@ void ComboBox::currentIndex(int value)
     else
         text(std::string());
 
-    if (handle() == nullptr)
-        return;
-    auto hwnd = reinterpret_cast<HWND>(handle());
-
-    SendMessage(hwnd, CB_SETCURSEL, (WPARAM)_props->currentIndex, 0);
+    updateSelection();
 }
 
 void ComboBox::readSelection()

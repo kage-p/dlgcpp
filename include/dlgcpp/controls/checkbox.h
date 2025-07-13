@@ -13,6 +13,8 @@ namespace dlgcpp
 
             bool checked() const;
             void checked(bool value);
+            bool autoCheck() const;
+            void autoCheck(bool value);
             HorizontalAlign horizontalAlignment() const;
             void horizontalAlignment(HorizontalAlign value);
             VerticalAlign verticalAlignment() const;

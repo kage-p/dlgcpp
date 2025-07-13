@@ -1,5 +1,5 @@
 #include "checkbox_p.h"
-#include "../dlgmsg.h"
+#include "utility/message.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -34,7 +34,7 @@ unsigned int CheckBox::styles() const
 {
     auto styles = Control::styles();
 
-    styles |= BS_CHECKBOX | BS_NOTIFY;
+    styles |= (_props->autoCheck ? BS_AUTOCHECKBOX : BS_CHECKBOX) | BS_NOTIFY;
 
     switch (_props->horzAlign)
     {
@@ -71,6 +71,14 @@ void CheckBox::notify(dlg_message& msg)
     {
         if (HIWORD(msg.wParam) == BN_CLICKED)
         {
+            if (_props->autoCheck)
+            {
+                // handle auto check state
+                auto hwnd = (HWND)handle();
+                auto state = SendMessage(hwnd, BM_GETCHECK, 0, 0);
+                checked(state);
+            }
+
             ClickEvent().invoke(shared_from_this());
         }
         else if (HIWORD(msg.wParam) == BN_DBLCLK)
@@ -86,6 +94,8 @@ void CheckBox::notify(dlg_message& msg)
             FocusEvent().invoke(shared_from_this(), false);
         }
     }
+
+    Control::notify(msg);
 }
 
 bool CheckBox::checked() const
@@ -101,8 +111,26 @@ void CheckBox::checked(bool value)
 
     if (handle() == nullptr)
         return;
+
     auto hwnd = reinterpret_cast<HWND>(handle());
     SendMessage(hwnd, BM_SETCHECK, (WPARAM)_props->checked, 0);
+}
+
+bool CheckBox::autoCheck() const
+{
+    return _props->autoCheck;
+}
+
+void CheckBox::autoCheck(bool value)
+{
+    if (_props->autoCheck == value)
+        return;
+    _props->autoCheck = value;
+
+    if (handle() == nullptr)
+        return;
+
+    rebuild();
 }
 
 HorizontalAlign CheckBox::horizontalAlignment() const

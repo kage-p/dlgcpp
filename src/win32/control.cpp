@@ -1,15 +1,24 @@
 #include "control_p.h"
-#include "utility.h"
 #include "dlgcpp/dialog.h"
+#include "gfx/context.h"
+#include "utility/font.h"
+#include "utility/keys.h"
+#include "utility/message.h"
+#include "utility/string.h"
+#include "utility/units.h"
+#include <map>
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <Windows.h>
+#include <CommCtrl.h>
 
 using namespace dlgcpp;
+using namespace dlgcpp::gfx;
 
 // private functions
 void destruct(ctl_priv& pi);
+bool mustBeSubclassed(const ctl_props& props);
 LRESULT CALLBACK controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam);
 
 
@@ -18,12 +27,10 @@ Control::Control(const std::string& text, const Position& p) :
 {
     _pi->props.p = p;
     _pi->props.text = text;
-    _pi->state.hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
-    // TODO: translate and store system font
-    //auto lfw = LOGFONTW();
-    //GetObject(_pi->state.font, sizeof(LOGFONTW), &lfw);
-    //_pi->props.font = Font{};
+    // use system default font, but store the value
+    _pi->state.hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
+    _pi->props.font = toFont(_pi->state.hFont);
 }
 
 Control::~Control()
@@ -60,6 +67,11 @@ void Control::id(int value)
     _pi->props.id = value;
 }
 
+int Control::idRange() const
+{
+    return 1;
+}
+
 std::shared_ptr<IControl> Control::control()
 {
     return shared_from_this();
@@ -70,131 +82,211 @@ ctl_state Control::state()
     return _pi->state;
 }
 
-void Control::notify(dlg_message&)
+/// <summary>
+/// The default handler for control WM_NOTIFY messages.
+/// </summary>
+void Control::notify(dlg_message& msg)
 {
-    // no default action
+    switch (msg.wMsg)
+    {
+    case WM_NOTIFY:
+    {
+        auto& nmhdr = *((NMHDR*)msg.lParam);
+        switch (nmhdr.code)
+        {
+        case NM_CLICK:
+            _pi->props.clickEvent.invoke(shared_from_this());
+            break;
+        case NM_RCLICK:
+            _pi->props.rightClickEvent.invoke(shared_from_this());
+            break;
+        case NM_DBLCLK:
+            _pi->props.dblClickEvent.invoke(shared_from_this());
+            break;
+        case NM_RDBLCLK:
+            _pi->props.dblRightClickEvent.invoke(shared_from_this());
+            break;
+        }
+    }
+    break;
+    }
 }
 
+/// <summary>
+/// The default handler for subclassed control messages.
+/// </summary>
+/// <param name="msg"></param>
 void Control::notify(ctl_message& msg)
 {
     HWND hwndParent = GetParent(_pi->state.hwnd);
-    auto wMsg = msg.wMsg;
-    auto wParam = msg.wParam;
-    auto lParam = msg.lParam;
 
-    switch (wMsg)
+    if (_pi->props.wantKeyboardEvents)
     {
-    case WM_LBUTTONDOWN:
-    case WM_MBUTTONDOWN:
-    case WM_RBUTTONDOWN:
-    {
-        MouseEvent event;
-
-        if (wMsg == WM_LBUTTONDOWN)
-            event.button = MouseButton::Left;
-        else if (wMsg == WM_RBUTTONDOWN)
-            event.button = MouseButton::Right;
-        else
-            event.button = MouseButton::Middle;
-
-        event.point = Point(LOWORD(lParam), HIWORD(lParam));
-        toUnits(hwndParent, event.point);
-
-        MouseDownEvent().invoke(shared_from_this(), event);
-        break;
+        switch (msg.wMsg)
+        {
+        case WM_KEYDOWN:
+        {
+            KeyboardEvent event;
+            event.key = MapToKey(static_cast<UINT>(msg.wParam));
+            _pi->props.keyDownEvent.invoke(shared_from_this(), event);
+            break;
+        }
+        case WM_KEYUP:
+        {
+            KeyboardEvent event;
+            event.key = MapToKey(static_cast<UINT>(msg.wParam));
+            _pi->props.keyUpEvent.invoke(shared_from_this(), event);
+            break;
+        }
+        case WM_GETDLGCODE:
+            msg.result = DLGC_WANTALLKEYS | DLGC_WANTCHARS | DLGC_WANTTAB;
+            return;
+        }
     }
 
-    case WM_LBUTTONUP:
-    case WM_MBUTTONUP:
-    case WM_RBUTTONUP:
+    if (_pi->props.wantMouseEvents)
     {
-        MouseEvent event;
+        static const std::map<UINT, MouseButton> mouseMsgButtonMap =
+        {
+            { WM_LBUTTONDOWN, MouseButton::Left },
+            { WM_MBUTTONDOWN, MouseButton::Middle },
+            { WM_RBUTTONDOWN, MouseButton::Right },
+            { WM_LBUTTONUP, MouseButton::Left },
+            { WM_MBUTTONUP, MouseButton::Middle },
+            { WM_RBUTTONUP, MouseButton::Right },
+            { WM_LBUTTONDBLCLK, MouseButton::Left },
+            { WM_MBUTTONDBLCLK, MouseButton::Middle },
+            { WM_RBUTTONDBLCLK, MouseButton::Right }
+        };
+        switch (msg.wMsg)
+        {
+        case WM_MOUSEMOVE:
+        {
+            MouseEvent event;
+            UINT keys = GET_KEYSTATE_WPARAM(msg.wParam);
+            if (keys & MK_LBUTTON)
+                event.button = MouseButton::Left;
+            else if (keys & MK_MBUTTON)
+                event.button = MouseButton::Middle;
+            else if (keys & MK_RBUTTON)
+                event.button = MouseButton::Right;
+            event.point = Point(LOWORD(msg.lParam), HIWORD(msg.lParam));
+            toUnits(hwndParent, event.point);
 
-        if (wMsg == WM_LBUTTONUP)
-            event.button = MouseButton::Left;
-        else if (wMsg == WM_RBUTTONUP)
-            event.button = MouseButton::Right;
-        else
-            event.button = MouseButton::Middle;
+            _pi->props.mouseMoveEvent.invoke(shared_from_this(), event);
+            break;
+        }
 
-        event.point = Point(LOWORD(lParam), HIWORD(lParam));
-        toUnits(hwndParent, event.point);
+        case WM_CAPTURECHANGED:
+        {
+            _pi->props.mouseCaptureLostEvent.invoke(shared_from_this());
+            break;
+        }
 
-        MouseUpEvent().invoke(shared_from_this(), event);
-        break;
+        default:
+            if (mouseMsgButtonMap.find(msg.wMsg) != mouseMsgButtonMap.end())
+            {
+                MouseEvent event;
+                event.button = mouseMsgButtonMap.at(msg.wMsg);
+                event.point = Point(LOWORD(msg.lParam), HIWORD(msg.lParam));
+                toUnits(hwndParent, event.point);
+                switch (msg.wMsg)
+                {
+                case WM_LBUTTONDOWN:
+                case WM_MBUTTONDOWN:
+                case WM_RBUTTONDOWN:
+                    _pi->props.mouseDownEvent.invoke(shared_from_this(), event);
+                    break;
+                case WM_LBUTTONUP:
+                case WM_MBUTTONUP:
+                case WM_RBUTTONUP:
+                    _pi->props.mouseUpEvent.invoke(shared_from_this(), event);
+                    break;
+                case WM_LBUTTONDBLCLK:
+                case WM_MBUTTONDBLCLK:
+                case WM_RBUTTONDBLCLK:
+                    _pi->props.mouseDblClickEvent.invoke(shared_from_this(), event);
+                    break;
+                }
+            }
+        }
     }
 
-    case WM_LBUTTONDBLCLK:
-    case WM_MBUTTONDBLCLK:
-    case WM_RBUTTONDBLCLK:
+    if (_pi->props.wantSizingEvents)
     {
-        MouseEvent event;
+        switch (msg.wMsg)
+        {
+        case WM_MOVE:
+        {
+            // translate using mapped value and store
+            Point posPx((int)(short)LOWORD(msg.lParam), (int)(short)HIWORD(msg.lParam));
+            Point posDu(posPx);
+            toUnits(GetParent(_pi->state.hwnd), posDu);
 
-        if (wMsg == WM_LBUTTONDBLCLK)
-            event.button = MouseButton::Left;
-        else if (wMsg == WM_RBUTTONDBLCLK)
-            event.button = MouseButton::Right;
-        else
-            event.button = MouseButton::Middle;
+            DLGCPP_CMSG("WM_MOVE: " <<
+                "x = " << posDu.x() << " (" << posPx.x() << ") " <<
+                "y = " << posDu.y() << " (" << posPx.y() << ") " <<
+                "text = " + _pi->props.text);
 
-        event.point = Point(LOWORD(lParam), HIWORD(lParam));
-        toUnits(hwndParent, event.point);
+            _pi->props.p.x(posDu.x());
+            _pi->props.p.y(posDu.y());
+            _pi->props.moveEvent.invoke(shared_from_this());
+            break;
+        }
+        case WM_SIZE:
+        {
+            // translate using mapped value and store
+            Size sizePx({ (int)(short)LOWORD(msg.lParam), (int)(short)HIWORD(msg.lParam) });
+            Size sizeDu(sizePx);
+            toUnits(GetParent(_pi->state.hwnd), sizeDu);
 
-        MouseDoubleClickEvent().invoke(shared_from_this(), event);
-        break;
+            DLGCPP_CMSG("WM_SIZE: " <<
+                "width = " << sizeDu.width() << " (" << sizePx.width() << ") " <<
+                "height = " << sizeDu.height() << " (" << sizePx.height() << ") " <<
+                "text = " + _pi->props.text);
+
+            _pi->props.p.width(sizeDu.width());
+            _pi->props.p.height(sizeDu.height());
+            _pi->props.sizeEvent.invoke(shared_from_this());
+            break;
+        }
+        }
     }
 
-    case WM_MOUSEMOVE:
+    if (_pi->props.wantPaintEvents)
     {
-        MouseEvent event;
-        event.button = wMsg == WM_LBUTTONDOWN ? MouseButton::Left : wMsg == WM_RBUTTONDOWN ? MouseButton::Right : MouseButton::Middle;
-        event.point = Point(LOWORD(lParam), HIWORD(lParam));
-        toUnits(hwndParent, event.point);
+        switch (msg.wMsg)
+        {
+        case WM_ERASEBKGND:
+            if (_pi->props.paintEvent.count() > 0)
+            {
+                // drawing is handled in WM_PAINT
+                msg.result = TRUE;
+                return;
+            }
+            break;
 
-        MouseMoveEvent().invoke(shared_from_this(), event);
-        break;
-    }
+        case WM_PAINT:
+            if (_pi->props.paintEvent.count() > 0)
+            {
+                auto ps = PAINTSTRUCT{};
+                BeginPaint(_pi->state.hwnd, &ps);
 
-    case WM_CAPTURECHANGED:
-    {
-        MouseCaptureLostEvent().invoke(shared_from_this());
-        break;
-    }
+                auto context = std::make_shared<DrawingContextGdip>(_pi->state.hwnd, ps.hdc);
+                _pi->props.paintEvent.invoke(shared_from_this(), context);
+                context->render();
 
-    case WM_MOVE:
-    {
-        // translate using mapped value and store
-        Point posPx((int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
-        Point posDu(posPx);
-        toUnits(GetParent(_pi->state.hwnd), posDu);
+                EndPaint(_pi->state.hwnd, &ps);
 
-        DLGCPP_CMSG("WM_MOVE: " <<
-                    "x = "  << posDu.x() << " (" << posPx.x() << ") " <<
-                    "y = " << posDu.y() << " (" << posPx.y() << ") " <<
-                    "text = " + _pi->props.text);
-
-        _pi->props.p.x(posDu.x());
-        _pi->props.p.y(posDu.y());
-        MoveEvent().invoke(shared_from_this());
-        break;
-    }
-    case WM_SIZE:
-    {
-        // translate using mapped value and store
-        Size sizePx({(int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam)});
-        Size sizeDu(sizePx);
-        toUnits(GetParent(_pi->state.hwnd), sizeDu);
-
-        DLGCPP_CMSG("WM_SIZE: " <<
-                    "width = "  << sizeDu.width() << " (" << sizePx.width() << ") " <<
-                    "height = " << sizeDu.height() << " (" << sizePx.height() << ") " <<
-                    "text = " + _pi->props.text);
-
-        _pi->props.p.width(sizeDu.width());
-        _pi->props.p.height(sizeDu.height());
-        SizeEvent().invoke(shared_from_this());
-        break;
-    }
+                if (context->handled())
+                {
+                    // no further drawing
+                    msg.result = 0;
+                    return;
+                }
+                break;
+            }
+        }
     }
 
     // use default control action
@@ -231,7 +323,7 @@ void Control::visible(bool value)
         return;
 
     ShowWindow(_pi->state.hwnd,
-               _pi->props.visible ? SW_SHOW : SW_HIDE);
+        _pi->props.visible ? SW_SHOW : SW_HIDE);
 }
 
 const Position& Control::p() const
@@ -253,12 +345,12 @@ void Control::p(const Position& p)
     auto px = toPixels(hwndParent, p);
 
     SetWindowPos(_pi->state.hwnd,
-                 0,
-                 px.x(),
-                 px.y(),
-                 px.width(),
-                 px.height(),
-                 SWP_NOZORDER);
+        0,
+        px.x(),
+        px.y(),
+        px.width(),
+        px.height(),
+        SWP_NOZORDER);
 }
 
 void Control::move(const Point& point)
@@ -272,12 +364,12 @@ void Control::move(const Point& point)
     auto px = toPixels(GetParent(_pi->state.hwnd), _pi->props.p);
 
     SetWindowPos(_pi->state.hwnd,
-                 0,
-                 px.x(),
-                 px.y(),
-                 0,
-                 0,
-                 SWP_NOZORDER | SWP_NOSIZE);
+        0,
+        px.x(),
+        px.y(),
+        0,
+        0,
+        SWP_NOZORDER | SWP_NOSIZE);
 }
 
 void Control::resize(const Size& size)
@@ -291,12 +383,42 @@ void Control::resize(const Size& size)
     auto px = toPixels(GetParent(_pi->state.hwnd), _pi->props.p);
 
     SetWindowPos(_pi->state.hwnd,
-                 0,
-                 0,
-                 0,
-                 px.width(),
-                 px.height(),
-                 SWP_NOZORDER | SWP_NOMOVE);
+        0,
+        0,
+        0,
+        px.width(),
+        px.height(),
+        SWP_NOZORDER | SWP_NOMOVE);
+}
+
+void Control::setFocus()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    SetFocus(_pi->state.hwnd);
+}
+
+void Control::bringToFront()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    SetWindowPos(_pi->state.hwnd,
+        HWND_TOP,
+        0, 0, 0, 0,
+        SWP_NOMOVE | SWP_NOSIZE);
+}
+
+void Control::sendToBack()
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    SetWindowPos(_pi->state.hwnd,
+        HWND_BOTTOM,
+        0, 0, 0, 0,
+        SWP_NOMOVE | SWP_NOSIZE);
 }
 
 BorderStyle Control::border() const
@@ -339,7 +461,7 @@ void Control::text(const std::string& value)
     }
 
     SetWindowTextW(_pi->state.hwnd,
-                   toWide(_pi->props.text).c_str());
+        toWide(_pi->props.text).c_str());
 }
 
 std::pair<Color, Color> Control::colors() const
@@ -378,16 +500,6 @@ void Control::colors(Color fgColor, Color bgColor)
     redraw();
 }
 
-Cursor Control::cursor() const
-{
-    return _pi->props.cursor;
-}
-
-void Control::cursor(Cursor value)
-{
-    _pi->props.cursor = value;
-}
-
 const Font& Control::font() const
 {
     return _pi->props.font;
@@ -400,8 +512,8 @@ void Control::font(const Font& value)
     if (_pi->state.hFont != NULL)
         DeleteObject(_pi->state.hFont);
 
-    if (!_pi->props.font.faceName.empty())
-        _pi->state.hFont = makeFont(_pi->props.font);
+    if (!_pi->props.font.family.empty())
+        _pi->state.hFont = toGdiFont(_pi->props.font);
     else
         _pi->state.hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
@@ -411,9 +523,142 @@ void Control::font(const Font& value)
     SendMessage(_pi->state.hwnd, WM_SETFONT, (WPARAM)_pi->state.hFont, TRUE);
 }
 
+Cursor Control::cursor() const
+{
+    return _pi->props.cursor;
+}
+
+void Control::cursor(Cursor value)
+{
+    _pi->props.cursor = value;
+}
+
+bool Control::mouseCapture() const
+{
+    return (_pi->state.hwnd != NULL && GetCapture() == _pi->state.hwnd);
+}
+
+void Control::mouseCapture(bool value)
+{
+    if (_pi->state.hwnd == NULL)
+        return;
+
+    if (value)
+        SetCapture(_pi->state.hwnd);
+    else
+    {
+        if (GetCapture() == _pi->state.hwnd)
+            ReleaseCapture();
+    }
+}
+
+/// <summary>
+/// Checks whether the control receives internal events (messages).
+/// </summary>
+bool Control::wantInternalEvents() const
+{
+    return _pi->props.wantInternalEvents;
+}
+
+/// <summary>
+/// Enables the control to receive internal event messages through subclassing.
+/// Note: notify(ctl_msg) may still be called if subclass is enabled elsewhere.
+/// </summary>
+void Control::wantInternalEvents(bool value)
+{
+    if (_pi->props.wantInternalEvents == value)
+        return;
+    _pi->props.wantInternalEvents = value;
+    rebuild();
+}
+
+/// <summary>
+/// Checks whether the control receives all keyboard events.
+/// </summary>
+bool Control::wantKeyboardEvents() const
+{
+    return _pi->props.wantKeyboardEvents;
+}
+
+/// <summary>
+/// Enables the control to receive all keyboard events.
+/// </summary>
+void Control::wantKeyboardEvents(bool value)
+{
+    if (_pi->props.wantKeyboardEvents == value)
+        return;
+    _pi->props.wantKeyboardEvents = value;
+    rebuild();
+}
+
+/// <summary>
+/// Checks whether the control receives all mouse events.
+/// </summary>
+bool Control::wantMouseEvents() const
+{
+    return _pi->props.wantMouseEvents;
+}
+
+/// <summary>
+/// Enables the control to receive all mouse events.
+/// </summary>
+void Control::wantMouseEvents(bool value)
+{
+    if (_pi->props.wantMouseEvents == value)
+        return;
+    _pi->props.wantMouseEvents = value;
+    rebuild();
+}
+
+
+/// <summary>
+/// Checks whether the control receives paint events.
+/// </summary>
+bool Control::wantPaintEvents() const
+{
+    return _pi->props.wantPaintEvents;
+}
+
+/// <summary>
+/// Enables the control to receive paint events.
+/// </summary>
+void Control::wantPaintEvents(bool value)
+{
+    if (_pi->props.wantPaintEvents == value)
+        return;
+    _pi->props.wantPaintEvents = value;
+    rebuild();
+}
+
+/// <summary>
+/// Checks whether the control receives move/size events.
+/// </summary>
+bool Control::wantSizingEvents() const
+{
+    return _pi->props.wantSizingEvents;
+}
+
+/// <summary>
+/// Enables the control to receive move/size events.
+/// </summary>
+/// <param name="value"></param>
+void Control::wantSizingEvents(bool value)
+{
+    if (_pi->props.wantSizingEvents == value)
+        return;
+    _pi->props.wantSizingEvents = value;
+    rebuild();
+}
+
 void* Control::handle() const
 {
     return _pi->state.hwnd;
+}
+
+bool Control::isHandleEqual(void* otherHandle) const
+{
+    auto hwndOther = reinterpret_cast<HWND>(otherHandle);
+    return (hwndOther == _pi->state.hwnd);
 }
 
 void* Control::user() const
@@ -463,20 +708,17 @@ unsigned int Control::exStyles() const
     return styles;
 }
 
+const ctl_priv* Control::priv() const
+{
+    return _pi;
+}
+
 void Control::redraw()
 {
     if (_pi->state.hwnd == NULL)
         return;
 
-    RedrawWindow(_pi->state.hwnd, NULL, 0, RDW_ERASE | RDW_INVALIDATE | RDW_UPDATENOW);
-}
-
-void Control::setFocus()
-{
-    if (_pi->state.hwnd == NULL)
-        return;
-
-    SetFocus(_pi->state.hwnd);
+    RedrawWindow(_pi->state.hwnd, NULL, 0, RDW_INVALIDATE | RDW_UPDATENOW);
 }
 
 void Control::rebuild()
@@ -497,22 +739,22 @@ void Control::rebuild()
     auto p = toPixels(hwndParent, _pi->props.p);
 
     auto hwnd = CreateWindowExW(exStyles(),
-                                toWide(className()).c_str(),
-                                toWide(_pi->props.text).c_str(),
-                                styles(),
-                                p.x(),
-                                p.y(),
-                                p.width(),
-                                p.height(),
-                                hwndParent,
-                                (HMENU)(UINT_PTR)_pi->props.id,
-                                GetModuleHandle(NULL), NULL);
+        toWide(className()).c_str(),
+        toWide(_pi->props.text).c_str(),
+        styles(),
+        p.x(),
+        p.y(),
+        p.width(),
+        p.height(),
+        hwndParent,
+        (HMENU)(UINT_PTR)_pi->props.id,
+        GetModuleHandle(NULL), NULL);
     if (hwnd == NULL)
         return;
 
     _pi->state.hwnd = hwnd;
 
-    if (_pi->props.subclass)
+    if (mustBeSubclassed(_pi->props))
     {
         SetPropW(_pi->state.hwnd, L"this", this);
         _pi->state.prevWndProc = (WNDPROC)SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)controlWndProc);
@@ -522,12 +764,27 @@ void Control::rebuild()
     SendMessage(_pi->state.hwnd, WM_SETFONT, (WPARAM)_pi->state.hFont, FALSE);
 }
 
+/// <summary>
+/// Determines if the control needs to be subclassed.
+/// </summary>
+bool mustBeSubclassed(const ctl_props& props)
+{
+    bool subclass =
+        props.wantKeyboardEvents ||
+        props.wantMouseEvents ||
+        props.wantPaintEvents ||
+        props.wantSizingEvents ||
+        props.wantInternalEvents;
+
+    return subclass;
+}
+
 void destruct(ctl_priv& pi)
 {
     if (pi.state.hwnd == NULL)
         return;
 
-    if (pi.props.subclass)
+    if (pi.state.prevWndProc != NULL)
     {
         // remove subclass
         SetWindowLongPtr(pi.state.hwnd, GWLP_WNDPROC, (LONG_PTR)pi.state.prevWndProc);
@@ -547,7 +804,7 @@ LRESULT CALLBACK controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lPar
     {
         // wrap and transfer the message directly to the class.
         // note: all derivatives will need to process the message and use CallWindowProc
-        auto msg = ctl_message{wMsg, wParam, lParam, 0, pproc};
+        auto msg = ctl_message{ wMsg, wParam, lParam, 0, pproc };
         pthis->notify(msg);
         return msg.result;
     }
@@ -559,14 +816,34 @@ IEvent<ISharedControl>& Control::ClickEvent()
     return _pi->props.clickEvent;
 }
 
+IEvent<ISharedControl>& Control::RightClickEvent()
+{
+    return _pi->props.rightClickEvent;
+}
+
 IEvent<ISharedControl>& Control::DoubleClickEvent()
 {
     return _pi->props.dblClickEvent;
 }
 
+IEvent<ISharedControl>& Control::DoubleRightClickEvent()
+{
+    return _pi->props.dblRightClickEvent;
+}
+
 IEvent<ISharedControl, bool>& Control::FocusEvent()
 {
     return _pi->props.focusEvent;
+}
+
+IEvent<ISharedControl, KeyboardEvent>& Control::KeyDownEvent()
+{
+    return _pi->props.keyDownEvent;
+}
+
+IEvent<ISharedControl, KeyboardEvent>& Control::KeyUpEvent()
+{
+    return _pi->props.keyUpEvent;
 }
 
 IEvent<ISharedControl, MouseEvent>& Control::MouseDownEvent()
@@ -591,7 +868,7 @@ IEvent<ISharedControl, MouseEvent>& Control::MouseDoubleClickEvent()
 
 IEvent<ISharedControl>& Control::MouseCaptureLostEvent()
 {
-    return _pi->props.mouseCaptureLost;
+    return _pi->props.mouseCaptureLostEvent;
 }
 
 IEvent<ISharedControl>& Control::MoveEvent()
@@ -602,4 +879,14 @@ IEvent<ISharedControl>& Control::MoveEvent()
 IEvent<ISharedControl>& Control::SizeEvent()
 {
     return _pi->props.sizeEvent;
+}
+
+IEvent<ISharedControl, ISharedDrawingContext>& Control::PaintEvent()
+{
+    return _pi->props.paintEvent;
+}
+
+IEvent<int>& Control::UserEvent()
+{
+    return _pi->props.userEvent;
 }

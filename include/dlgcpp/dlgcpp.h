@@ -13,6 +13,7 @@
 #pragma once
 
 #include "defs.h"
+
 #include "control.h"
 #include "dialog.h"
 #include "menu.h"
@@ -24,8 +25,15 @@
 #include "controls/image.h"
 #include "controls/label.h"
 #include "controls/listbox.h"
+#include "controls/listview.h"
+#include "controls/option_btn.h"
+#include "controls/progress.h"
 #include "controls/slider.h"
+#include "controls/tabs.h"
 #include "controls/textbox.h"
+#include "controls/toolbar.h"
+#include "controls/trackbar.h"
+#include "controls/treeview.h"
 
 #include "dialogs/about.h"
 #include "dialogs/file.h"

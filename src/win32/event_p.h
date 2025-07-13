@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dlgcpp/event.h"
-#include <vector>
+#include <unordered_map>
 
 namespace dlgcpp
 {
@@ -9,49 +9,56 @@ namespace dlgcpp
     class Event : public IEvent<Args...>
     {
     public:
-        inline Event& operator+=(std::function<void(Args...args)> fn) override
+        virtual ~Event() = default;
+
+        inline EventBinding operator+=(std::function<void(Args...args)> fn) override
         {
-            _listeners.push_back(fn);
-            return *this;
+            EventBinding ref = _nextBindingRef++;
+            _listeners[ref] = std::move(fn);
+            return ref;
         }
 
-        inline Event& operator+=(std::function<void()> fn) override
+        inline void operator-=(EventBinding ref) override
         {
-            _basic_listeners.push_back(fn);
-            return *this;
+            _listeners.erase(ref);
         }
 
         inline size_t count() override
         {
-            return _listeners.size() + _basic_listeners.size();
+            return _listeners.size();
         }
 
         inline void clear() override
         {
             _listeners.clear();
-            _basic_listeners.clear();
         }
 
         inline void invoke(Args ... args) override
         {
-            for (auto& f : _listeners)
-                f(args...);
-            for (auto& f : _basic_listeners)
-                f();
+            for (const auto& [id, fn] : _listeners)
+            {
+                fn(args...);
+            }
         };
 
         inline void invoke() override
         {
-            // TODO: need to call parameter listeners
-            //for (auto& f : _listeners)
-            //    f(_defaultArgs);
-            for (auto& f : _basic_listeners)
-                f();
+            for (const auto& [id, fn] : _listeners)
+            {
+                std::apply([&fn](Args... args) {
+                    fn(args...);
+                    }, _defaultArgs);
+            }
         };
 
+        void setDefaultArgs(Args... args)
+        {
+            _defaultArgs = std::make_tuple(std::forward<Args>(args)...);
+        }
+
     private:
-        std::vector<std::function<void(Args...args)>> _listeners;
-        std::vector<std::function<void()>> _basic_listeners;
+        std::unordered_map<EventBinding, std::function<void(Args...)>> _listeners;
         std::tuple<Args...> _defaultArgs;
+        EventBinding _nextBindingRef = 1;
     };
 }
