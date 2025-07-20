@@ -10,6 +10,14 @@
 
 namespace dlgcpp
 {
+    enum class BorderStyle
+    {
+        None = 0,
+        Thin,
+        Sunken,
+        Raised
+    };
+
     class IControl
     {
     public:

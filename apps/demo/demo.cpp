@@ -55,7 +55,7 @@ int main()
             int x = (dlg->p().width() / 2) - (label->p().width() / 2);
             int y = (dlg->p().height() / 2) - (label->p().height() / 2);
 
-            label->move(Position{ x,y });
+            label->move(Point{ x,y });
             label->redraw();
         };
 

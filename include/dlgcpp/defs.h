@@ -19,233 +19,36 @@ namespace dlgcpp
     class IMenu;
     class IControl;
     class IDrawingContext;
+
+    class Point;
+    class Size;
+    class Rect;
+    class Position;
+    class Font;
+    class ImageSource;
+
+    enum class Color : unsigned long;
+    enum class Key;
+    enum class Cursor;
+    enum class HorizontalAlign;
+    enum class VerticalAlign;
+
+    struct KeyboardEvent;
+    struct MouseEvent;
     struct dlg_message;
 
+    // shared forwards
     typedef std::shared_ptr<IDialog> ISharedDialog;
     typedef std::shared_ptr<IControl> ISharedControl;
     typedef std::shared_ptr<IDrawingContext> ISharedDrawingContext;
-
-    class Point
-    {
-    public:
-        Point(int x = 0, int y = 0);
-        Point(const Point&);
-        Point& operator=(const Point& other);
-        bool operator==(const Point& other) const;
-        bool operator!=(const Point& other) const;
-
-        int x() const;
-        void x(int value);
-        int y() const;
-        void y(int value);
-
-    private:
-        int _x = 0;
-        int _y = 0;
-    };
-
-    class Size
-    {
-    public:
-        Size(int w = 0, int h = 0);
-        Size(const Size&);
-        Size& operator=(const Size& other);
-        bool operator==(const Size& other) const;
-        bool operator!=(const Size& other) const;
-
-        int width() const;
-        void width(int value);
-        int height() const;
-        void height(int value);
-        bool empty() const;
-
-    private:
-        int _width = 0;
-        int _height = 0;
-    };
-
-    class Position : public Point, public Size
-    {
-    public:
-        Position(int x = 0, int y = 0, int w = 0, int h = 0);
-        Position(const Position&);
-        Position(const Point&);
-        Position(const Size&);
-        Position& operator=(const Position& other);
-        bool operator==(const Position& other) const;
-        bool operator!=(const Position& other) const;
-
-        const Point& point() const { return *this; }
-        const Size& size() const { return *this; }
-    };
-
-    struct Rect { int x{ 0 }, y{ 0 }, w{ 0 }, h{ 0 }; };
-
-    enum class HorizontalAlign
-    {
-        Left = 0,
-        Center,
-        Right
-    };
-
-    enum class VerticalAlign
-    {
-        Top = 0,
-        Center,
-        Bottom
-    };
-
-    enum class BorderStyle
-    {
-        None = 0,
-        Thin,
-        Sunken,
-        Raised
-    };
-
-    enum class Color : unsigned long
-    {
-        // not specified.
-        None = 0xFFFFFFFFL,
-        // default color
-        Default = 0xFF000000L,
-
-        Black = 0x0,
-        White = 0xFFFFFF,
-        Gray = 0x808080,
-        LtGray = 0xC0C0C0,
-        DarkGray = 0xA9A9A9,
-        Red = 0x0000FF,
-        Green = 0x00FF00,
-        Blue = 0xFF0000,
-        Cyan = 0xFFFF00,
-        Magenta = 0xFF00FF,
-        Yellow = 0x00FFFF,
-        DarkRed = 0x0000C4,
-        DarkGreen = 0x00C400,
-        DarkBlue = 0xC40000,
-        MedBlue = 0xFF4040,
-        Aqua = 0xFFFF00,
-        Fuchsia = 0xFF00FF,
-        Lime = 0x00FF00,
-        Maroon = 0x000080,
-        Navy = 0x800000,
-        Olive = 0x008080,
-        Orange = 0x00A5FF,
-        Purple = 0x800080,
-        Silver = 0xC0C0C0,
-        Teal = 0x808000,
-        Brown = 0x2A2AA5
-    };
-
-    inline Color MakeColor(int8_t r, int8_t g, int8_t b)
-    {
-        return (Color)(((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff));
-    }
-
-    typedef struct Font
-    {
-        std::string family;
-        int pointSize = 8;
-        bool bold = false;
-        bool italic = false;
-        bool underline = false;
-        bool symbolType = false;
-    } Font;
-
-    enum class Cursor
-    {
-        Default = 0,
-        Arrow,
-        ArrowBusy,
-        Busy,
-        Cross,
-        Hand,
-        Help,
-        Text,
-        Unavailable
-    };
-
-    struct ImageSource
-    {
-        // location of a file or resource
-        std::string id;
-        // image is an icon, else a bitmap
-        bool isIcon = false;
-        // id is a file, else a resource
-        bool isFile = false;
-
-        inline bool operator==(const ImageSource& other) const
-        {
-            return (id == other.id &&
-                isIcon == other.isIcon &&
-                isFile == other.isFile);
-        }
-        inline bool operator!=(const ImageSource& other) const
-        {
-            return !(*this == other);
-        }
-    };
-
-    enum class MouseButton
-    {
-        None = 0,
-        Left,
-        Right,
-        Middle
-    };
-
-    struct MouseEvent
-    {
-        MouseButton button = MouseButton::None;
-        Point point = Point(0, 0);
-    };
-
-    enum class Key
-    {
-        Unknown,
-
-        // Letters
-        A, B, C, D, E, F, G, H, I, J, K, L, M,
-        N, O, P, Q, R, S, T, U, V, W, X, Y, Z,
-
-        // Numbers
-        Num0, Num1, Num2, Num3, Num4,
-        Num5, Num6, Num7, Num8, Num9,
-
-        // Function keys
-        F1, F2, F3, F4, F5, F6,
-        F7, F8, F9, F10, F11, F12,
-        F13, F14, F15, F16, F17, F18, F19, F20, F21, F22, F23, F24,
-
-        // Control keys
-        Escape, Tab, CapsLock, Shift, Ctrl, Alt,
-        LeftShift, RightShift, LeftCtrl, RightCtrl, LeftAlt, RightAlt,
-        Space, Enter, Backspace,
-
-        // Arrows
-        Left, Up, Right, Down,
-
-        // Navigation
-        Insert, Delete, Home, End, PageUp, PageDown,
-
-        // Symbols
-        Apostrophe, Comma, Minus, Period, Slash,
-        Semicolon, Equal, BracketLeft, Backslash, BracketRight, Grave,
-
-        // Numpad
-        NumPad0, NumPad1, NumPad2, NumPad3, NumPad4,
-        NumPad5, NumPad6, NumPad7, NumPad8, NumPad9,
-        NumPadMultiply, NumPadAdd, NumPadSubtract,
-        NumPadDecimal, NumPadDivide, NumPadEnter, NumLock,
-
-        // Other
-        PrintScreen, ScrollLock, Pause,
-        Apps, LWin, RWin, Menu,
-    };
-
-    struct KeyboardEvent
-    {
-        Key key = Key::Unknown;
-    };
 }
+
+#include "align.h"
+#include "colors.h"
+#include "font.h"
+#include "image.h"
+#include "keys.h"
+#include "mouse.h"
+#include "point.h"
+#include "position.h"
+#include "size.h"
