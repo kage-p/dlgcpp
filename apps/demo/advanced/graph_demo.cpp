@@ -1,7 +1,6 @@
 #include "graph_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 struct GraphObject
 {

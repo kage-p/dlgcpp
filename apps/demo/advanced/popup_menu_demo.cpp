@@ -1,7 +1,6 @@
 #include "popup_menu_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 void advanced_popup_menu_demo(ISharedDialog parent)
 {
@@ -15,7 +14,7 @@ void advanced_popup_menu_demo(ISharedDialog parent)
     dlg->add(note);
 
     auto menu = std::make_shared<Menu>();
-    std::shared_ptr<IMenuItem> item;
+    ISharedMenuItem item;
 
     item = std::make_shared<MenuItem>("Priority/default Item");
     item->defaultItem(true);

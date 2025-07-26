@@ -1,7 +1,6 @@
 #include "optionbtn_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 void controls_optionbtn_demo(ISharedDialog parent)
 {

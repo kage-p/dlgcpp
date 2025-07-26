@@ -1,7 +1,6 @@
 #include "combobox_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 void controls_combobox_demo(ISharedDialog parent)
 {

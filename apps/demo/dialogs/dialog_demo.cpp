@@ -1,11 +1,8 @@
 #include "dialog_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
-using namespace dlgcpp::dialogs;
 
 std::shared_ptr<Dialog> dlg;
-
 
 void dialogs_modal_demo(ISharedDialog parent)
 {

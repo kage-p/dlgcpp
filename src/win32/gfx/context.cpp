@@ -1,5 +1,5 @@
 
-#include "context.h"
+#include "context_p.h"
 #include "utility/image.h"
 #include "utility/string.h"
 
@@ -25,7 +25,7 @@ static Gdiplus::Color toGdiColor(Color c)
     return color;
 }
 
-DrawingContextGdip::DrawingContextGdip(HWND hwnd, HDC hdc)
+DrawingContextImpl::DrawingContextImpl(HWND hwnd, HDC hdc)
     : m_hwnd(hwnd)
 {
     static bool gdipInit = false;
@@ -58,7 +58,7 @@ DrawingContextGdip::DrawingContextGdip(HWND hwnd, HDC hdc)
     m_Graphics->SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
 }
 
-DrawingContextGdip::~DrawingContextGdip()
+DrawingContextImpl::~DrawingContextImpl()
 {
     // clean-up
     SelectObject(m_hdcMem, m_hbmpOld);
@@ -66,33 +66,33 @@ DrawingContextGdip::~DrawingContextGdip()
     DeleteDC(m_hdcMem);
 }
 
-bool DrawingContextGdip::handled() const
+bool DrawingContextImpl::handled() const
 {
     return _handled;
 }
 
-void DrawingContextGdip::handled(bool value)
+void DrawingContextImpl::handled(bool value)
 {
     _handled = value;
 }
 
-void DrawingContextGdip::render()
+void DrawingContextImpl::render()
 {
     BitBlt(m_hdcScreen, 0, 0, m_size.width(), m_size.height(), m_hdcMem, 0, 0, SRCCOPY);
 }
 
-Size DrawingContextGdip::canvasSize() const
+Size DrawingContextImpl::canvasSize() const
 {
     return m_size;
 }
 
-void DrawingContextGdip::fill(const Rect& r, const Color fill)
+void DrawingContextImpl::fill(const Rect& r, const Color fill)
 {
     Gdiplus::SolidBrush brush(toGdiColor(fill));
     m_Graphics->FillRectangle(&brush, r.x, r.y, r.w, r.h);
 }
 
-void DrawingContextGdip::drawLine(
+void DrawingContextImpl::drawLine(
     Point p1,
     Point p2,
     Color stroke,
@@ -102,7 +102,7 @@ void DrawingContextGdip::drawLine(
     m_Graphics->DrawLine(&pen, p1.x(), p1.y(), p2.x(), p2.y());
 }
 
-void DrawingContextGdip::drawRect(
+void DrawingContextImpl::drawRect(
     const Rect& r,
     const Color stroke,
     int thickness,
@@ -118,7 +118,7 @@ void DrawingContextGdip::drawRect(
     m_Graphics->DrawRectangle(&pen, r.x, r.y, r.w, r.h);
 }
 
-void DrawingContextGdip::drawEllipse(
+void DrawingContextImpl::drawEllipse(
     const Rect& r,
     const Color stroke,
     int thickness,
@@ -134,7 +134,7 @@ void DrawingContextGdip::drawEllipse(
     m_Graphics->DrawEllipse(&pen, r.x, r.y, r.w, r.h);
 }
 
-void DrawingContextGdip::drawText(
+void DrawingContextImpl::drawText(
     const std::string& text,
     const Font& font,
     const Color color,
@@ -209,7 +209,7 @@ void DrawingContextGdip::drawText(
         adjustedPoint,
         &brush);
 }
-void DrawingContextGdip::drawImage(
+void DrawingContextImpl::drawImage(
     const ImageSource& image,
     const Rect& dest,
     double rotationDeg,

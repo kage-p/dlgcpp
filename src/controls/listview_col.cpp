@@ -3,14 +3,15 @@
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-struct dlgcpp::controls::listview_col_priv
+class dlgcpp::controls::ListViewColumnImpl
 {
+public:
     std::string text;
     int width = 0;
 };
 
 ListViewColumn::ListViewColumn() :
-    _priv(new listview_col_priv())
+    _impl(new ListViewColumnImpl())
 {
 }
 
@@ -19,49 +20,44 @@ ListViewColumn::ListViewColumn(
     int width) :
     ListViewColumn()
 {
-    _priv->text = text;
-    _priv->width = width;
+    _impl->text = text;
+    _impl->width = width;
 }
 
 ListViewColumn::ListViewColumn(
     const ListViewColumn& other) :
     ListViewColumn()
 {
-    _priv->text = other.text();
-    _priv->width = other.width();
+    _impl->text = other.text();
+    _impl->width = other.width();
 }
 
 ListViewColumn& ListViewColumn::operator=(const ListViewColumn& other)
 {
     if (this != &other)
     {
-        _priv->text = other.text();
-        _priv->width = other.width();
+        _impl->text = other.text();
+        _impl->width = other.width();
     }
     return *this;
 }
 
-ListViewColumn::~ListViewColumn()
-{
-    delete _priv;
-}
-
 const std::string& ListViewColumn::text() const
 {
-    return _priv->text;
+    return _impl->text;
 }
 
 void ListViewColumn::text(const std::string& value)
 {
-    _priv->text = value;
+    _impl->text = value;
 }
 
 int ListViewColumn::width() const
 {
-    return _priv->width;
+    return _impl->width;
 }
 
 void ListViewColumn::width(int value)
 {
-    _priv->width = value;
+    _impl->width = value;
 }

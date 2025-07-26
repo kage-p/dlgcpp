@@ -1,5 +1,6 @@
 #pragma once
 
+#include "control_p.h"
 #include "dlgcpp/controls/button.h"
 
 #define NOMINMAX
@@ -10,10 +11,30 @@ namespace dlgcpp
 {
     namespace controls
     {
-        struct button_props
+        class ButtonImpl : public ControlImpl
         {
-            HorizontalAlign horzAlign = HorizontalAlign::Center;
-            VerticalAlign vertAlign = VerticalAlign::Center;
+        public:
+            explicit ButtonImpl(
+                Button& button,
+                const std::string& text = std::string(),
+                const Position& p = Position());
+
+            ~ButtonImpl() override;
+
+            // IButton impl.
+            HorizontalAlign horizontalAlignment() const;
+            void horizontalAlignment(HorizontalAlign value);
+            VerticalAlign verticalAlignment() const;
+            void verticalAlignment(VerticalAlign value);
+
+        private:
+            Button& _button;
+            HorizontalAlign _horzAlign = HorizontalAlign::Center;
+            VerticalAlign _vertAlign = VerticalAlign::Center;
+
+            std::string className() const override;
+            unsigned int styles() const override;
+            void notify(DialogMessage&) override;
         };
     }
 }

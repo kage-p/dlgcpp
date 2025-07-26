@@ -1,5 +1,6 @@
 #pragma once
 
+#include "control_p.h"
 #include "dlgcpp/controls/checkbox.h"
 
 #define NOMINMAX
@@ -10,12 +11,36 @@ namespace dlgcpp
 {
     namespace controls
     {
-        struct checkbox_props
+        class CheckBoxImpl : public ControlImpl
         {
-            bool checked = false;
-            bool autoCheck = true;
-            HorizontalAlign horzAlign = HorizontalAlign::Left;
-            VerticalAlign vertAlign = VerticalAlign::Center;
+        public:
+            explicit CheckBoxImpl(
+                CheckBox& checkBox,
+                const std::string& text = std::string(),
+                const Position& p = Position());
+
+            ~CheckBoxImpl() override;
+
+            bool checked() const;
+            void checked(bool value);
+            bool autoCheck() const;
+            void autoCheck(bool value);
+            HorizontalAlign horizontalAlignment() const;
+            void horizontalAlignment(HorizontalAlign value);
+            VerticalAlign verticalAlignment() const;
+            void verticalAlignment(VerticalAlign value);
+
+        private:
+            CheckBox& _checkBox;
+            bool _checked = false;
+            bool _autoCheck = true;
+            HorizontalAlign _horzAlign = HorizontalAlign::Left;
+            VerticalAlign _vertAlign = VerticalAlign::Center;
+
+            void rebuild();
+            std::string className() const;
+            unsigned int styles() const;
+            void notify(DialogMessage&);
         };
     }
 }

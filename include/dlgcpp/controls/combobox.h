@@ -1,12 +1,14 @@
 #pragma once
-#include "../control.h"
+#include "dlgcpp/controls/control.h"
 #include <vector>
 
 namespace dlgcpp
 {
     namespace controls
     {
-        class ComboBox : public dlgcpp::Control
+        class ComboBoxImpl;
+
+        class ComboBox : public Control
         {
         public:
             explicit ComboBox(const Position& p = Position());
@@ -30,17 +32,9 @@ namespace dlgcpp
             IEvent<ISharedControl>& ListCloseEvent();
 
         private:
-            struct combobox_props* _props;
-            void rebuild() override;
-            std::string className() const override;
-            void notify(dlg_message&) override;
-            unsigned int styles() const override;
-            bool isHandleEqual(void* otherHandle) const override;
+            ComboBox(std::shared_ptr<ComboBoxImpl> impl);
 
-            void readInput();
-            void readSelection();
-            void updateSelection();
-            void updateItems();
+            std::shared_ptr<ComboBoxImpl> _impl;
         };
     }
 }

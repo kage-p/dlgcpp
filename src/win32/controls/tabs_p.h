@@ -1,7 +1,8 @@
 #pragma once
 
+#include "control_p.h"
 #include "dlgcpp/controls/tabs.h"
-#include "../event_p.h"
+#include "utility/event.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -12,11 +13,36 @@ namespace dlgcpp
 {
     namespace controls
     {
-        struct tabs_props
+        class TabsImpl : public ControlImpl
         {
-            std::vector<ISharedTabItem> items;
-            int currentIndex = -1;
-            Event<ISharedControl> selChangedEvent;
+        public:
+            explicit TabsImpl(
+                Tabs& tabs,
+                const Position& p = Position());
+
+            ~TabsImpl() override;
+
+            Position area() const;
+            int currentIndex() const;
+            void currentIndex(int value);
+            const std::vector<ISharedTabItem>& items() const;
+            void items(const std::vector<ISharedTabItem>& items);
+            IEvent<ISharedControl>& SelChangedEvent();
+
+        private:
+            Tabs& _tabs;
+            std::vector<ISharedTabItem> _items;
+            int _currentIndex = -1;
+            Event<ISharedControl> _selChangedEvent;
+
+            std::string className() const override;
+            unsigned int styles() const override;
+            void notify(DialogMessage&) override;
+            void rebuild() override;
+
+            void readSelection();
+            void updateSelection();
+            void updateItems();
         };
     }
 }

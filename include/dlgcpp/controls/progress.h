@@ -1,11 +1,14 @@
 #pragma once
-#include "../control.h"
+
+#include "dlgcpp/controls/control.h"
 
 namespace dlgcpp
 {
     namespace controls
     {
-        class Progress : public dlgcpp::Control
+        class ProgressImpl;
+
+        class Progress : public Control
         {
         public:
             explicit Progress(const Position& p = Position());
@@ -17,18 +20,13 @@ namespace dlgcpp
             void value(int value);
             std::pair<int, int> range() const;
             void range(int from, int to);
-            void colors(Color fgColor, Color bgColor) override;
 
             IEvent<ISharedControl>& ChangedEvent();
 
         private:
-            struct progress_props* _props;
-            void rebuild() override;
-            std::string className() const override;
-            unsigned int styles() const override;
-            void notify(dlg_message&) override;
+            Progress(std::shared_ptr<ProgressImpl> impl);
 
-            void updateDisplayStyles();
+            std::shared_ptr<ProgressImpl> _impl;
         };
     }
 }

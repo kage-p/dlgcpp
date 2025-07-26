@@ -1,37 +1,38 @@
+#include "dlgcpp/dialogs/dialog.h"
 #include "label_p.h"
 #include "utility/font.h"
-#include "utility/message.h"
 #include "utility/string.h"
 #include "utility/units.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-Label::Label(const std::string& text,
+LabelImpl::LabelImpl(
+    Label& label,
+    const std::string& text,
     const Position& p) :
-    Control(text, p),
-    _props(new lbl_props())
+    ControlImpl(label, text, p),
+    _label(label)
 {
 }
 
-Label::~Label()
+LabelImpl::~LabelImpl()
 {
-    delete _props;
 }
 
-void Label::rebuild()
+void LabelImpl::rebuild()
 {
-    Control::rebuild();
+    ControlImpl::rebuild();
     updateAutoSize();
 }
 
-unsigned int Label::styles() const
+unsigned int LabelImpl::styles() const
 {
-    auto styles = Control::styles();
+    auto styles = ControlImpl::styles();
     styles = styles & ~WS_TABSTOP;
     styles |= SS_NOPREFIX;
 
-    switch (_props->horzAlign)
+    switch (_horzAlign)
     {
     case HorizontalAlign::Left:
         styles |= SS_LEFT;
@@ -45,7 +46,7 @@ unsigned int Label::styles() const
         break;
     }
 
-    switch (_props->vertAlign)
+    switch (_vertAlign)
     {
     case VerticalAlign::Top:
         // default
@@ -58,72 +59,72 @@ unsigned int Label::styles() const
         break;
     }
 
-    if (_props->clickable)
+    if (_clickable)
         styles |= SS_NOTIFY;
 
-    if (_props->elipsis)
+    if (_elipsis)
         styles |= SS_ENDELLIPSIS;
 
     return styles;
 }
 
-void Label::p(const Position& p)
+void LabelImpl::p(const Position& p)
 {
-    Control::p(p);
+    ControlImpl::p(p);
     updateAutoSize();
 }
 
-void Label::notify(dlg_message& msg)
+void LabelImpl::notify(DialogMessage& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {
         if (HIWORD(msg.wParam) == STN_CLICKED)
         {
-            ClickEvent().invoke(shared_from_this());
+            ClickEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == STN_DBLCLK)
         {
-            DoubleClickEvent().invoke(shared_from_this());
+            DoubleClickEvent().invoke(control());
         }
     }
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-void Label::text(const std::string& value)
+void LabelImpl::text(const std::string& value)
 {
-    Control::text(value);
+    ControlImpl::text(value);
     updateAutoSize();
 }
 
-void Label::font(const Font& value)
+void LabelImpl::font(const Font& value)
 {
-    Control::font(value);
+    ControlImpl::font(value);
     updateAutoSize();
 }
 
-bool Label::autoSize() const
+bool LabelImpl::autoSize() const
 {
-    return _props->autoSize;
+    return _autoSize;
 }
 
-void Label::autoSize(bool value)
+void LabelImpl::autoSize(bool value)
 {
-    if (_props->autoSize == value)
+    if (_autoSize == value)
         return;
-    _props->autoSize = value;
+    _autoSize = value;
     updateAutoSize();
 }
 
-bool Label::clickable() const
+bool LabelImpl::clickable() const
 {
-    return _props->clickable;
+    return _clickable;
 }
 
-void Label::clickable(bool value)
+void LabelImpl::clickable(bool value)
 {
-    if (_props->clickable == value)
+    if (_clickable == value)
         return;
-    _props->clickable = value;
+    _clickable = value;
 
     if (handle() == nullptr)
         return;
@@ -133,23 +134,23 @@ void Label::clickable(bool value)
     SetWindowLong(hwnd, GWL_STYLE, styles());
 }
 
-void Label::updateAutoSize()
+void LabelImpl::updateAutoSize()
 {
     if (parent() == nullptr)
         return;
-    if (!_props->autoSize)
+    if (!_autoSize)
         return;
 
     HFONT hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
-    auto f = Control::font();
+    auto f = ControlImpl::font();
     if (!f.family.empty())
         hFont = toGdiFont(f);
 
     auto hdc = CreateCompatibleDC(NULL);
     auto szl = SIZE();
     SelectObject(hdc, hFont);
-    std::string text = Control::text();
+    std::string text = ControlImpl::text();
     GetTextExtentPoint32W(hdc, toWide(text).c_str(), (int)text.size(), &szl);
     DeleteDC(hdc);
     DeleteObject(hFont);
@@ -157,49 +158,49 @@ void Label::updateAutoSize()
     auto hwndParent = reinterpret_cast<HWND>(parent()->handle());
     Size size(szl.cx + 1, szl.cy + 1);
     toUnits(hwndParent, size);
-    Control::resize(size);
+    ControlImpl::resize(size);
 }
 
-bool Label::elipsis() const
+bool LabelImpl::elipsis() const
 {
-    return _props->elipsis;
+    return _elipsis;
 }
 
-void Label::elipsis(bool value)
+void LabelImpl::elipsis(bool value)
 {
-    if (_props->elipsis == value)
+    if (_elipsis == value)
         return;
-    _props->elipsis = value;
+    _elipsis = value;
     rebuild();
 }
 
-HorizontalAlign Label::horizontalAlignment() const
+HorizontalAlign LabelImpl::horizontalAlignment() const
 {
-    return _props->horzAlign;
+    return _horzAlign;
 }
 
-void Label::horizontalAlignment(HorizontalAlign value)
+void LabelImpl::horizontalAlignment(HorizontalAlign value)
 {
-    if (_props->horzAlign == value)
+    if (_horzAlign == value)
         return;
-    _props->horzAlign = value;
+    _horzAlign = value;
     rebuild();
 }
 
-VerticalAlign Label::verticalAlignment() const
+VerticalAlign LabelImpl::verticalAlignment() const
 {
-    return _props->vertAlign;
+    return _vertAlign;
 }
 
-void Label::verticalAlignment(VerticalAlign value)
+void LabelImpl::verticalAlignment(VerticalAlign value)
 {
-    if (_props->vertAlign == value)
+    if (_vertAlign == value)
         return;
 
     // bottom alignment is not supported
     if (value == VerticalAlign::Bottom)
         return;
 
-    _props->vertAlign = value;
+    _vertAlign = value;
     rebuild();
 }

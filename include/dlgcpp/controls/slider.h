@@ -1,11 +1,14 @@
 #pragma once
-#include "../control.h"
+
+#include "dlgcpp/controls/control.h"
 
 namespace dlgcpp
 {
     namespace controls
     {
-        class Slider : public dlgcpp::Control
+        class SliderImpl;
+
+        class Slider : public Control
         {
         public:
             explicit Slider(const std::string& text = std::string(), const Position& p = Position());
@@ -17,19 +20,15 @@ namespace dlgcpp
             void value(int value);
             std::pair<int, int> range() const;
             void range(int from, int to);
-            void colors(Color fgColor, Color bgColor) override;
             Color barColor() const;
             void barColor(Color value);
 
             IEvent<ISharedControl>& ChangedEvent();
 
         private:
-            struct slider_props* _props;
-            void rebuild() override;
-            std::string className() const override;
-            void notify(dlg_message&) override;
+            Slider(std::shared_ptr<SliderImpl> impl);
 
-            void updateDisplayStyles();
+            std::shared_ptr<SliderImpl> _impl;
         };
     }
 }

@@ -7,48 +7,44 @@
 #include <Windows.h>
 
 #include <objbase.h>
-#include <gdiplus.h>
+#include <Gdiplus.h>
 
 namespace dlgcpp
 {
     namespace gfx
     {
-        class DrawingContextGdip final : public IDrawingContext
+        class DrawingContextImpl
         {
         public:
-            DrawingContextGdip(HWND hwnd, HDC hdc);
-            ~DrawingContextGdip() override;
+            DrawingContextImpl(HWND hwnd, HDC hdc);
+            virtual ~DrawingContextImpl();
 
-            bool handled() const override;
-            void handled(bool value) override;
-            Size canvasSize() const override;
+            bool handled() const;
+            void handled(bool value);
+            Size canvasSize() const;
             void render();
-
-            // Shapes
 
             void fill(
                 const Rect& r,
-                Color fill) override;
+                Color fill);
 
             void drawLine(
                 Point p1,
                 Point p2,
                 Color stroke,
-                int thickness = 1) override;
+                int thickness = 1);
 
             void drawRect(
                 const Rect& r,
                 const Color stroke,
                 int thickness,
-                Color fill = Color::None) override;
+                Color fill = Color::None);
 
             void drawEllipse(
                 const Rect& r,
                 const Color stroke,
                 int thickness,
-                Color fill = Color::None) override;
-
-            // Text
+                Color fill = Color::None);
 
             void drawText(
                 const std::string& text,
@@ -56,15 +52,13 @@ namespace dlgcpp
                 const Color color,
                 Point anchor,
                 HorizontalAlign horzAlign = HorizontalAlign::Left,
-                VerticalAlign vertAlign = VerticalAlign::Top) override;
-
-            // Images
+                VerticalAlign vertAlign = VerticalAlign::Top);
 
             void drawImage(
                 const ImageSource& image,
                 const Rect& dest,
                 double rotationDeg = 0.0,
-                Color bgColor = Color::None) override;
+                Color bgColor = Color::None);
 
         private:
             HWND m_hwnd = nullptr;

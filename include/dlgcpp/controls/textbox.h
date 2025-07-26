@@ -1,14 +1,20 @@
 #pragma once
-#include "../control.h"
+
+#include "dlgcpp/controls/control.h"
 
 namespace dlgcpp
 {
     namespace controls
     {
-        class TextBox : public dlgcpp::Control
+        class TextBoxImpl;
+
+        class TextBox : public Control
         {
         public:
-            explicit TextBox(const std::string& text = std::string(), const Position& p = Position());
+            explicit TextBox(
+                const std::string& text = std::string(),
+                const Position& p = Position());
+
             ~TextBox() override;
 
             int maxChars() const;
@@ -27,14 +33,9 @@ namespace dlgcpp
             IEvent<ISharedControl>& ChangedEvent();
 
         private:
-            struct textbox_props* _props;
+            TextBox(std::shared_ptr<TextBoxImpl> impl);
 
-            void rebuild() override;
-            std::string className() const override;
-            unsigned int styles() const override;
-            void notify(dlg_message&) override;
-
-            void readInput();
+            std::shared_ptr<TextBoxImpl> _impl;
         };
     }
 }

@@ -34,8 +34,6 @@
 #include "dialogs/splash_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
-using namespace dlgcpp::dialogs;
 
 int main()
 {
@@ -60,7 +58,7 @@ int main()
         };
 
     auto menu = std::make_shared<Menu>();
-    std::shared_ptr<IMenuItem> item;
+    ISharedMenuItem item;
 
     auto controls = std::make_shared<MenuItem>("&Controls");
     menu->add(controls);

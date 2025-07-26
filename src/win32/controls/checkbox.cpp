@@ -1,42 +1,43 @@
 #include "checkbox_p.h"
-#include "utility/message.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-CheckBox::CheckBox(const std::string& text, const Position& p) :
-    Control(text, p),
-    _props(new checkbox_props())
+CheckBoxImpl::CheckBoxImpl(
+    CheckBox& checkBox,
+    const std::string& text,
+    const Position& p) :
+    ControlImpl(checkBox, text, p),
+    _checkBox(checkBox)
 {
 }
 
-CheckBox::~CheckBox()
+CheckBoxImpl::~CheckBoxImpl()
 {
-    delete _props;
 }
 
-void CheckBox::rebuild()
+void CheckBoxImpl::rebuild()
 {
-    Control::rebuild();
+    ControlImpl::rebuild();
 
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, BM_SETCHECK, (WPARAM)_props->checked, 0);
+    SendMessage(hwnd, BM_SETCHECK, (WPARAM)_checked, 0);
 }
 
-std::string CheckBox::className() const
+std::string CheckBoxImpl::className() const
 {
     return "BUTTON";
 }
 
-unsigned int CheckBox::styles() const
+unsigned int CheckBoxImpl::styles() const
 {
-    auto styles = Control::styles();
+    auto styles = ControlImpl::styles();
 
-    styles |= (_props->autoCheck ? BS_AUTOCHECKBOX : BS_CHECKBOX) | BS_NOTIFY;
+    styles |= (_autoCheck ? BS_AUTOCHECKBOX : BS_CHECKBOX) | BS_NOTIFY;
 
-    switch (_props->horzAlign)
+    switch (_horzAlign)
     {
     case HorizontalAlign::Left:
         styles |= BS_LEFT;
@@ -49,7 +50,7 @@ unsigned int CheckBox::styles() const
         break;
     }
 
-    switch (_props->vertAlign)
+    switch (_vertAlign)
     {
     case VerticalAlign::Top:
         styles |= BS_TOP;
@@ -65,13 +66,13 @@ unsigned int CheckBox::styles() const
     return styles;
 }
 
-void CheckBox::notify(dlg_message& msg)
+void CheckBoxImpl::notify(DialogMessage& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {
         if (HIWORD(msg.wParam) == BN_CLICKED)
         {
-            if (_props->autoCheck)
+            if (_autoCheck)
             {
                 // handle auto check state
                 auto hwnd = (HWND)handle();
@@ -79,53 +80,53 @@ void CheckBox::notify(dlg_message& msg)
                 checked(state);
             }
 
-            ClickEvent().invoke(shared_from_this());
+            ClickEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == BN_DBLCLK)
         {
-            DoubleClickEvent().invoke(shared_from_this());
+            DoubleClickEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == BN_SETFOCUS)
         {
-            FocusEvent().invoke(shared_from_this(), true);
+            FocusEvent().invoke(control(), true);
         }
         else if (HIWORD(msg.wParam) == BN_KILLFOCUS)
         {
-            FocusEvent().invoke(shared_from_this(), false);
+            FocusEvent().invoke(control(), false);
         }
     }
 
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-bool CheckBox::checked() const
+bool CheckBoxImpl::checked() const
 {
-    return _props->checked;
+    return _checked;
 }
 
-void CheckBox::checked(bool value)
+void CheckBoxImpl::checked(bool value)
 {
-    if (_props->checked == value)
+    if (_checked == value)
         return;
-    _props->checked = value;
+    _checked = value;
 
     if (handle() == nullptr)
         return;
 
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, BM_SETCHECK, (WPARAM)_props->checked, 0);
+    SendMessage(hwnd, BM_SETCHECK, (WPARAM)_checked, 0);
 }
 
-bool CheckBox::autoCheck() const
+bool CheckBoxImpl::autoCheck() const
 {
-    return _props->autoCheck;
+    return _autoCheck;
 }
 
-void CheckBox::autoCheck(bool value)
+void CheckBoxImpl::autoCheck(bool value)
 {
-    if (_props->autoCheck == value)
+    if (_autoCheck == value)
         return;
-    _props->autoCheck = value;
+    _autoCheck = value;
 
     if (handle() == nullptr)
         return;
@@ -133,28 +134,28 @@ void CheckBox::autoCheck(bool value)
     rebuild();
 }
 
-HorizontalAlign CheckBox::horizontalAlignment() const
+HorizontalAlign CheckBoxImpl::horizontalAlignment() const
 {
-    return _props->horzAlign;
+    return _horzAlign;
 }
 
-void CheckBox::horizontalAlignment(HorizontalAlign value)
+void CheckBoxImpl::horizontalAlignment(HorizontalAlign value)
 {
-    if (_props->horzAlign == value)
+    if (_horzAlign == value)
         return;
-    _props->horzAlign = value;
+    _horzAlign = value;
     rebuild();
 }
 
-VerticalAlign CheckBox::verticalAlignment() const
+VerticalAlign CheckBoxImpl::verticalAlignment() const
 {
-    return _props->vertAlign;
+    return _vertAlign;
 }
 
-void CheckBox::verticalAlignment(VerticalAlign value)
+void CheckBoxImpl::verticalAlignment(VerticalAlign value)
 {
-    if (_props->vertAlign == value)
+    if (_vertAlign == value)
         return;
-    _props->vertAlign = value;
+    _vertAlign = value;
     rebuild();
 }

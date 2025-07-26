@@ -1,5 +1,6 @@
 #pragma once
 
+#include "control_p.h"
 #include "dlgcpp/controls/image.h"
 
 #define NOMINMAX
@@ -10,16 +11,36 @@ namespace dlgcpp
 {
     namespace controls
     {
-        struct img_props
+        class ImageImpl : public ControlImpl
         {
-            ImageSource image;
-            bool autoSize = false;
-            bool centered = false;
-        };
+        public:
+            explicit ImageImpl(
+                Image& image,
+                const Position& p = Position());
 
-        struct img_state
-        {
-            HGDIOBJ hImage = NULL;
+            ~ImageImpl() override;
+
+            bool autoSize() const;
+            void autoSize(bool value);
+            bool centered() const;
+            void centered(bool value);
+            const ImageSource& image() const;
+            void image(const ImageSource& image);
+
+        private:
+            Image& _image;
+            ImageSource _imageSource;
+            bool _autoSize = false;
+            bool _centered = false;
+
+            // state
+            HGDIOBJ _hImage = NULL;
+
+            void rebuild() override;
+            unsigned int styles() const override;
+            void notify(DialogMessage&) override;
+
+            void updateImage();
         };
     }
 }

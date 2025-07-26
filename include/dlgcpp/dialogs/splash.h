@@ -1,6 +1,7 @@
 #pragma once
 
-#include "dlgcpp/dlgcpp.h"
+#include "dlgcpp/defs.h"
+#include <string>
 
 namespace dlgcpp
 {
@@ -19,11 +20,13 @@ namespace dlgcpp
             virtual void close() = 0;
         };
 
+        class SplashDialogImpl;
+
         class SplashDialog : public ISplashDialog
         {
         public:
             explicit SplashDialog(ISharedDialog parent = nullptr);
-            virtual ~SplashDialog();
+            virtual ~SplashDialog() = default;
 
             // ISplashDialog impl.
             const std::string& logoBitmapId() const override;
@@ -36,7 +39,9 @@ namespace dlgcpp
             void close() override;
 
         private:
-            struct splash_props* _props;
+            SplashDialog(std::shared_ptr<SplashDialogImpl> impl);
+
+            std::shared_ptr<SplashDialogImpl> _impl;
         };
     }
 }

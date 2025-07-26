@@ -1,14 +1,20 @@
 #pragma once
-#include "../control.h"
+
+#include "dlgcpp/controls/control.h"
 
 namespace dlgcpp
 {
     namespace controls
     {
-        class OptionButton : public dlgcpp::Control
+        class OptionButtonImpl;
+
+        class OptionButton : public Control
         {
         public:
-            explicit OptionButton(const std::string& text = std::string(), const Position& p = Position());
+            explicit OptionButton(
+                const std::string& text = std::string(),
+                const Position& p = Position());
+
             ~OptionButton() override;
 
             bool checked() const;
@@ -19,12 +25,9 @@ namespace dlgcpp
             void verticalAlignment(VerticalAlign value);
 
         private:
-            struct optionbtn_props* _props;
+            OptionButton(std::shared_ptr<OptionButtonImpl> impl);
 
-            void rebuild() override;
-            std::string className() const override;
-            unsigned int styles() const override;
-            void notify(dlg_message&) override;
+            std::shared_ptr<OptionButtonImpl> _impl;
         };
     }
 }

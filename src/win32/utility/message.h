@@ -8,7 +8,7 @@
 
 namespace dlgcpp
 {
-    struct dlg_message
+    struct DialogMessage
     {
         UINT wMsg = 0;
         WPARAM wParam = 0;

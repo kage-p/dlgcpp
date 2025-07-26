@@ -1,7 +1,6 @@
 #include "listbox_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 void controls_listbox_demo(ISharedDialog parent)
 {

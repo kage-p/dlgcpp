@@ -1,8 +1,11 @@
+#include "../mocks/mocks.h"
 #include "dialog_tests.h"
 #include "dlgcpp/dlgcpp.h"
-#include "../mocks/mocks.h"
 
 using namespace dlgcpp;
+using namespace dlgcpp::dialogs;
+using namespace dlgcpp::controls;
+using namespace dlgcpp::menus;
 using namespace dlgcpp::tests;
 
 TEST(DialogTests, constructor_default)
@@ -14,37 +17,32 @@ TEST(DialogTests, constructor_default)
 
 TEST(DialogTests, test_constructor_with_params)
 {
-    auto mockParent = std::make_shared<MockDialog>();
+    auto parent = std::make_shared<MockDialog>();
 
-    ON_CALL(*mockParent, p()).WillByDefault(testing::ReturnRefOfCopy(Position(10,20,30,40)));
+    ON_CALL(*parent, p()).WillByDefault(testing::ReturnRefOfCopy(Position(10, 20, 30, 40)));
 
-    auto target = std::make_shared<Dialog>(DialogType::Popup, mockParent);
+    auto target = std::make_shared<Dialog>(DialogType::Popup, parent);
     EXPECT_EQ(target->type(), DialogType::Popup);
-    EXPECT_EQ(target->parent(), mockParent);
+    EXPECT_EQ(target->parent(), parent);
     EXPECT_EQ(target->p(), Position(10, 20, 600, 400));
 }
 
-TEST(DialogTests, exec)
+TEST(DialogTests, show)
 {
+    int resultCode = 12345;
     auto target = std::make_shared<Dialog>();
 
-    // TODO: test exec() when we have a means to exit the event loop
-    //EXPECT_EQ(target->exec(), 0);
+    target->timer(500);
+    target->TimerEvent() += [resultCode](ISharedDialog dlg) { dlg->close(resultCode); };
+
+    auto result = target->exec();
+    EXPECT_EQ(result, resultCode);
 }
 
 TEST(DialogTests, parent)
 {
     auto target = std::make_shared<Dialog>();
-    auto mockParent = std::make_shared<MockDialog>();
-    target->parent(mockParent);
-    EXPECT_EQ(target->parent(), mockParent);
-}
-
-TEST(DialogTests, id)
-{
-    auto target = std::make_shared<Dialog>();
-    target->id(42);
-    EXPECT_EQ(target->id(), 42);
+    EXPECT_EQ(target->parent(), nullptr);
 }
 
 TEST(DialogTests, enabled)
@@ -122,7 +120,7 @@ TEST(DialogTests, title)
 TEST(DialogTests, image)
 {
     auto target = std::make_shared<Dialog>();
-    ImageSource img{"path/to/image", false, false};
+    ImageSource img{ "path/to/image", false, false };
 
     // must be an icon
     target->image(img);
@@ -136,13 +134,9 @@ TEST(DialogTests, image)
 TEST(DialogTests, menu)
 {
     auto target = std::make_shared<Dialog>();
-
-    auto mockMenu = std::make_shared<MockMenu>();
-    auto mockChildMenu = std::make_shared<MockChildMenu>();
-    ON_CALL(*mockChildMenu, menu()).WillByDefault(testing::Return(mockMenu));
-    target->menu(mockChildMenu);
-
-    EXPECT_EQ(target->menu(), mockMenu);
+    auto menu = std::make_shared<Menu>();
+    target->menu(menu);
+    EXPECT_EQ(target->menu(), menu);
 }
 
 TEST(DialogTests, handle)
@@ -161,25 +155,29 @@ TEST(DialogTests, user)
 
 TEST(DialogTests, addRemoveChildControl)
 {
-    // TODO: need to remove the ctl_state member
-    // auto target = std::make_shared<Dialog>();
-    // auto mockChildControl = std::make_shared<MockChildControl>();
-    // target->add(mockChildControl);
-    // auto controls = target->controls();
-    // EXPECT_EQ(controls.size(), 1);
-    // target->remove(mockChildControl);
-    // controls = target->controls();
-    // EXPECT_TRUE(controls.empty());
+    auto target = std::make_shared<Dialog>();
+    auto child = std::make_shared<Button>();
+
+    target->add(child);
+    auto controls = target->controls();
+
+    EXPECT_EQ(controls.size(), 1);
+    target->remove(child);
+
+    controls = target->controls();
+    EXPECT_TRUE(controls.empty());
 }
 
 TEST(DialogTests, addRemoveChildDialog)
 {
     auto target = std::make_shared<Dialog>();
-    auto mockChildDialog = std::make_shared<MockChildDialog>();
-    target->add(mockChildDialog);
+    auto child = std::make_shared<Dialog>(DialogType::Frameless);
+
+    target->add(child);
     auto dialogs = target->dialogs();
     EXPECT_EQ(dialogs.size(), 1);
-    target->remove(mockChildDialog);
+
+    target->remove(child);
     dialogs = target->dialogs();
     EXPECT_TRUE(dialogs.empty());
 }

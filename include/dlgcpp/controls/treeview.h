@@ -1,6 +1,7 @@
 #pragma once
-#include "../control.h"
-#include "treeview_node.h"
+
+#include "dlgcpp/controls/control.h"
+#include "dlgcpp/controls/treeview_node.h"
 #include <vector>
 
 namespace dlgcpp
@@ -41,17 +42,15 @@ namespace dlgcpp
             virtual IEvent<ISharedControl, std::shared_ptr<TreeViewNode>>& ItemDoubleClickEvent() = 0;
         };
 
-        typedef std::shared_ptr<ITreeView> ISharedTreeView;
+        class TreeViewImpl;
 
-        class TreeView : public dlgcpp::Control,
+        class TreeView :
+            public Control,
             public ITreeView
         {
         public:
             explicit TreeView(const Position& p = Position());
             ~TreeView() override;
-
-            void notify(struct ctl_message&) override;
-            void colors(Color fgColor, Color bgColor) override;
 
             // ITreeView impl.
             bool checkboxes() const override;
@@ -83,21 +82,9 @@ namespace dlgcpp
             IEvent<ISharedControl, std::shared_ptr<TreeViewNode>>& ItemDoubleClickEvent() override;
 
         private:
-            struct treeview_priv* _priv;
+            TreeView(std::shared_ptr<TreeViewImpl> impl);
 
-            std::string className() const override;
-            unsigned int styles() const override;
-            void notify(dlg_message&) override;
-            void rebuild() override;
-
-            void readSelection(int row, bool selected);
-            void updateRootNode();
-            void updateChildNodes(std::shared_ptr<TreeViewNode> parent);
-            void updateSelection();
-            void updateDisplayStyles();
-            void updateExtStyles();
-
-            void onRootNodeChanged();
+            std::shared_ptr<TreeViewImpl> _impl;
         };
     }
 }

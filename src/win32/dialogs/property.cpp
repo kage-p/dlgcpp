@@ -4,61 +4,57 @@ using namespace dlgcpp;
 using namespace dlgcpp::controls;
 using namespace dlgcpp::dialogs;
 
-PropertyDialog::PropertyDialog(ISharedDialog parent) :
-    _props(new propdlg_props()),
-    _state(new propdlg_state())
+PropertyDialogImpl::PropertyDialogImpl(
+    PropertyDialog& propertyDialog,
+    ISharedDialog parent) :
+    _propertyDialog(propertyDialog)
 {
-    _props->parent = parent;
+    _parent = parent;
 }
 
-PropertyDialog::~PropertyDialog()
+const std::string& PropertyDialogImpl::title() const
 {
-    delete _props;
+    return _title;
 }
 
-const std::string& PropertyDialog::title() const
+void PropertyDialogImpl::title(const std::string& value)
 {
-    return _props->title;
+    _title = value;
 }
 
-void PropertyDialog::title(const std::string& value)
+const std::string& PropertyDialogImpl::message() const
 {
-    _props->title = value;
+    return _message;
 }
 
-const std::string& PropertyDialog::message() const
+void PropertyDialogImpl::message(const std::string& value)
 {
-    return _props->message;
+    _message = value;
 }
 
-void PropertyDialog::message(const std::string& value)
+int PropertyDialogImpl::sectionWidth() const
 {
-    _props->message = value;
+    return _sectionWidth;
 }
 
-int PropertyDialog::sectionWidth() const
+void PropertyDialogImpl::sectionWidth(int value)
 {
-    return _props->sectionWidth;
+    _sectionWidth = value;
 }
 
-void PropertyDialog::sectionWidth(int value)
+bool PropertyDialogImpl::show()
 {
-    _props->sectionWidth = value;
-}
+    _dialog = std::make_shared<Dialog>(DialogType::Application, _parent);
+    _dialog->title(_title);
+    _dialog->resize({ 400,275 });
 
-bool PropertyDialog::show()
-{
-    _state->propertyDialog = std::make_shared<Dialog>(DialogType::Application, _props->parent);
-    _state->propertyDialog->title(_props->title);
-    _state->propertyDialog->resize({ 400,275 });
+    _sectionListBox = std::make_shared<ListBox>();
+    _dialog->add(_sectionListBox);
 
-    _state->sectionListBox = std::make_shared<ListBox>();
-    _state->propertyDialog->add(_state->sectionListBox);
+    _propertySheet = std::make_shared<Dialog>();
+    _dialog->add(_propertySheet);
 
-    _state->propertySheet = std::make_shared<Dialog>();
-    _state->propertyDialog->add(_state->propertySheet);
-
-    _state->propertyDialog->SizeEvent() += [this](ISharedDialog dlg)
+    _dialog->SizeEvent() += [this](ISharedDialog dlg)
         {
             auto width = dlg->p().width();
             auto height = dlg->p().height();
@@ -66,14 +62,14 @@ bool PropertyDialog::show()
             // TODO: complete property dialog
             Position pos;
 
-            pos = Position{ 10,10, _props->sectionWidth, (height - 20) };
-            _state->sectionListBox->p(pos);
+            pos = Position{ 10,10, _sectionWidth, (height - 20) };
+            _sectionListBox->p(pos);
 
             pos = Position{ pos.x() + pos.width() + 10, 10, (width / 3) * 2, (height - 20) };
-            //_state->propertySheet->p(pos);
+            //_propertySheet->p(pos);
         };
 
-    _state->propertyDialog->center();
-    int r = _state->propertyDialog->exec();
+    _dialog->center();
+    int r = _dialog->exec();
     return (r == 0);
 }

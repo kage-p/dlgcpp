@@ -1,79 +1,72 @@
+#include "dlgcpp/controls/image.h"
+#include "dlgcpp/controls/label.h"
 #include "splash_p.h"
-
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 using namespace dlgcpp::dialogs;
 
-SplashDialog::SplashDialog(ISharedDialog parent)
-    : _props(new splash_props())
+SplashDialogImpl::SplashDialogImpl(
+    SplashDialog& splashDialog,
+    ISharedDialog parent)
+    : _splashDialog(splashDialog)
 {
-    _props->parent = parent;
+    _parent = parent;
 }
 
-SplashDialog::~SplashDialog()
+const std::string& SplashDialogImpl::logoBitmapId() const
 {
-    // remove the modeless dialog
-    _props->splashDialog.reset();
-    delete _props;
+    return _logoBitmapId;
 }
 
-const std::string& SplashDialog::logoBitmapId() const
+void SplashDialogImpl::logoBitmapId(const std::string& value)
 {
-    return _props->logoBitmapId;
+    _logoBitmapId = value;
 }
 
-void SplashDialog::logoBitmapId(const std::string& value)
+const std::string& SplashDialogImpl::message() const
 {
-    _props->logoBitmapId = value;
+    return _message;
 }
 
-const std::string& SplashDialog::message() const
+void SplashDialogImpl::message(const std::string& value)
 {
-    return _props->message;
+    _message = value;
 }
 
-void SplashDialog::message(const std::string& value)
+int SplashDialogImpl::timeout() const
 {
-    _props->message = value;
+    return _timeout;
 }
 
-int SplashDialog::timeout() const
+void SplashDialogImpl::timeout(int value)
 {
-    return _props->timeout;
+    _timeout = value;
 }
 
-void SplashDialog::timeout(int value)
+void SplashDialogImpl::show()
 {
-    _props->timeout = value;
-}
+    _dialog.reset();
 
-void SplashDialog::show()
-{
-    _props->splashDialog.reset();
-
-    if (_props->logoBitmapId.empty())
+    if (_logoBitmapId.empty())
         return;
 
-    auto dlg = std::make_shared<Dialog>(DialogType::Frameless, _props->parent);
-    _props->splashDialog = dlg;
+    auto dlg = std::make_shared<Dialog>(DialogType::Frameless, _parent);
+    _dialog = dlg;
 
-    auto logoImage = std::make_shared<Image>(Position{0, 0, 0, 0});
+    auto logoImage = std::make_shared<Image>(Position{ 0, 0, 0, 0 });
     logoImage->colors(Color::Black, Color::White);
     logoImage->autoSize(true);
-    logoImage->image(ImageSource{_props->logoBitmapId,false,false});
+    logoImage->image(ImageSource{ _logoBitmapId,false,false });
     dlg->add(logoImage);
 
     auto imageSize = logoImage->p().size();
 
-    if (!_props->message.empty())
+    if (!_message.empty())
     {
-        auto msgPos = Position{3, imageSize.width() - 15, imageSize.height() - 6 , 12};
-        auto messageLabel = std::make_shared<Label>(_props->message, msgPos);
-        messageLabel->font(Font{"sans serif", 8, true});
+        auto msgPos = Position{ 3, imageSize.width() - 15, imageSize.height() - 6 , 12 };
+        auto messageLabel = std::make_shared<Label>(_message, msgPos);
+        messageLabel->font(Font{ "sans serif", 8, true });
         messageLabel->colors(Color::LtGray, Color::None);
         messageLabel->autoSize(true);
         dlg->add(messageLabel);
@@ -86,21 +79,21 @@ void SplashDialog::show()
     SetWindowPos((HWND)dlg->handle(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
     logoImage->ClickEvent() += [](ISharedControl ctl)
-    {
-        ctl->parent()->close();
-    };
+        {
+            ctl->parent()->close();
+        };
 
-    if (_props->timeout > 0)
+    if (_timeout > 0)
     {
         dlg->TimerEvent() += [](ISharedDialog dlg)
-        {
-            dlg->close();
-        };
-        dlg->timer(_props->timeout);
+            {
+                dlg->close();
+            };
+        dlg->timer(_timeout);
     }
 }
 
-void SplashDialog::close()
+void SplashDialogImpl::close()
 {
-    _props->splashDialog.reset();
+    _dialog.reset();
 }

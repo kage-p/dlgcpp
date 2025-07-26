@@ -2,20 +2,21 @@
 
 using namespace dlgcpp::controls;
 
-Custom::Custom(const std::string& className,
-               const Position& p) :
-    Control(std::string(), p),
-    _props(new cus_props())
+CustomImpl::CustomImpl(
+    Custom& custom,
+    const std::string& className,
+    const Position& p) :
+    ControlImpl(custom, std::string(), p),
+    _custom(custom)
 {
-    _props->className = className;
+    _className = className;
 }
 
-Custom::~Custom()
+CustomImpl::~CustomImpl()
 {
-    delete _props;
 }
 
-std::string Custom::className() const
+std::string CustomImpl::className() const
 {
-    return _props->className;
+    return _className;
 }

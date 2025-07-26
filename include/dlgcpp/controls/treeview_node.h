@@ -1,17 +1,33 @@
 #pragma once
+
+#include <memory>
 #include <string>
 
 namespace dlgcpp
 {
     namespace controls
     {
-        class TreeViewNode
+        class ITreeViewNode;
+        typedef std::shared_ptr<ITreeViewNode> ISharedTreeViewNode;
+
+        class ITreeViewNode
         {
         public:
-            TreeViewNode();
+            virtual int id() const = 0;
+            virtual const std::string& tag() const = 0;
+            virtual const std::string& text() const = 0;
+            virtual void text(const std::string& value) = 0;
+            virtual bool checked() const = 0;
+            virtual void checked(bool value) = 0;
+        };
 
+        class TreeViewNodeImpl;
+
+        class TreeViewNode : public ITreeViewNode
+        {
+        public:
             // construct with tag
-            TreeViewNode(
+            explicit TreeViewNode(
                 const std::string& tag = {},
                 const std::string& text = {},
                 bool checked = false);
@@ -23,18 +39,18 @@ namespace dlgcpp
                 bool checked = false,
                 const std::string& tag = {});
 
-            virtual int id() const;
-            virtual const std::string& tag() const;
-            virtual const std::string& text() const;
-            virtual void text(const std::string& value);
-            virtual bool checked() const;
-            virtual void checked(bool value);
+            ~TreeViewNode() = default;
+
+            // ITreeViewNode impl.
+            int id() const override;
+            const std::string& tag() const override;
+            const std::string& text() const override;
+            void text(const std::string& value) override;
+            bool checked() const override;
+            void checked(bool value) override;
 
         private:
-            int _id = 0;
-            std::string _text;
-            std::string _tag;
-            bool _checked = false;
+            std::shared_ptr<TreeViewNodeImpl> _impl;
         };
     }
 }

@@ -1,7 +1,6 @@
 #include "progress_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 void controls_progress_demo(ISharedDialog parent)
 {

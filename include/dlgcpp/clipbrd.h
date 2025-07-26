@@ -9,7 +9,6 @@
 namespace dlgcpp
 {
     class IClipboard;
-    typedef std::shared_ptr<IClipboard> ISharedClipboard;
 
     class IClipboard
     {

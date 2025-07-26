@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <string>
 
 #ifdef DLGCPP_DEBUG
 #include <iostream>
@@ -12,13 +11,41 @@
 #define DLGCPP_CERR(m_args)
 #endif
 
+// forward definitions
+
 namespace dlgcpp
 {
-    // forwards
-    class IDialog;
-    class IMenu;
-    class IControl;
-    class IDrawingContext;
+    namespace dialogs
+    {
+        class IDialog;
+        class Dialog;
+        class DialogImpl;
+    }
+
+    namespace controls
+    {
+        class IControl;
+        class Control;
+        class ControlImpl;
+    }
+
+    namespace gfx
+    {
+        class IDrawingContext;
+        class DrawingContext;
+        class DrawingContextImpl;
+    }
+
+    namespace menus
+    {
+        class IMenu;
+        class Menu;
+        class MenuImpl;
+
+        class IMenuItem;
+        class MenuItem;
+        class MenuItemImpl;
+    }
 
     class Point;
     class Size;
@@ -35,20 +62,21 @@ namespace dlgcpp
 
     struct KeyboardEvent;
     struct MouseEvent;
-    struct dlg_message;
 
     // shared forwards
-    typedef std::shared_ptr<IDialog> ISharedDialog;
-    typedef std::shared_ptr<IControl> ISharedControl;
-    typedef std::shared_ptr<IDrawingContext> ISharedDrawingContext;
+    typedef std::shared_ptr<dlgcpp::dialogs::IDialog> ISharedDialog;
+    typedef std::shared_ptr<dlgcpp::controls::IControl> ISharedControl;
+    typedef std::shared_ptr<dlgcpp::gfx::IDrawingContext> ISharedDrawingContext;
+    typedef std::shared_ptr<dlgcpp::menus::IMenu> ISharedMenu;
+    typedef std::shared_ptr<dlgcpp::menus::IMenuItem> ISharedMenuItem;
 }
 
-#include "align.h"
-#include "colors.h"
-#include "font.h"
-#include "image.h"
-#include "keys.h"
-#include "mouse.h"
-#include "point.h"
-#include "position.h"
-#include "size.h"
+#include "dlgcpp/align.h"
+#include "dlgcpp/colors.h"
+#include "dlgcpp/font.h"
+#include "dlgcpp/image.h"
+#include "dlgcpp/keys.h"
+#include "dlgcpp/mouse.h"
+#include "dlgcpp/point.h"
+#include "dlgcpp/position.h"
+#include "dlgcpp/size.h"

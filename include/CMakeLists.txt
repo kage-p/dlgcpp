@@ -6,16 +6,23 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(src_files
-    dlgcpp/dlgcpp.h
-    dlgcpp/child.h
-    dlgcpp/control.h
+    dlgcpp/align.h
+    dlgcpp/clipbrd.h
+    dlgcpp/colors.h
     dlgcpp/defs.h
-    dlgcpp/dialog.h
+    dlgcpp/dlgcpp.h
     dlgcpp/event.h
-    dlgcpp/menu.h
+    dlgcpp/font.h
+    dlgcpp/image.h
+    dlgcpp/keys.h
+    dlgcpp/mouse.h
+    dlgcpp/point.h
+    dlgcpp/position.h
+    dlgcpp/size.h
     dlgcpp/controls/button.h
     dlgcpp/controls/checkbox.h
     dlgcpp/controls/combobox.h
+    dlgcpp/controls/control.h
     dlgcpp/controls/custom.h
     dlgcpp/controls/image.h
     dlgcpp/controls/label.h
@@ -34,14 +41,15 @@ set(src_files
     dlgcpp/controls/treeview.h
     dlgcpp/controls/treeview_node.h
     dlgcpp/dialogs/about.h
+    dlgcpp/dialogs/dialog.h
     dlgcpp/dialogs/file.h
     dlgcpp/dialogs/folder.h
     dlgcpp/dialogs/message.h
     dlgcpp/dialogs/property.h
     dlgcpp/dialogs/splash.h
     dlgcpp/gfx/context.h
+    dlgcpp/menus/menu.h
+    dlgcpp/menus/menu_item.h
 )
 
 add_library(${target} INTERFACE ${src_files})
-
-

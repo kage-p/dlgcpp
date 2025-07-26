@@ -1,43 +1,36 @@
 #include "tabs_p.h"
 #include "utility/image.h"
-#include "utility/message.h"
 #include "utility/string.h"
 #include "utility/units.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-Tabs::Tabs(const Position& p) :
-    Control(std::string(), p),
-    _props(new tabs_props())
+TabsImpl::TabsImpl(Tabs& tabs, const Position& p) :
+    ControlImpl(tabs, std::string(), p),
+    _tabs(tabs)
 {
 }
 
-Tabs::~Tabs()
+TabsImpl::~TabsImpl()
 {
-    delete _props;
 }
 
-IEvent<ISharedControl>& Tabs::SelChangedEvent()
-{
-    return _props->selChangedEvent;
-}
-
-std::string Tabs::className() const
+std::string TabsImpl::className() const
 {
     return WC_TABCONTROLA;
 }
 
-unsigned int Tabs::styles() const
+unsigned int TabsImpl::styles() const
 {
-    auto styles = Control::styles();
+    auto styles = ControlImpl::styles();
 
     styles |= TCS_FOCUSONBUTTONDOWN;
 
     return styles;
 }
 
-void Tabs::notify(dlg_message& msg)
+void TabsImpl::notify(DialogMessage& msg)
 {
     if (msg.wMsg == WM_NOTIFY)
     {
@@ -48,17 +41,17 @@ void Tabs::notify(dlg_message& msg)
         }
     }
 
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-void Tabs::rebuild()
+void TabsImpl::rebuild()
 {
-    Control::rebuild();
+    ControlImpl::rebuild();
     updateItems();
     updateSelection();
 }
 
-Position Tabs::area() const
+Position TabsImpl::area() const
 {
     if (handle() == nullptr)
         return Position();
@@ -76,19 +69,19 @@ Position Tabs::area() const
     return toUnits(GetParent(hwnd), pos);
 }
 
-const std::vector<ISharedTabItem>& Tabs::items() const
+const std::vector<ISharedTabItem>& TabsImpl::items() const
 {
-    return _props->items;
+    return _items;
 }
 
-void Tabs::items(const std::vector<ISharedTabItem>& items)
+void TabsImpl::items(const std::vector<ISharedTabItem>& items)
 {
-    _props->items = items;
+    _items = items;
     updateItems();
     updateSelection();
 }
 
-void Tabs::updateItems()
+void TabsImpl::updateItems()
 {
     if (handle() == nullptr)
         return;
@@ -97,10 +90,10 @@ void Tabs::updateItems()
     SendMessage(hwnd, TCM_DELETEALLITEMS, 0, 0);
 
     // TODO: imageSize customisation
-    HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, _props->items.size(), 0);
+    HIMAGELIST hImageList = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, _items.size(), 0);
 
     int index = 0;
-    for (const auto& item : _props->items)
+    for (const auto& item : _items)
     {
         auto tci = TCITEMW();
 
@@ -145,22 +138,22 @@ void Tabs::updateItems()
         ImageList_Destroy(hImageList);
 }
 
-int Tabs::currentIndex() const
+int TabsImpl::currentIndex() const
 {
-    return _props->currentIndex;
+    return _currentIndex;
 }
 
-void Tabs::currentIndex(int value)
+void TabsImpl::currentIndex(int value)
 {
-    if (_props->currentIndex == value)
+    if (_currentIndex == value)
         return;
 
-    _props->currentIndex = value;
+    _currentIndex = value;
 
     updateSelection();
 }
 
-void Tabs::readSelection()
+void TabsImpl::readSelection()
 {
     if (handle() == nullptr)
         return;
@@ -168,19 +161,24 @@ void Tabs::readSelection()
 
     auto index = (int)SendMessage(hwnd, TCM_GETCURSEL, 0, 0);
 
-    if (index != _props->currentIndex)
+    if (index != _currentIndex)
     {
         currentIndex(index);
-        SelChangedEvent().invoke(shared_from_this());
+        SelChangedEvent().invoke(control());
     }
 }
 
-void Tabs::updateSelection()
+void TabsImpl::updateSelection()
 {
     if (handle() == nullptr)
         return;
 
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    SendMessage(hwnd, TCM_SETCURSEL, (WPARAM)_props->currentIndex, 0);
+    SendMessage(hwnd, TCM_SETCURSEL, (WPARAM)_currentIndex, 0);
+}
+
+IEvent<ISharedControl>& TabsImpl::SelChangedEvent()
+{
+    return _selChangedEvent;
 }

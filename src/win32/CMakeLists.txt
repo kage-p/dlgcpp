@@ -1,13 +1,8 @@
 cmake_minimum_required(VERSION 3.27)
 
 set(platform_src
-    control.cpp
-    control_p.h
-    dialog.cpp
-    dialog_p.h
-    event_p.h
-    menu.cpp
-    menu_p.h
+    controls/control.cpp
+    controls/control_p.h
     controls/button.cpp
     controls/button_p.h
     controls/checkbox.cpp
@@ -23,29 +18,25 @@ set(platform_src
     controls/listbox.cpp
     controls/listbox_p.h
     controls/listview.cpp
-    controls/listview_col.cpp
     controls/listview_p.h
     controls/option_btn.cpp
     controls/option_btn_p.h
     controls/progress.cpp
     controls/progress_p.h
     controls/slider.cpp
-    controls/slider_imp.cpp
-    controls/slider_imp.h
     controls/slider_p.h
-    controls/tab_item.cpp
     controls/tabs.cpp
     controls/tabs_p.h
     controls/textbox.cpp
     controls/textbox_p.h
     controls/toolbar.cpp
-    controls/toolbar_item.cpp
     controls/toolbar_p.h
     controls/trackbar.cpp
     controls/trackbar_p.h
     controls/treeview.cpp
-    controls/treeview_node.cpp
     controls/treeview_p.h
+    dialogs/dialog.cpp
+    dialogs/dialog_p.h
     dialogs/about.cpp
     dialogs/about_p.h
     dialogs/file.cpp
@@ -59,7 +50,11 @@ set(platform_src
     dialogs/splash.cpp
     dialogs/splash_p.h
     gfx/context.cpp
-    gfx/context.h
+    gfx/context_p.h
+    menus/menu.cpp
+    menus/menu_p.h
+    menus/menu_item.cpp
+	menus/menu_item_p.h
     utility/font.cpp
     utility/font.h
     utility/image.cpp

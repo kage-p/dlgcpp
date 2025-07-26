@@ -1,7 +1,8 @@
 #pragma once
 
+#include "control_p.h"
 #include "dlgcpp/controls/progress.h"
-#include "../event_p.h"
+#include "utility/event.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -12,12 +13,38 @@ namespace dlgcpp
 {
     namespace controls
     {
-        struct progress_props
+        class ProgressImpl : public ControlImpl
         {
-            bool vertical = false;
-            int value = 0;
-            std::pair<int, int> range = {0,100};
-            Event<ISharedControl> changedEvent;
+        public:
+            explicit ProgressImpl(
+                Progress& progress,
+                const Position& p = Position());
+
+            ~ProgressImpl() override;
+
+            bool vertical() const;
+            void vertical(bool value);
+            int value() const;
+            void value(int value);
+            std::pair<int, int> range() const;
+            void range(int from, int to);
+            void colors(Color fgColor, Color bgColor) override;
+
+            IEvent<ISharedControl>& ChangedEvent();
+
+        private:
+            Progress& _progressBar;
+            bool _vertical = false;
+            int _value = 0;
+            std::pair<int, int> _range = { 0,100 };
+            Event<ISharedControl> _changedEvent;
+
+            void rebuild() override;
+            std::string className() const override;
+            unsigned int styles() const override;
+            void notify(DialogMessage&) override;
+
+            void updateDisplayStyles();
         };
     }
 }

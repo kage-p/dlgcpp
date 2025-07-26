@@ -1,7 +1,6 @@
 #include "trackbar_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 void controls_trackbar_demo(ISharedDialog parent)
 {

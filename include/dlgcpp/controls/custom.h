@@ -1,20 +1,23 @@
 #pragma once
-#include "../control.h"
+
+#include "dlgcpp/controls/control.h"
 
 namespace dlgcpp
 {
     namespace controls
     {
-        class Custom : public dlgcpp::Control
+        class CustomImpl;
+
+        class Custom : public Control
         {
         public:
             explicit Custom(const std::string& className, const Position& p = Position());
             ~Custom() override;
 
         private:
-            struct cus_props* _props;
+            Custom(std::shared_ptr<CustomImpl> impl);
 
-            std::string className() const override;
+            std::shared_ptr<CustomImpl> _impl;
         };
     }
 }

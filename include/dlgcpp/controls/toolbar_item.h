@@ -35,6 +35,8 @@ namespace dlgcpp
             virtual IEvent<ISharedToolBarItem>& ClickEvent() = 0;
         };
 
+        class ToolBarItemImpl;
+
         class ToolBarItem : public IToolBarItem
         {
         public:
@@ -43,7 +45,7 @@ namespace dlgcpp
                 const std::string& text = {},
                 const std::string& toolTipText = {});
 
-            virtual ~ToolBarItem();
+            virtual ~ToolBarItem() = default;
 
             bool enabled() const override;
             void enabled(bool value) override;
@@ -66,7 +68,7 @@ namespace dlgcpp
             IEvent<ISharedToolBarItem>& ClickEvent() override;
 
         private:
-            struct toolbar_item_priv* _priv;
+            std::shared_ptr<ToolBarItemImpl> _impl;
         };
     }
 }

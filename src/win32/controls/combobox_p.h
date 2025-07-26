@@ -1,7 +1,8 @@
 #pragma once
 
+#include "control_p.h"
 #include "dlgcpp/controls/combobox.h"
-#include "../event_p.h"
+#include "utility/event.h"
 #include <vector>
 
 #define NOMINMAX
@@ -12,18 +13,55 @@ namespace dlgcpp
 {
     namespace controls
     {
-        struct combobox_props
+        class ComboBoxImpl : public ControlImpl
         {
-            bool editable = true;
-            bool dropDown = false;
-            bool sorted = true;
-            std::vector<std::string> items;
-            int currentIndex = -1;            
-            Event<ISharedControl> selChangedEvent;
-            Event<ISharedControl> selCancelEvent;
-            Event<ISharedControl> listCloseEvent;
-            Event<ISharedControl> listOpenEvent;
-            Event<ISharedControl> textChangedEvent;
+        public:
+            explicit ComboBoxImpl(
+                ComboBox& comboBox,
+                const Position& p = Position());
+
+            ~ComboBoxImpl() override;
+
+            int currentIndex() const;
+            void currentIndex(int value);
+            bool dropDown() const;
+            void dropDown(bool value);
+            bool editable() const;
+            void editable(bool value);
+            bool sorted() const;
+            void sorted(bool value);
+            const std::vector<std::string>& items() const;
+            void items(const std::vector<std::string>& items);
+
+            IEvent<ISharedControl>& SelChangedEvent();
+            IEvent<ISharedControl>& SelCancelEvent();
+            IEvent<ISharedControl>& TextChangedEvent();
+            IEvent<ISharedControl>& ListOpenEvent();
+            IEvent<ISharedControl>& ListCloseEvent();
+
+        private:
+            ComboBox& _comboBox;
+            bool _editable = true;
+            bool _dropDown = false;
+            bool _sorted = true;
+            std::vector<std::string> _items;
+            int _currentIndex = -1;
+            Event<ISharedControl> _selChangedEvent;
+            Event<ISharedControl> _selCancelEvent;
+            Event<ISharedControl> _listCloseEvent;
+            Event<ISharedControl> _listOpenEvent;
+            Event<ISharedControl> _textChangedEvent;
+
+            void rebuild() override;
+            std::string className() const override;
+            void notify(DialogMessage&) override;
+            unsigned int styles() const override;
+            bool isHandleEqual(void* otherHandle) const override;
+
+            void readInput();
+            void readSelection();
+            void updateSelection();
+            void updateItems();
         };
     }
 }

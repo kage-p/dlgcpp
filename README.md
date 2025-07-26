@@ -32,7 +32,6 @@ User interfaces can be quickly constructed using standard C++ method calls, as s
     #include "dlgcpp/dlgcpp.h"
     -
     using namespace dlgcpp;
-    using namespace dlgcpp::controls;
     -
     int main()
     {
