@@ -1,6 +1,7 @@
 #pragma once
 
-#include "dlgcpp/dlgcpp.h"
+#include "dlgcpp/defs.h"
+#include <string>
 
 namespace dlgcpp
 {
@@ -26,11 +27,13 @@ namespace dlgcpp
             virtual void show() = 0;
         };
 
+        class AboutDialogImpl;
+
         class AboutDialog : public IAboutDialog
         {
         public:
             explicit AboutDialog(ISharedDialog parent = nullptr);
-            virtual ~AboutDialog();
+            virtual ~AboutDialog() = default;
 
             // IAboutDialog impl.
             const std::string& title() const override;
@@ -50,7 +53,9 @@ namespace dlgcpp
             void show() override;
 
         private:
-            struct about_props* _props;
+            AboutDialog(std::shared_ptr<AboutDialogImpl> impl);
+
+            std::shared_ptr<AboutDialogImpl> _impl;
         };
     }
 }

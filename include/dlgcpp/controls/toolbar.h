@@ -1,6 +1,7 @@
 #pragma once
-#include "../control.h"
-#include "toolbar_item.h"
+
+#include "dlgcpp/controls/control.h"
+#include "dlgcpp/controls/toolbar_item.h"
 #include <vector>
 
 namespace dlgcpp
@@ -18,10 +19,10 @@ namespace dlgcpp
             virtual void items(const std::vector<ISharedToolBarItem>& items) = 0;
         };
 
-        typedef std::shared_ptr<IToolBar> ISharedToolBar;
+        class ToolBarImpl;
 
         class ToolBar :
-            public dlgcpp::Control,
+            public Control,
             public IToolBar
         {
         public:
@@ -36,18 +37,9 @@ namespace dlgcpp
             void items(const std::vector<ISharedToolBarItem>& items) override;
 
         private:
-            struct toolbar_props* _props;
-            void rebuild() override;
-            std::string className() const override;
-            int idRange() const override;
-            void notify(dlg_message&) override;
-            unsigned int styles() const override;
-            bool isHandleEqual(void* otherHandle) const override;
+            ToolBar(std::shared_ptr<ToolBarImpl> impl);
 
-            ISharedToolBarItem findItemById(int ctlId) const;
-            void updateItems();
-
-            static constexpr int ToolbarIdRange = 100;
+            std::shared_ptr<ToolBarImpl> _impl;
         };
     }
 }

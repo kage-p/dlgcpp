@@ -20,6 +20,8 @@ namespace dlgcpp
             virtual void width(int) = 0;
         };
 
+        class ListViewColumnImpl;
+
         class ListViewColumn : public IListViewColumn
         {
         public:
@@ -27,7 +29,7 @@ namespace dlgcpp
             ListViewColumn(const std::string& text, int width = 100);
             ListViewColumn(const ListViewColumn& other);
             ListViewColumn& operator=(const ListViewColumn& other);
-            virtual ~ListViewColumn();
+            virtual ~ListViewColumn() = default;
 
             const std::string& text() const override;
             void text(const std::string& value) override;
@@ -36,7 +38,7 @@ namespace dlgcpp
             void width(int value) override;
 
         private:
-            struct listview_col_priv* _priv;
+            std::shared_ptr<ListViewColumnImpl> _impl;
         };
     }
 }

@@ -1,7 +1,6 @@
 #include "drawing_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 enum class DrawObjectType
 {
@@ -14,9 +13,9 @@ enum class DrawObjectType
 struct DrawObject
 {
     DrawObjectType type = DrawObjectType::None;
-    int strokeWidth;
-    Color strokeColor;
-    Color fillColor;
+    int strokeWidth = 0;
+    Color strokeColor = Color::None;
+    Color fillColor = Color::None;
     Point start;
     Point end;
 };
@@ -211,8 +210,8 @@ std::shared_ptr<Menu> createMenu(
     std::shared_ptr<Label> canvas)
 {
     auto menu = std::make_shared<Menu>();
-    std::shared_ptr<IMenuItem> item;
-    std::shared_ptr<IMenuItem> childItem;
+    ISharedMenuItem item;
+    ISharedMenuItem childItem;
 
     //------------------
 

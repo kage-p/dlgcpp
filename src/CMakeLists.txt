@@ -6,106 +6,60 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(src_files
-    neutral/point.cpp
-    neutral/position.cpp
-    neutral/size.cpp
+    controls/button.cpp
+    controls/checkbox.cpp
+    controls/combobox.cpp
+    controls/control.cpp
+    controls/custom.cpp
+    controls/image.cpp
+    controls/label.cpp
+    controls/listbox.cpp
+    controls/listview.cpp
+    controls/listview_col.cpp
+    controls/option_btn.cpp
+    controls/progress.cpp
+    controls/slider.cpp
+    controls/tab_item.cpp
+    controls/tabs.cpp
+    controls/textbox.cpp
+    controls/toolbar.cpp
+    controls/toolbar_item.cpp
+    controls/trackbar.cpp
+    controls/treeview.cpp
+    controls/treeview_node.cpp
+    dialogs/dialog.cpp
+    dialogs/dialog.cpp
+    dialogs/about.cpp
+    dialogs/file.cpp
+    dialogs/folder.cpp
+    dialogs/message.cpp
+    dialogs/property.cpp
+    dialogs/splash.cpp
+    gfx/context.cpp
+    menus/menu.cpp
+    menus/menu_item.cpp
+    utility/event.h
 )
 
 if (WIN32)
-set(src_files ${src_files}
-    win32/control.cpp
-    win32/control_p.h
-    win32/dialog.cpp
-    win32/dialog_p.h
-    win32/event_p.h
-    win32/menu.cpp
-    win32/menu_p.h
-    win32/controls/button.cpp
-    win32/controls/button_p.h
-    win32/controls/checkbox.cpp
-    win32/controls/checkbox_p.h
-    win32/controls/combobox.cpp
-    win32/controls/combobox_p.h
-    win32/controls/custom.cpp
-    win32/controls/custom_p.h
-    win32/controls/image.cpp
-    win32/controls/image_p.h
-    win32/controls/label.cpp
-    win32/controls/label_p.h
-    win32/controls/listbox.cpp
-    win32/controls/listbox_p.h
-    win32/controls/listview.cpp
-    win32/controls/listview_col.cpp
-    win32/controls/listview_p.h
-    win32/controls/option_btn.cpp
-    win32/controls/option_btn_p.h
-    win32/controls/progress.cpp
-    win32/controls/progress_p.h
-    win32/controls/slider.cpp
-    win32/controls/slider_imp.cpp
-    win32/controls/slider_imp.h
-    win32/controls/slider_p.h
-    win32/controls/tab_item.cpp
-    win32/controls/tabs.cpp
-    win32/controls/tabs_p.h
-    win32/controls/textbox.cpp
-    win32/controls/textbox_p.h
-    win32/controls/toolbar.cpp
-    win32/controls/toolbar_item.cpp
-    win32/controls/toolbar_p.h
-    win32/controls/trackbar.cpp
-    win32/controls/trackbar_p.h
-    win32/controls/treeview.cpp
-    win32/controls/treeview_node.cpp
-    win32/controls/treeview_p.h
-    win32/dialogs/about.cpp
-    win32/dialogs/about_p.h
-    win32/dialogs/file.cpp
-    win32/dialogs/file_p.h
-    win32/dialogs/folder.cpp
-    win32/dialogs/folder_p.h
-    win32/dialogs/message.cpp
-    win32/dialogs/message_p.h
-    win32/dialogs/property.cpp
-    win32/dialogs/property_p.h
-    win32/dialogs/splash.cpp
-    win32/dialogs/splash_p.h
-    win32/gfx/context.cpp
-    win32/gfx/context.h
-    win32/utility/font.cpp
-    win32/utility/font.h
-    win32/utility/image.cpp
-    win32/utility/image.h
-    win32/utility/keys.cpp
-    win32/utility/keys.h
-    win32/utility/message.cpp
-    win32/utility/message.h
-    win32/utility/string.cpp
-    win32/utility/string.h
-    win32/utility/units.cpp
-    win32/utility/units.h
-)
+    add_subdirectory(win32)
 endif()
 
 # define other platforms here
 
-add_library(${target} STATIC ${src_files})
+add_library(${target} STATIC ${src_files} ${platform_src})
 
 # requires unicode
 target_compile_definitions(${target} PRIVATE UNICODE _UNICODE)
 
-if (WIN32)
-    # include root path
-    target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/win32)
-endif()
+# set include paths
+target_include_directories(${target} PUBLIC "${PROJECT_SOURCE_DIR}/include")
+target_include_directories(${target} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(${target} PRIVATE ${platform_includes})
 
-# consumers need the header target
-target_include_directories(${target} PUBLIC "$<TARGET_PROPERTY:dlgcpp,SOURCE_DIR>")
+# set dependencies
+target_link_libraries(${target} ${platform_deps})
 
 if (DLGCPP_DEBUG)
     target_compile_definitions(${target} PRIVATE DLGCPP_DEBUG)
-endif()
-
-if (WIN32)
-    target_link_libraries(${target} PUBLIC comctl32.lib gdiplus.lib)
 endif()

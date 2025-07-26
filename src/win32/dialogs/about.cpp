@@ -1,4 +1,9 @@
 #include "about_p.h"
+#include "dlgcpp/controls/button.h"
+#include "dlgcpp/controls/image.h"
+#include "dlgcpp/controls/label.h"
+#include "dlgcpp/controls/textbox.h"
+#include "dlgcpp/dialogs/dialog.h"
 #include "utility/image.h"
 #include "utility/string.h"
 
@@ -11,141 +16,138 @@ using namespace dlgcpp;
 using namespace dlgcpp::controls;
 using namespace dlgcpp::dialogs;
 
-AboutDialog::AboutDialog(ISharedDialog parent) :
-    _props(new about_props())
+AboutDialogImpl::AboutDialogImpl(
+    AboutDialog& aboutDialog,
+    ISharedDialog parent) :
+    _aboutDialog(aboutDialog),
+    _parent(parent)
 {
-    _props->parent = parent;
 }
 
-AboutDialog::~AboutDialog()
+const std::string& AboutDialogImpl::title() const
 {
-    delete _props;
+    return _title;
 }
 
-const std::string& AboutDialog::title() const
+void AboutDialogImpl::title(const std::string& value)
 {
-    return _props->title;
+    _title = value;
 }
 
-void AboutDialog::title(const std::string& value)
+const std::string& AboutDialogImpl::appDetails() const
 {
-    _props->title = value;
+    return _appDetails;
 }
 
-const std::string& AboutDialog::appDetails() const
+void AboutDialogImpl::appDetails(const std::string& value)
 {
-    return _props->appDetails;
+    _appDetails = value;
 }
 
-void AboutDialog::appDetails(const std::string& value)
+const std::string& AboutDialogImpl::description() const
 {
-    _props->appDetails = value;
+    return _description;
 }
 
-const std::string& AboutDialog::description() const
+void AboutDialogImpl::description(const std::string& value)
 {
-    return _props->description;
+    _description = value;
 }
 
-void AboutDialog::description(const std::string& value)
+const std::string& AboutDialogImpl::homePageLink() const
 {
-    _props->description = value;
+    return _homePageLink;
 }
 
-const std::string& AboutDialog::homePageLink() const
+void AboutDialogImpl::homePageLink(const std::string& value)
 {
-    return _props->homePageLink;
+    _homePageLink = value;
 }
 
-void AboutDialog::homePageLink(const std::string& value)
+const std::string& AboutDialogImpl::releaseDate() const
 {
-    _props->homePageLink = value;
+    return _releaseDate;
 }
 
-const std::string& AboutDialog::releaseDate() const
+void AboutDialogImpl::releaseDate(const std::string& value)
 {
-    return _props->releaseDate;
+    _releaseDate = value;
 }
 
-void AboutDialog::releaseDate(const std::string& value)
+const std::string& AboutDialogImpl::logoBitmapId() const
 {
-    _props->releaseDate = value;
+    return _logoBitmapId;
 }
 
-const std::string& AboutDialog::logoBitmapId() const
+void AboutDialogImpl::logoBitmapId(const std::string& value)
 {
-    return _props->logoBitmapId;
+    _logoBitmapId = value;
 }
 
-void AboutDialog::logoBitmapId(const std::string& value)
+const std::string& AboutDialogImpl::logoIconId() const
 {
-    _props->logoBitmapId = value;
+    return _logoIconId;
 }
 
-const std::string& AboutDialog::logoIconId() const
+void AboutDialogImpl::logoIconId(const std::string& value)
 {
-    return _props->logoIconId;
+    _logoIconId = value;
 }
 
-void AboutDialog::logoIconId(const std::string& value)
+void AboutDialogImpl::show()
 {
-    _props->logoIconId = value;
-}
-
-void AboutDialog::show()
-{
-    auto dlg = std::make_shared<Dialog>(DialogType::Popup, _props->parent);
-    dlg->title(_props->title);
+    auto dlg = std::make_shared<Dialog>(DialogType::Popup, _parent);
+    dlg->title(_title);
 
     // TODO: split into createInterface
 
     // Add image height
     int cxLogoOffset = 0;
     int cyLogoOffset = 0;
-    if (!_props->logoBitmapId.empty())
+    if (!_logoBitmapId.empty())
         cyLogoOffset = 50 + 15;
     dlg->resize({ 310, 130 + cyLogoOffset });
     dlg->center();
 
-    if (!_props->logoBitmapId.empty())
+    if (!_logoBitmapId.empty())
     {
         // Use bitmap...
         auto logoImage = std::make_shared<Image>(Position{ 7, 7, 295, 65 });
         logoImage->border(BorderStyle::Thin);
         logoImage->colors(Color::Black, Color::White);
-        logoImage->image(ImageSource{ _props->logoBitmapId, false, false });
+        logoImage->image(ImageSource{ _logoBitmapId, false, false });
         dlg->add(logoImage);
     }
-    else if (!_props->logoIconId.empty())
+    else if (!_logoIconId.empty())
     {
         // use application icon as alternative
         auto iconImage = std::make_shared<Image>(Position{ 7, 13, 0, 0 });
         iconImage->autoSize(true);
         iconImage->border(BorderStyle::Thin);
-        iconImage->image(ImageSource{ _props->logoIconId, true, false });
+        iconImage->image(ImageSource{ _logoIconId, true, false });
         dlg->add(iconImage);
         cxLogoOffset = iconImage->p().x() + iconImage->p().width();
     }
 
-    auto appDetails = std::make_shared<Label>(_props->appDetails, Position{ 7, 15 + cyLogoOffset, 295, 10 });
+    auto appDetails = std::make_shared<Label>(_appDetails, Position{ 7, 15 + cyLogoOffset, 295, 10 });
     appDetails->font(Font{ "sans serif", 8, true });
     dlg->add(appDetails);
 
-    if (!_props->releaseDate.empty())
+    if (!_releaseDate.empty())
     {
-        auto releaseInfo = std::make_shared<Label>(_props->releaseDate, Position{ 7 + cxLogoOffset, 26 + cyLogoOffset, 295 - cxLogoOffset, 10 });
+        auto releaseInfo = std::make_shared<Label>(_releaseDate, Position{ 7 + cxLogoOffset, 26 + cyLogoOffset, 295 - cxLogoOffset, 10 });
         dlg->add(releaseInfo);
     }
 
-    if (!_props->homePageLink.empty())
+    if (!_homePageLink.empty())
     {
-        auto webLink = std::make_shared<Label>(_props->homePageLink, Position{ 7 + cxLogoOffset, 36 + cyLogoOffset, 150, 12 });
+        auto webLink = std::make_shared<Label>(_homePageLink, Position{ 7 + cxLogoOffset, 36 + cyLogoOffset, 150, 12 });
         webLink->colors(Color::Blue, Color::None);
         webLink->cursor(Cursor::Hand);
         webLink->font(Font{ "MS Sans Serif", 8, false, false, true });
         webLink->autoSize(true);
 
-        auto homtPageText = toWide(_props->homePageLink);
+        auto homtPageText = toWide(_homePageLink);
         webLink->ClickEvent() +=
             [homtPageText](ISharedControl control)
             {
@@ -155,7 +157,7 @@ void AboutDialog::show()
         dlg->add(webLink);
     }
 
-    auto description = std::make_shared<TextBox>(_props->description, Position{ 7, 49 + cyLogoOffset, 295, 50 });
+    auto description = std::make_shared<TextBox>(_description, Position{ 7, 49 + cyLogoOffset, 295, 50 });
     description->readOnly(true);
     description->multiline(true);
     description->wrapText(true);

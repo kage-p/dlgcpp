@@ -1,82 +1,80 @@
 #include "progress_p.h"
-#include "utility/message.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-Progress::Progress(const Position& p) :
-    Control(std::string(), p),
-    _props(new progress_props())
+ProgressImpl::ProgressImpl(Progress& progressBar, const Position& p) :
+    ControlImpl(progressBar, std::string(), p),
+    _progressBar(progressBar)
 {
     this->border(BorderStyle::Thin);
 }
 
-Progress::~Progress()
+ProgressImpl::~ProgressImpl()
 {
-    delete _props;
 }
 
-void Progress::rebuild()
+void ProgressImpl::rebuild()
 {
-    Control::rebuild();
+    ControlImpl::rebuild();
 
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
     // apply the properties
-    SendMessage(hwnd, PBM_SETRANGE32, (WPARAM)_props->range.first, (LPARAM)_props->range.second);
-    SendMessage(hwnd, PBM_SETPOS, (WPARAM)_props->value, FALSE);
+    SendMessage(hwnd, PBM_SETRANGE32, (WPARAM)_range.first, (LPARAM)_range.second);
+    SendMessage(hwnd, PBM_SETPOS, (WPARAM)_value, FALSE);
 
     updateDisplayStyles();
 }
 
-std::string Progress::className() const
+std::string ProgressImpl::className() const
 {
     return PROGRESS_CLASSA;
 }
 
-unsigned int Progress::styles() const
+unsigned int ProgressImpl::styles() const
 {
-    auto styles = Control::styles();
+    auto styles = ControlImpl::styles();
 
     styles |= PBS_SMOOTH;
 
-    if (_props->vertical)
+    if (_vertical)
         styles |= PBS_VERTICAL;
     return styles;
 }
 
-IEvent<ISharedControl>& Progress::ChangedEvent()
+IEvent<ISharedControl>& ProgressImpl::ChangedEvent()
 {
-    return _props->changedEvent;
+    return _changedEvent;
 }
 
-void Progress::notify(dlg_message& msg)
+void ProgressImpl::notify(DialogMessage& msg)
 {
     if (msg.wMsg == WM_HSCROLL)
     {
         value((int)msg.wParam);
-        ChangedEvent().invoke(shared_from_this());
+        ChangedEvent().invoke(control());
     }
     else if (msg.wMsg == WM_VSCROLL)
     {
         value((int)msg.wParam);
-        ChangedEvent().invoke(shared_from_this());
+        ChangedEvent().invoke(control());
     }
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-bool Progress::vertical() const
+bool ProgressImpl::vertical() const
 {
-    return _props->vertical;
+    return _vertical;
 }
 
-void Progress::vertical(bool value)
+void ProgressImpl::vertical(bool value)
 {
-    if (_props->vertical == value)
+    if (_vertical == value)
         return;
-    _props->vertical = value;
+    _vertical = value;
 
     if (handle() == nullptr)
         return;
@@ -86,43 +84,43 @@ void Progress::vertical(bool value)
     SetWindowLong(hwnd, GWL_STYLE, styles());
 }
 
-int Progress::value() const
+int ProgressImpl::value() const
 {
-    return _props->value;
+    return _value;
 }
 
-void Progress::value(int value)
+void ProgressImpl::value(int value)
 {
-    if (_props->value == value)
+    if (_value == value)
         return;
-    _props->value = value;
+    _value = value;
 
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, PBM_SETPOS, (WPARAM)_props->value, 0);
+    SendMessage(hwnd, PBM_SETPOS, (WPARAM)_value, 0);
 }
 
-std::pair<int, int> Progress::range() const
+std::pair<int, int> ProgressImpl::range() const
 {
-    return _props->range;
+    return _range;
 }
 
-void Progress::range(int from, int to)
+void ProgressImpl::range(int from, int to)
 {
-    if (_props->range == std::pair<int, int>(from, to))
+    if (_range == std::pair<int, int>(from, to))
         return;
-    _props->range = std::pair<int, int>(from, to);
+    _range = std::pair<int, int>(from, to);
 
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, PBM_SETRANGE32, (WPARAM)_props->range.first, (LPARAM)_props->range.second);
+    SendMessage(hwnd, PBM_SETRANGE32, (WPARAM)_range.first, (LPARAM)_range.second);
 }
 
-void Progress::colors(Color fgColor, Color bgColor)
+void ProgressImpl::colors(Color fgColor, Color bgColor)
 {
-    Control::colors(fgColor, bgColor);
+    ControlImpl::colors(fgColor, bgColor);
 
     if (handle() == nullptr)
         return;
@@ -130,10 +128,10 @@ void Progress::colors(Color fgColor, Color bgColor)
     updateDisplayStyles();
 }
 
-void Progress::updateDisplayStyles()
+void ProgressImpl::updateDisplayStyles()
 {
     auto hwnd = reinterpret_cast<HWND>(handle());
-    auto clrPair = Control::colors();
+    auto clrPair = ControlImpl::colors();
 
     COLORREF backColor =
         clrPair.second != Color::Default

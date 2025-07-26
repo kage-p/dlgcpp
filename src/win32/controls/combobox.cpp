@@ -1,53 +1,28 @@
 #include "combobox_p.h"
-#include "utility/message.h"
 #include "utility/string.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-ComboBox::ComboBox(const Position& p) :
-    Control(std::string(), p),
-    _props(new combobox_props())
+ComboBoxImpl::ComboBoxImpl(
+    ComboBox& comboBox,
+    const Position& p) :
+    ControlImpl(comboBox, std::string(), p),
+    _comboBox(comboBox)
 {
     this->border(BorderStyle::Sunken);
 }
 
-ComboBox::~ComboBox()
+ComboBoxImpl::~ComboBoxImpl()
 {
-    delete _props;
 }
 
-IEvent<ISharedControl>& ComboBox::SelChangedEvent()
-{
-    return _props->selChangedEvent;
-}
-
-IEvent<ISharedControl>& ComboBox::SelCancelEvent()
-{
-    return _props->selCancelEvent;
-}
-
-IEvent<ISharedControl>& ComboBox::ListCloseEvent()
-{
-    return _props->listCloseEvent;
-}
-
-IEvent<ISharedControl>& ComboBox::ListOpenEvent()
-{
-    return _props->listOpenEvent;
-}
-
-IEvent<ISharedControl>& ComboBox::TextChangedEvent()
-{
-    return _props->textChangedEvent;
-}
-
-std::string ComboBox::className() const
+std::string ComboBoxImpl::className() const
 {
     return "COMBOBOX";
 }
 
-void ComboBox::notify(dlg_message& msg)
+void ComboBoxImpl::notify(DialogMessage& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {
@@ -58,49 +33,49 @@ void ComboBox::notify(dlg_message& msg)
         else if (HIWORD(msg.wParam) == CBN_EDITCHANGE)
         {
             readInput();
-            TextChangedEvent().invoke(shared_from_this());
+            TextChangedEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == CBN_DROPDOWN)
         {
-            ListOpenEvent().invoke(shared_from_this());
+            ListOpenEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == CBN_CLOSEUP)
         {
-            ListCloseEvent().invoke(shared_from_this());
+            ListCloseEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == CBN_DBLCLK)
         {
-            DoubleClickEvent().invoke(shared_from_this());
+            DoubleClickEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == CBN_SETFOCUS)
         {
-            FocusEvent().invoke(shared_from_this(), true);
+            FocusEvent().invoke(control(), true);
         }
         else if (HIWORD(msg.wParam) == CBN_KILLFOCUS)
         {
-            FocusEvent().invoke(shared_from_this(), false);
+            FocusEvent().invoke(control(), false);
         }
     }
 
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-void ComboBox::rebuild()
+void ComboBoxImpl::rebuild()
 {
-    Control::rebuild();
+    ControlImpl::rebuild();
     updateItems();
     updateSelection();
 }
 
-unsigned int ComboBox::styles() const
+unsigned int ComboBoxImpl::styles() const
 {
-    auto styles = Control::styles();
+    auto styles = ControlImpl::styles();
     styles |= CBS_HASSTRINGS | CBS_NOINTEGRALHEIGHT | WS_VSCROLL;
 
-    if (_props->dropDown)
+    if (_dropDown)
     {
         // combo has a dropdown list
-        if (_props->editable)
+        if (_editable)
             styles |= CBS_DROPDOWN | CBS_AUTOHSCROLL;
         else
             styles |= CBS_DROPDOWNLIST;
@@ -110,15 +85,15 @@ unsigned int ComboBox::styles() const
         styles |= CBS_SIMPLE | CBS_AUTOHSCROLL;
     }
 
-    if (_props->sorted)
+    if (_sorted)
         styles |= CBS_SORT;
 
     return styles;
 }
 
-bool ComboBox::isHandleEqual(void* otherHandle) const
+bool ComboBoxImpl::isHandleEqual(void* otherHandle) const
 {
-    if (Control::isHandleEqual(otherHandle))
+    if (ControlImpl::isHandleEqual(otherHandle))
         return true;
 
     auto hwnd = reinterpret_cast<HWND>(handle());
@@ -136,28 +111,28 @@ bool ComboBox::isHandleEqual(void* otherHandle) const
     return false;
 }
 
-int ComboBox::currentIndex() const
+int ComboBoxImpl::currentIndex() const
 {
-    return _props->currentIndex;
+    return _currentIndex;
 }
 
-void ComboBox::currentIndex(int value)
+void ComboBoxImpl::currentIndex(int value)
 {
-    if (_props->currentIndex == value)
+    if (_currentIndex == value)
         return;
 
-    _props->currentIndex = value;
+    _currentIndex = value;
 
     // TODO: override text()
-    if (_props->currentIndex < _props->items.size())
-        text(_props->items.at(_props->currentIndex));
+    if (_currentIndex < _items.size())
+        text(_items.at(_currentIndex));
     else
         text(std::string());
 
     updateSelection();
 }
 
-void ComboBox::readSelection()
+void ComboBoxImpl::readSelection()
 {
     // if the control input has been changed by the user, save the content
     if (handle() == nullptr)
@@ -167,78 +142,78 @@ void ComboBox::readSelection()
 
     auto index = (int)SendMessage(hwnd, CB_GETCURSEL, 0, 0);
 
-    if (index != _props->currentIndex)
+    if (index != _currentIndex)
     {
         currentIndex(index);
-        SelChangedEvent().invoke(shared_from_this());
+        SelChangedEvent().invoke(control());
     }
 }
 
-void ComboBox::updateSelection()
+void ComboBoxImpl::updateSelection()
 {
     if (handle() == nullptr)
         return;
 
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    SendMessage(hwnd, CB_SETCURSEL, (WPARAM)_props->currentIndex, 0);
+    SendMessage(hwnd, CB_SETCURSEL, (WPARAM)_currentIndex, 0);
 }
 
-bool ComboBox::dropDown() const
+bool ComboBoxImpl::dropDown() const
 {
-    return _props->dropDown;
+    return _dropDown;
 }
 
-void ComboBox::dropDown(bool value)
+void ComboBoxImpl::dropDown(bool value)
 {
-    if (_props->dropDown == value)
+    if (_dropDown == value)
         return;
 
-    _props->dropDown = value;
+    _dropDown = value;
     rebuild();
 }
 
-bool ComboBox::editable() const
+bool ComboBoxImpl::editable() const
 {
-    return _props->editable;
+    return _editable;
 }
 
-void ComboBox::editable(bool value)
+void ComboBoxImpl::editable(bool value)
 {
-    if (_props->editable == value)
+    if (_editable == value)
         return;
 
-    _props->editable = value;
+    _editable = value;
     rebuild();
 }
 
-bool ComboBox::sorted() const
+bool ComboBoxImpl::sorted() const
 {
-    return _props->sorted;
+    return _sorted;
 }
 
-void ComboBox::sorted(bool value)
+void ComboBoxImpl::sorted(bool value)
 {
-    if (_props->sorted == value)
+    if (_sorted == value)
         return;
 
-    _props->sorted = value;
+    _sorted = value;
     rebuild();
 }
 
-const std::vector<std::string>& ComboBox::items() const
+const std::vector<std::string>& ComboBoxImpl::items() const
 {
-    return _props->items;
+    return _items;
 }
 
-void ComboBox::items(const std::vector<std::string>& items)
+void ComboBoxImpl::items(const std::vector<std::string>& items)
 {
-    _props->items = items;
+    _items = items;
     updateItems();
     updateSelection();
 }
 
-void ComboBox::updateItems()
+void ComboBoxImpl::updateItems()
 {
     if (handle() == nullptr)
         return;
@@ -247,13 +222,13 @@ void ComboBox::updateItems()
     SendMessage(hwnd, CB_RESETCONTENT, 0, 0);
     readSelection(); // remove the selection
 
-    for (const auto& item : _props->items)
+    for (const auto& item : _items)
     {
         SendMessageW(hwnd, CB_ADDSTRING, 0, (LPARAM)toWide(item).c_str());
     }
 }
 
-void ComboBox::readInput()
+void ComboBoxImpl::readInput()
 {
     // if the control input has been changed by the user, save the content
     if (handle() == nullptr)
@@ -264,4 +239,29 @@ void ComboBox::readInput()
     std::wstring buf(cb, 0);
     GetWindowTextW(hwnd, &buf[0], cb);
     text(toBytes(buf.c_str()));
+}
+
+IEvent<ISharedControl>& ComboBoxImpl::SelChangedEvent()
+{
+    return _selChangedEvent;
+}
+
+IEvent<ISharedControl>& ComboBoxImpl::SelCancelEvent()
+{
+    return _selCancelEvent;
+}
+
+IEvent<ISharedControl>& ComboBoxImpl::ListCloseEvent()
+{
+    return _listCloseEvent;
+}
+
+IEvent<ISharedControl>& ComboBoxImpl::ListOpenEvent()
+{
+    return _listOpenEvent;
+}
+
+IEvent<ISharedControl>& ComboBoxImpl::TextChangedEvent()
+{
+    return _textChangedEvent;
 }

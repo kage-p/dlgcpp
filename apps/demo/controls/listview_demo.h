@@ -5,7 +5,7 @@
 
 void controls_listview_demo(dlgcpp::ISharedDialog parent);
 
-class ListViewDemoImpl : public dlgcpp::controls::ListView
+class ListViewDemoImpl : public dlgcpp::ListView
 {
 public:
     ListViewDemoImpl();
@@ -27,7 +27,7 @@ public:
 
     // ListView impl.
     int roleData(int column) const override;
-    dlgcpp::controls::ListViewColumn columnData(int role) const override;
+    dlgcpp::ListViewColumn columnData(int role) const override;
     size_t columnCount() const override;
     std::string rowData(size_t row, int role) const override;
     size_t rowCount() const override;
@@ -40,6 +40,6 @@ public:
 
 private:
     std::map<int, int> _roleMap;
-    std::map<int, dlgcpp::controls::ListViewColumn> _columnMap;
+    std::map<int, dlgcpp::ListViewColumn> _columnMap;
     std::vector<ListViewDemoItem> _items;
 };

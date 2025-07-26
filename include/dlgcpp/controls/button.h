@@ -1,5 +1,5 @@
 #pragma once
-#include "../control.h"
+#include "dlgcpp/controls/control.h"
 
 namespace dlgcpp
 {
@@ -14,13 +14,16 @@ namespace dlgcpp
             virtual void verticalAlignment(VerticalAlign value) = 0;
         };
 
-        typedef std::shared_ptr<IButton> ISharedButton;
+        class ButtonImpl;
 
-        class Button : public dlgcpp::Control,
-                       public IButton
+        class Button :
+            public Control,
+            public IButton
         {
         public:
-            explicit Button(const std::string& text = std::string(), const Position& p = Position());
+            explicit Button(
+                const std::string& text = std::string(),
+                const Position& p = Position());
             ~Button() override;
 
             // IButton impl.
@@ -30,12 +33,9 @@ namespace dlgcpp
             void verticalAlignment(VerticalAlign value) override;
 
         private:
-            struct button_props* _props;
+            Button(std::shared_ptr<ButtonImpl> impl);
 
-            void rebuild() override;
-            std::string className() const override;
-            unsigned int styles() const override;
-            void notify(dlg_message&) override;
+            std::shared_ptr<ButtonImpl> _impl;
         };
     }
 }

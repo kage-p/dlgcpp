@@ -1,12 +1,10 @@
 #include "clock_demo.h"
-
 #include <ctime>
 #include <iomanip>
 #include <sstream>
 #include <string>
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 void advanced_clock_demo(ISharedDialog parent)
 {

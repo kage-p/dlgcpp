@@ -1,12 +1,15 @@
 #pragma once
-#include "../control.h"
+
+#include "dlgcpp/controls/control.h"
 #include <vector>
 
 namespace dlgcpp
 {
     namespace controls
     {
-        class ListBox : public dlgcpp::Control
+        class ListBoxImpl;
+
+        class ListBox : public Control
         {
         public:
             explicit ListBox(const Position& p = Position());
@@ -29,15 +32,9 @@ namespace dlgcpp
             IEvent<ISharedControl>& SelCancelEvent();
 
         private:
-            struct listbox_props* _props;
-            void rebuild() override;
-            std::string className() const override;
-            void notify(dlg_message&) override;
-            unsigned int styles() const override;
+            ListBox(std::shared_ptr<ListBoxImpl> impl);
 
-            void readSelection();
-            void updateSelection();
-            void updateItems();
+            std::shared_ptr<ListBoxImpl> _impl;
         };
     }
 }

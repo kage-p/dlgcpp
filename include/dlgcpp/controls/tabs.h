@@ -1,16 +1,21 @@
 #pragma once
-#include "../control.h"
-#include "tab_item.h"
+
+#include "dlgcpp/controls/control.h"
+#include "dlgcpp/controls/tab_item.h"
 #include <vector>
 
 namespace dlgcpp
 {
     namespace controls
     {
-        class Tabs : public dlgcpp::Control
+        class TabsImpl;
+
+        class Tabs : public Control
         {
         public:
-            explicit Tabs(const Position& p = Position());
+            explicit Tabs(
+                const Position& p = Position());
+
             ~Tabs() override;
 
             Position area() const;
@@ -21,16 +26,9 @@ namespace dlgcpp
             IEvent<ISharedControl>& SelChangedEvent();
 
         private:
-            struct tabs_props* _props;
+            Tabs(std::shared_ptr<TabsImpl> impl);
 
-            std::string className() const override;
-            unsigned int styles() const override;
-            void notify(dlg_message&) override;
-            void rebuild() override;
-
-            void readSelection();
-            void updateSelection();
-            void updateItems();
+            std::shared_ptr<TabsImpl> _impl;
         };
     }
 }

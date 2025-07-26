@@ -1,44 +1,45 @@
 #include "option_btn_p.h"
-#include "utility/message.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-OptionButton::OptionButton(const std::string& text, const Position& p) :
-    Control(text, p),
-    _props(new optionbtn_props())
+OptionButtonImpl::OptionButtonImpl(
+    OptionButton& optionBtn,
+    const std::string& text,
+    const Position& p) :
+    ControlImpl(optionBtn, text, p),
+    _optionBtn(optionBtn)
 {
 }
 
-OptionButton::~OptionButton()
+OptionButtonImpl::~OptionButtonImpl()
 {
-    delete _props;
 }
 
-void OptionButton::rebuild()
+void OptionButtonImpl::rebuild()
 {
-    Control::rebuild();
+    ControlImpl::rebuild();
 
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, BM_SETCHECK, (WPARAM)_props->checked, 0);
+    SendMessage(hwnd, BM_SETCHECK, (WPARAM)_checked, 0);
 }
 
-std::string OptionButton::className() const
+std::string OptionButtonImpl::className() const
 {
     return "BUTTON";
 }
 
-unsigned int OptionButton::styles() const
+unsigned int OptionButtonImpl::styles() const
 {
-    auto styles = Control::styles();
+    auto styles = ControlImpl::styles();
 
     // note: auto style is not supported as we don't have a simple
     // method of reading the state from other controls in a group.
     styles |= BS_RADIOBUTTON | BS_NOTIFY;
 
-    switch (_props->horzAlign)
+    switch (_horzAlign)
     {
     case HorizontalAlign::Left:
         styles |= BS_LEFT;
@@ -51,7 +52,7 @@ unsigned int OptionButton::styles() const
         break;
     }
 
-    switch (_props->vertAlign)
+    switch (_vertAlign)
     {
     case VerticalAlign::Top:
         styles |= BS_TOP;
@@ -67,70 +68,70 @@ unsigned int OptionButton::styles() const
     return styles;
 }
 
-void OptionButton::notify(dlg_message& msg)
+void OptionButtonImpl::notify(DialogMessage& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {
         if (HIWORD(msg.wParam) == BN_CLICKED)
         {
-            ClickEvent().invoke(shared_from_this());
+            ClickEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == BN_DBLCLK)
         {
-            DoubleClickEvent().invoke(shared_from_this());
+            DoubleClickEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == BN_SETFOCUS)
         {
-            FocusEvent().invoke(shared_from_this(), true);
+            FocusEvent().invoke(control(), true);
         }
         else if (HIWORD(msg.wParam) == BN_KILLFOCUS)
         {
-            FocusEvent().invoke(shared_from_this(), false);
+            FocusEvent().invoke(control(), false);
         }
     }
 
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-bool OptionButton::checked() const
+bool OptionButtonImpl::checked() const
 {
-    return _props->checked;
+    return _checked;
 }
 
-void OptionButton::checked(bool value)
+void OptionButtonImpl::checked(bool value)
 {
-    if (_props->checked == value)
+    if (_checked == value)
         return;
-    _props->checked = value;
+    _checked = value;
 
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, BM_SETCHECK, (WPARAM)_props->checked, 0);
+    SendMessage(hwnd, BM_SETCHECK, (WPARAM)_checked, 0);
 }
 
-HorizontalAlign OptionButton::horizontalAlignment() const
+HorizontalAlign OptionButtonImpl::horizontalAlignment() const
 {
-    return _props->horzAlign;
+    return _horzAlign;
 }
 
-void OptionButton::horizontalAlignment(HorizontalAlign value)
+void OptionButtonImpl::horizontalAlignment(HorizontalAlign value)
 {
-    if (_props->horzAlign == value)
+    if (_horzAlign == value)
         return;
-    _props->horzAlign = value;
+    _horzAlign = value;
     rebuild();
 }
 
-VerticalAlign OptionButton::verticalAlignment() const
+VerticalAlign OptionButtonImpl::verticalAlignment() const
 {
-    return _props->vertAlign;
+    return _vertAlign;
 }
 
-void OptionButton::verticalAlignment(VerticalAlign value)
+void OptionButtonImpl::verticalAlignment(VerticalAlign value)
 {
-    if (_props->vertAlign == value)
+    if (_vertAlign == value)
         return;
-    _props->vertAlign = value;
+    _vertAlign = value;
     rebuild();
 }

@@ -1,14 +1,19 @@
 #pragma once
-#include "../control.h"
+#include "dlgcpp/controls/control.h"
 
 namespace dlgcpp
 {
     namespace controls
     {
-        class CheckBox : public dlgcpp::Control
+        class CheckBoxImpl;
+
+        class CheckBox : public Control
         {
         public:
-            explicit CheckBox(const std::string& text = std::string(), const Position& p = Position());
+            explicit CheckBox(
+                const std::string& text = std::string(),
+                const Position& p = Position());
+
             ~CheckBox() override;
 
             bool checked() const;
@@ -21,12 +26,9 @@ namespace dlgcpp
             void verticalAlignment(VerticalAlign value);
 
         private:
-            struct checkbox_props* _props;
+            CheckBox(std::shared_ptr<CheckBoxImpl> impl);
 
-            void rebuild() override;
-            std::string className() const override;
-            unsigned int styles() const override;
-            void notify(dlg_message&) override;
+            std::shared_ptr<CheckBoxImpl> _impl;
         };
     }
 }

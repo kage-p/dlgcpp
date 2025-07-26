@@ -1,6 +1,4 @@
-#include "control_p.h"
 #include "listview_p.h"
-#include "utility/message.h"
 #include "utility/string.h"
 #include "utility/units.h"
 
@@ -8,49 +6,39 @@ using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 
-LRESULT CALLBACK ListViewEdit_SubclassProc(
-    HWND hwnd,
-    UINT msg,
-    WPARAM wParam,
-    LPARAM lParam,
-    UINT_PTR uIdSubclass,
-    DWORD_PTR dwRefData);
-
-
-ListView::ListView(const Position& p) :
-    Control(std::string(), p),
-    _priv(new listview_priv())
+ListViewImpl::ListViewImpl(ListView& listView, const Position& p) :
+    ControlImpl(listView, std::string(), p),
+    _listView(listView)
 {
-    Control::border(BorderStyle::Sunken);
+    ControlImpl::border(BorderStyle::Sunken);
 
     // we need internal messages for editing only; this requires a subclass.
-    Control::wantInternalEvents(true);
+    ControlImpl::wantInternalEvents(true);
 
-    _priv->columnsChangedEvent += [this](ISharedControl) { onColumnsChanged(); };
-    _priv->rowsChangedEvent += [this](ISharedControl) { onRowsChanged(); };
-    _priv->selChangedEventInternal += [this](ISharedControl) { onSelectionChanged(); };
+    _columnsChangedEvent += [this](ISharedControl) { onColumnsChanged(); };
+    _rowsChangedEvent += [this](ISharedControl) { onRowsChanged(); };
+    _selChangedEventInternal += [this](ISharedControl) { onSelectionChanged(); };
 }
 
-ListView::~ListView()
+ListViewImpl::~ListViewImpl()
 {
-    delete _priv;
 }
 
-std::string ListView::className() const
+std::string ListViewImpl::className() const
 {
     return WC_LISTVIEWA;
 }
 
-unsigned int ListView::styles() const
+unsigned int ListViewImpl::styles() const
 {
-    auto styles = Control::styles();
+    auto styles = ControlImpl::styles();
 
     styles |= LVS_OWNERDATA;
 
-    if (!_priv->multiselect)
+    if (!_multiselect)
         styles |= LVS_SINGLESEL;
 
-    switch (_priv->displayType)
+    switch (_displayType)
     {
     case ListViewDisplay::Details:
         styles |= LVS_REPORT;
@@ -69,15 +57,14 @@ unsigned int ListView::styles() const
     return styles;
 }
 
-void ListView::notify(ctl_message& msg)
+void ListViewImpl::notify(ControlMessage& msg)
 {
     if (msg.wMsg == WM_CTLCOLOREDIT)
     {
         // use the listview colors
-        auto ctl_priv = priv();
         auto hdc = (HDC)msg.wParam;
 
-        auto clrPair = Control::colors();
+        auto clrPair = ControlImpl::colors();
 
         if (clrPair.second != Color::Default &&
             clrPair.second != Color::None)
@@ -90,7 +77,8 @@ void ListView::notify(ctl_message& msg)
 
             SetTextColor(hdc, textColor);
             SetBkColor(hdc, (COLORREF)clrPair.second);
-            msg.result = (LRESULT)ctl_priv->state.hbrBack;
+
+            msg.result = (LRESULT)backgroundBrush();
         }
         else if (clrPair.first != Color::Default)
         {
@@ -103,10 +91,10 @@ void ListView::notify(ctl_message& msg)
         return;
     }
 
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-void ListView::notify(dlg_message& msg)
+void ListViewImpl::notify(DialogMessage& msg)
 {
     if (msg.wMsg == WM_NOTIFY)
     {
@@ -118,21 +106,21 @@ void ListView::notify(dlg_message& msg)
             if (nmdi.item.mask & LVIF_TEXT)
             {
                 // check the role
-                const auto colCount = columnCount();
+                const auto colCount = _listView.columnCount();
                 if (colCount == 0 || nmdi.item.iSubItem >= (int)colCount)
                     return;
 
                 // extract text
-                int role = roleData(nmdi.item.iSubItem);
-                auto text = rowData(nmdi.item.iItem, role);
+                int role = _listView.roleData(nmdi.item.iSubItem);
+                auto text = _listView.rowData(nmdi.item.iItem, role);
 
-                _priv->displayBuffer = toWide(text);
-                nmdi.item.pszText = _priv->displayBuffer.data();
+                _displayBuffer = toWide(text);
+                nmdi.item.pszText = _displayBuffer.data();
             }
 
             if (nmdi.item.mask & LVIF_STATE)
             {
-                bool isChecked = checked(nmdi.item.iItem);
+                bool isChecked = _listView.checked(nmdi.item.iItem);
                 nmdi.item.stateMask = LVIS_STATEIMAGEMASK;
                 nmdi.item.state = INDEXTOSTATEIMAGEMASK(isChecked ? 2 : 1);
             }
@@ -145,7 +133,7 @@ void ListView::notify(dlg_message& msg)
             {
                 // item selection state changed
                 // fire internal event
-                _priv->selChangedEventInternal.invoke(shared_from_this());
+                _selChangedEventInternal.invoke(control());
             }
         }
         else if (nmhdr.code == NM_CLICK)
@@ -156,21 +144,21 @@ void ListView::notify(dlg_message& msg)
             hit.pt = nmItemActivate.ptAction;
             ListView_SubItemHitTest(nmhdr.hwndFrom, &hit);
 
-            if (_priv->checkboxes &&
+            if (_checkboxes &&
                 (hit.flags & LVHT_ONITEMSTATEICON) &&
                 (hit.iItem >= 0))
             {
                 // checkbox clicked
-                checked(nmItemActivate.iItem, !checked(nmItemActivate.iItem));
+                _listView.checked(nmItemActivate.iItem, !_listView.checked(nmItemActivate.iItem));
                 ListView_RedrawItems(nmhdr.hwndFrom, hit.iItem, hit.iItem);
             }
             else if (hit.iItem >= 0)
             {
                 // fire item click event
-                _priv->itemClickEvent.invoke(
-                    shared_from_this(),
+                _itemClickEvent.invoke(
+                    control(),
                     nmItemActivate.iItem,
-                    roleData(nmItemActivate.iSubItem));
+                    _listView.roleData(nmItemActivate.iSubItem));
             }
         }
         else if (nmhdr.code == NM_DBLCLK)
@@ -180,15 +168,15 @@ void ListView::notify(dlg_message& msg)
 
             beginEditing(
                 nmItemActivate.iItem,
-                roleData(nmItemActivate.iSubItem));
+                _listView.roleData(nmItemActivate.iSubItem));
 
             if (nmItemActivate.iItem >= 0)
             {
                 // fire item double click event
-                _priv->itemDblClickEvent.invoke(
-                    shared_from_this(),
+                _itemDblClickEvent.invoke(
+                    control(),
                     nmItemActivate.iItem,
-                    roleData(nmItemActivate.iSubItem));
+                    _listView.roleData(nmItemActivate.iSubItem));
             }
         }
         else if (nmhdr.code == LVN_COLUMNCLICK)
@@ -196,26 +184,26 @@ void ListView::notify(dlg_message& msg)
             // column header clicked
             auto& nmlv = *((NMLISTVIEW*)msg.lParam);
 
-            _priv->columnClickEvent.invoke(
-                shared_from_this(),
-                roleData(nmlv.iSubItem));
+            _columnClickEvent.invoke(
+                control(),
+                _listView.roleData(nmlv.iSubItem));
         }
         else if (nmhdr.code == NM_SETFOCUS)
         {
-            if (_priv->editState.editing)
+            if (_editState.editing)
                 confirmEditing();
         }
     }
 
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-void ListView::rebuild()
+void ListViewImpl::rebuild()
 {
     // remove editor
     cancelEditing();
 
-    Control::rebuild();
+    ControlImpl::rebuild();
 
     if (handle() == nullptr)
         return;
@@ -227,9 +215,9 @@ void ListView::rebuild()
     updateSelection();
 }
 
-void ListView::colors(Color fgColor, Color bgColor)
+void ListViewImpl::colors(Color fgColor, Color bgColor)
 {
-    Control::colors(fgColor, bgColor);
+    ControlImpl::colors(fgColor, bgColor);
 
     if (handle() == nullptr)
         return;
@@ -237,60 +225,60 @@ void ListView::colors(Color fgColor, Color bgColor)
     updateDisplayStyles();
 }
 
-int ListView::selectedIndex() const
+int ListViewImpl::selectedIndex() const
 {
-    if (_priv->multiselect)
+    if (_multiselect)
         return -1;
-    return _priv->selectedIndex;
+    return _selectedIndex;
 }
 
-void ListView::selectedIndex(int value)
+void ListViewImpl::selectedIndex(int value)
 {
-    if (_priv->multiselect)
+    if (_multiselect)
         return;
-    if (_priv->selectedIndex == value)
+    if (_selectedIndex == value)
         return;
 
-    _priv->selectedIndex = value;
+    _selectedIndex = value;
     updateSelection();
 }
 
-const std::vector<int>& ListView::selectedIndexes() const
+const std::vector<int>& ListViewImpl::selectedIndexes() const
 {
     static const std::vector<int> empty;
-    if (!_priv->multiselect)
+    if (!_multiselect)
         return empty;
-    return _priv->selectedIndexes;
+    return _selectedIndexes;
 }
 
-void ListView::selectedIndexes(const std::vector<int>& indexes)
+void ListViewImpl::selectedIndexes(const std::vector<int>& indexes)
 {
-    if (!_priv->multiselect)
+    if (!_multiselect)
         return;
-    if (_priv->selectedIndexes == indexes)
+    if (_selectedIndexes == indexes)
         return;
 
-    _priv->selectedIndexes.clear();
+    _selectedIndexes.clear();
     for (int index : indexes)
     {
         // skip invalid
         if (index < 0 ||
-            index >(int)rowCount())
+            index >(int)_listView.rowCount())
             continue;
 
         // skip duplicates
-        if (std::find(_priv->selectedIndexes.begin(),
-            _priv->selectedIndexes.end(),
-            index) != _priv->selectedIndexes.end())
+        if (std::find(_selectedIndexes.begin(),
+            _selectedIndexes.end(),
+            index) != _selectedIndexes.end())
             continue;
 
-        _priv->selectedIndexes.push_back(index);
+        _selectedIndexes.push_back(index);
     }
 
     updateSelection();
 }
 
-void ListView::updateSelection()
+void ListViewImpl::updateSelection()
 {
     if (handle() == nullptr)
         return;
@@ -302,9 +290,9 @@ void ListView::updateSelection()
     lvi.stateMask = LVIS_SELECTED;
     SendMessage(hwnd, LVM_SETITEMSTATE, (WPARAM)-1, (LPARAM)&lvi);
 
-    if (_priv->multiselect)
+    if (_multiselect)
     {
-        for (int index : _priv->selectedIndexes)
+        for (int index : _selectedIndexes)
         {
             lvi.state = LVIS_SELECTED;
             lvi.stateMask = LVIS_SELECTED;
@@ -313,26 +301,26 @@ void ListView::updateSelection()
     }
     else
     {
-        if (_priv->selectedIndex > -1)
+        if (_selectedIndex > -1)
         {
             auto lvi = LVITEM();
             lvi.state = LVIS_SELECTED;
             lvi.stateMask = LVIS_SELECTED;
-            SendMessage(hwnd, LVM_SETITEMSTATE, (WPARAM)_priv->selectedIndex, (LPARAM)&lvi);
+            SendMessage(hwnd, LVM_SETITEMSTATE, (WPARAM)_selectedIndex, (LPARAM)&lvi);
         }
     }
 }
 
-bool ListView::checkboxes() const
+bool ListViewImpl::checkboxes() const
 {
-    return _priv->checkboxes;
+    return _checkboxes;
 }
 
-void ListView::checkboxes(bool value)
+void ListViewImpl::checkboxes(bool value)
 {
-    if (_priv->checkboxes == value)
+    if (_checkboxes == value)
         return;
-    _priv->checkboxes = value;
+    _checkboxes = value;
 
     if (handle() == nullptr)
         return;
@@ -340,21 +328,21 @@ void ListView::checkboxes(bool value)
     updateExtStyles();
 }
 
-bool ListView::editing() const
+bool ListViewImpl::editing() const
 {
-    return _priv->editState.editing;
+    return _editState.editing;
 }
 
-bool ListView::beginEditing(size_t row, int role)
+bool ListViewImpl::beginEditing(size_t row, int role)
 {
     if (handle() == nullptr)
         return false;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    if (_priv->editState.editing)
+    if (_editState.editing)
     {
-        if (_priv->editState.row == row &&
-            _priv->editState.role == role)
+        if (_editState.row == row &&
+            _editState.role == role)
             // already editing the same
             return true;
 
@@ -362,13 +350,13 @@ bool ListView::beginEditing(size_t row, int role)
     }
 
     // request to edit the item
-    if (!beginEdit(row, role))
+    if (!_listView.beginEdit(row, role))
         return false;
 
-    std::string pretext = rowData(row, role);
+    std::string pretext = _listView.rowData(row, role);
 
     // get column from role
-    auto column = _priv->columnRoles.at(role);
+    auto column = _columnRoles.at(role);
 
     RECT rc = { 0 };
     rc.top = column;
@@ -389,7 +377,7 @@ bool ListView::beginEditing(size_t row, int role)
         (rc.right - rc.left) + 2,
         (rc.bottom - rc.top) + 3,
         hwnd,
-        reinterpret_cast<HMENU>(static_cast<INT_PTR>(_priv->editState.idEditor)),
+        reinterpret_cast<HMENU>(static_cast<INT_PTR>(_editState.idEditor)),
         NULL,
         NULL);
 
@@ -403,7 +391,7 @@ bool ListView::beginEditing(size_t row, int role)
         hwndEditor,
         ListViewEdit_SubclassProc,
         1,
-        reinterpret_cast<DWORD_PTR>(&_priv->editState));
+        reinterpret_cast<DWORD_PTR>(&_editState));
 
     auto font = (HFONT)SendMessage(hwnd, WM_GETFONT, 0, 0);
     SendMessage(hwndEditor, WM_SETFONT, (WPARAM)font, 0);
@@ -414,33 +402,33 @@ bool ListView::beginEditing(size_t row, int role)
 
     SetFocus(hwndEditor);
 
-    _priv->editState.hwndEditor = hwndEditor;
-    _priv->editState.listView = this;
-    _priv->editState.row = row;
-    _priv->editState.column = column;
-    _priv->editState.role = role;
-    _priv->editState.editing = true;
+    _editState.hwndEditor = hwndEditor;
+    _editState.listView = &_listView;
+    _editState.row = row;
+    _editState.column = column;
+    _editState.role = role;
+    _editState.editing = true;
 
     return true;
 }
 
-void ListView::confirmEditing()
+void ListViewImpl::confirmEditing()
 {
-    if (!_priv->editState.editing)
+    if (!_editState.editing)
         return;
 
     // Get length of text
-    int len = GetWindowTextLengthW(_priv->editState.hwndEditor);
+    int len = GetWindowTextLengthW(_editState.hwndEditor);
     std::wstring buf(len, L'\0');
 
     if (len > 0)
-        GetWindowTextW(_priv->editState.hwndEditor, buf.data(), len + 1);
+        GetWindowTextW(_editState.hwndEditor, buf.data(), len + 1);
 
     auto text = toBytes(buf.data());
 
-    bool changed = endEdit(
-        _priv->editState.row,
-        _priv->editState.role,
+    bool changed = _listView.endEdit(
+        _editState.row,
+        _editState.role,
         text);
 
     if (changed && handle() != nullptr)
@@ -449,42 +437,42 @@ void ListView::confirmEditing()
 
         ListView_RedrawItems(
             hwnd,
-            (int)_priv->editState.row,
-            (int)_priv->editState.row);
+            (int)_editState.row,
+            (int)_editState.row);
     }
 
     cancelEditing();
 }
 
-void ListView::cancelEditing()
+void ListViewImpl::cancelEditing()
 {
-    if (!_priv->editState.editing)
+    if (!_editState.editing)
         return;
 
     if (handle() == nullptr)
         return;
 
-    _priv->editState.editing = false;
-    _priv->editState.row = -1;
-    _priv->editState.column = -1;
-    _priv->editState.role = -1;
-    _priv->editState.confirmed = false;
+    _editState.editing = false;
+    _editState.row = -1;
+    _editState.column = -1;
+    _editState.role = -1;
+    _editState.confirmed = false;
 
     // destroy last so focus changes after
-    DestroyWindow(_priv->editState.hwndEditor);
-    _priv->editState.hwndEditor = NULL;
+    DestroyWindow(_editState.hwndEditor);
+    _editState.hwndEditor = NULL;
 }
 
-bool ListView::gridlines() const
+bool ListViewImpl::gridlines() const
 {
-    return _priv->gridlines;
+    return _gridlines;
 }
 
-void ListView::gridlines(bool value)
+void ListViewImpl::gridlines(bool value)
 {
-    if (_priv->gridlines == value)
+    if (_gridlines == value)
         return;
-    _priv->gridlines = value;
+    _gridlines = value;
 
     if (handle() == nullptr)
         return;
@@ -492,16 +480,16 @@ void ListView::gridlines(bool value)
     updateExtStyles();
 }
 
-bool ListView::multiselect() const
+bool ListViewImpl::multiselect() const
 {
-    return _priv->multiselect;
+    return _multiselect;
 }
 
-void ListView::multiselect(bool value)
+void ListViewImpl::multiselect(bool value)
 {
-    if (_priv->multiselect == value)
+    if (_multiselect == value)
         return;
-    _priv->multiselect = value;
+    _multiselect = value;
 
     if (handle() == nullptr)
         return;
@@ -511,22 +499,22 @@ void ListView::multiselect(bool value)
     SetWindowLong(hwnd, GWL_STYLE, styles());
 
     // clear selections
-    _priv->selectedIndex = -1;
-    _priv->selectedIndexes.clear();
+    _selectedIndex = -1;
+    _selectedIndexes.clear();
     updateSelection();
 }
 
-ListViewDisplay ListView::display() const
+ListViewDisplay ListViewImpl::display() const
 {
-    return _priv->displayType;
+    return _displayType;
 }
 
-void ListView::display(ListViewDisplay value)
+void ListViewImpl::display(ListViewDisplay value)
 {
-    if (_priv->displayType == value)
+    if (_displayType == value)
         return;
 
-    _priv->displayType = value;
+    _displayType = value;
 
     if (handle() == nullptr)
         return;
@@ -536,67 +524,10 @@ void ListView::display(ListViewDisplay value)
     SetWindowLong(hwnd, GWL_STYLE, styles());
 }
 
-int ListView::roleData(int) const
-{
-    // placeholder
-    return 0;
-}
-
-ListViewColumn ListView::columnData(int) const
-{
-    // placeholder
-    return ListViewColumn();
-}
-
-size_t ListView::columnCount() const
-{
-    // placeholder
-    return 0;
-}
-
-std::string ListView::rowData(size_t, int) const
-{
-    // placeholder
-    return std::string();
-}
-
-size_t ListView::rowCount() const
-{
-    // placeholder
-    return 0;
-}
-
-bool ListView::beginEdit(
-    size_t row,
-    int role)
-{
-    return false;
-}
-
-bool ListView::endEdit(
-    size_t row,
-    int role,
-    const std::string& text)
-{
-    // placeholder
-    return false;
-}
-
-bool ListView::checked(size_t row) const
-{
-    // placeholder
-    return false;
-}
-
-void ListView::checked(size_t row, bool checked)
-{
-    // placeholder
-}
-
-void ListView::updateDisplayStyles()
+void ListViewImpl::updateDisplayStyles()
 {
     auto hwnd = (HWND)handle();
-    auto clrPair = Control::colors();
+    auto clrPair = ControlImpl::colors();
 
     COLORREF backColor =
         clrPair.second != Color::Default
@@ -612,7 +543,7 @@ void ListView::updateDisplayStyles()
     ListView_SetTextColor(hwnd, textColor);
 }
 
-void ListView::updateExtStyles()
+void ListViewImpl::updateExtStyles()
 {
     auto hwnd = reinterpret_cast<HWND>(handle());
     auto dwStyle = (UINT)SendMessage(hwnd, LVM_GETEXTENDEDLISTVIEWSTYLE, 0, 0);
@@ -620,12 +551,12 @@ void ListView::updateExtStyles()
     // always full row select in report mode
     dwStyle |= LVS_EX_FULLROWSELECT;
 
-    if (_priv->gridlines)
+    if (_gridlines)
         dwStyle |= LVS_EX_GRIDLINES;
     else
         dwStyle &= ~LVS_EX_GRIDLINES;
 
-    if (_priv->checkboxes)
+    if (_checkboxes)
         dwStyle |= LVS_EX_CHECKBOXES;
     else
         dwStyle &= ~LVS_EX_CHECKBOXES;
@@ -633,22 +564,22 @@ void ListView::updateExtStyles()
     SendMessage(hwnd, LVM_SETEXTENDEDLISTVIEWSTYLE, 0, dwStyle);
 }
 
-void ListView::updateColumns()
+void ListViewImpl::updateColumns()
 {
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    auto colCount = (int)columnCount();
+    auto colCount = (int)_listView.columnCount();
     int index = 0;
 
-    _priv->columnRoles.clear();
+    _columnRoles.clear();
     for (auto colIdx = 0; colIdx < colCount; colIdx++)
     {
-        auto role = roleData(colIdx);
-        _priv->columnRoles[role] = colIdx;
+        auto role = _listView.roleData(colIdx);
+        _columnRoles[role] = colIdx;
 
-        auto colData = columnData(role);
+        auto colData = _listView.columnData(role);
 
         auto text = toWide(colData.text());
         auto lvc = LVCOLUMNW();
@@ -664,26 +595,26 @@ void ListView::updateColumns()
     }
 }
 
-void ListView::updateRows()
+void ListViewImpl::updateRows()
 {
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    SendMessage(hwnd, LVM_SETITEMCOUNT, (WPARAM)rowCount(), 0);
+    SendMessage(hwnd, LVM_SETITEMCOUNT, (WPARAM)_listView.rowCount(), 0);
 }
 
-void ListView::onColumnsChanged()
+void ListViewImpl::onColumnsChanged()
 {
     updateColumns();
 }
 
-void ListView::onRowsChanged()
+void ListViewImpl::onRowsChanged()
 {
     updateRows();
 }
 
-void ListView::onSelectionChanged()
+void ListViewImpl::onSelectionChanged()
 {
     // selection state has changed; this handler will read the
     // new selection states and fire a public event if changed
@@ -692,7 +623,7 @@ void ListView::onSelectionChanged()
 
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    if (_priv->multiselect)
+    if (_multiselect)
     {
         auto selectedIndexes = std::vector<int>();
 
@@ -705,11 +636,11 @@ void ListView::onSelectionChanged()
             selectedIndexes.push_back(index);
         }
 
-        _priv->selectedIndex = -1;
-        if (_priv->selectedIndexes != selectedIndexes)
+        _selectedIndex = -1;
+        if (_selectedIndexes != selectedIndexes)
         {
-            _priv->selectedIndexes = selectedIndexes;
-            _priv->selChangedEvent.invoke(shared_from_this());
+            _selectedIndexes = selectedIndexes;
+            _selChangedEvent.invoke(control());
 
             std::string indexes;
             for (int index : selectedIndexes)
@@ -717,20 +648,20 @@ void ListView::onSelectionChanged()
                 indexes += std::to_string(index) + " ";
             }
 
-            DLGCPP_CMSG("ListView::onSelectionChanged(): selectedIndexes = " << indexes);
+            DLGCPP_CMSG("ListViewImpl::onSelectionChanged(): selectedIndexes = " << indexes);
         }
     }
     else
     {
         int selectedIndex = (int)SendMessage(hwnd, LVM_GETNEXTITEM, -1, LVNI_SELECTED);
 
-        _priv->selectedIndexes.clear();
-        if (_priv->selectedIndex != selectedIndex)
+        _selectedIndexes.clear();
+        if (_selectedIndex != selectedIndex)
         {
-            _priv->selectedIndex = selectedIndex;
-            _priv->selChangedEvent.invoke(shared_from_this());
+            _selectedIndex = selectedIndex;
+            _selChangedEvent.invoke(control());
 
-            DLGCPP_CMSG("ListView::onSelectionChanged(): selectedIndex = " << selectedIndex);
+            DLGCPP_CMSG("ListViewImpl::onSelectionChanged(): selectedIndex = " << selectedIndex);
         }
     }
 }
@@ -738,7 +669,7 @@ void ListView::onSelectionChanged()
 /// <summary>
 /// Subclass procedure for the in-place editor control
 /// </summary>
-LRESULT CALLBACK ListViewEdit_SubclassProc(
+LRESULT CALLBACK ListViewImpl::ListViewEdit_SubclassProc(
     HWND hwnd,
     UINT msg,
     WPARAM wParam,
@@ -746,11 +677,11 @@ LRESULT CALLBACK ListViewEdit_SubclassProc(
     UINT_PTR uIdSubclass,
     DWORD_PTR dwRefData)
 {
-    auto* priv = reinterpret_cast<listview_edit_priv*>(dwRefData);
+    auto* priv = reinterpret_cast<ListViewEditProps*>(dwRefData);
     if (priv == nullptr)
         return DefSubclassProc(hwnd, msg, wParam, lParam);
 
-    auto moveEdit = [](listview_edit_priv* priv, int dx, int dy)
+    auto moveEdit = [](ListViewEditProps* priv, int dx, int dy)
         {
             if (!priv || !priv->listView)
                 return;
@@ -833,32 +764,32 @@ LRESULT CALLBACK ListViewEdit_SubclassProc(
     return DefSubclassProc(hwnd, msg, wParam, lParam);
 }
 
-IEvent<ISharedControl>& ListView::ColumnsChangedEvent()
+IEvent<ISharedControl>& ListViewImpl::ColumnsChangedEvent()
 {
-    return _priv->columnsChangedEvent;
+    return _columnsChangedEvent;
 }
 
-IEvent<ISharedControl>& ListView::RowsChangedEvent()
+IEvent<ISharedControl>& ListViewImpl::RowsChangedEvent()
 {
-    return _priv->rowsChangedEvent;
+    return _rowsChangedEvent;
 }
 
-IEvent<ISharedControl>& ListView::SelChangedEvent()
+IEvent<ISharedControl>& ListViewImpl::SelChangedEvent()
 {
-    return _priv->selChangedEvent;
+    return _selChangedEvent;
 }
 
-IEvent<ISharedControl, int>& ListView::ColumnClickEvent()
+IEvent<ISharedControl, int>& ListViewImpl::ColumnClickEvent()
 {
-    return _priv->columnClickEvent;
+    return _columnClickEvent;
 }
 
-IEvent<ISharedControl, size_t, int>& ListView::ItemClickEvent()
+IEvent<ISharedControl, size_t, int>& ListViewImpl::ItemClickEvent()
 {
-    return _priv->itemClickEvent;
+    return _itemClickEvent;
 }
 
-IEvent<ISharedControl, size_t, int>& ListView::ItemDoubleClickEvent()
+IEvent<ISharedControl, size_t, int>& ListViewImpl::ItemDoubleClickEvent()
 {
-    return _priv->itemDblClickEvent;
+    return _itemDblClickEvent;
 }

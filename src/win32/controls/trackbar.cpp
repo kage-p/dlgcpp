@@ -1,59 +1,57 @@
 #include "trackbar_p.h"
-#include "utility/message.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-TrackBar::TrackBar(const Position& p) :
-    Control(std::string(), p),
-    _props(new trackbar_props())
+TrackBarImpl::TrackBarImpl(TrackBar& trackBar, const Position& p) :
+    ControlImpl(trackBar, std::string(), p),
+    _trackBar(trackBar)
 {
 }
 
-TrackBar::~TrackBar()
+TrackBarImpl::~TrackBarImpl()
 {
-    delete _props;
 }
 
-void TrackBar::rebuild()
+void TrackBarImpl::rebuild()
 {
-    Control::rebuild();
+    ControlImpl::rebuild();
 
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
     // apply the properties
-    SendMessage(hwnd, TBM_SETRANGEMIN, FALSE, (LPARAM)_props->range.first);
-    SendMessage(hwnd, TBM_SETRANGEMAX, FALSE, (LPARAM)_props->range.second);
-    SendMessage(hwnd, TBM_SETPOS, FALSE, (WPARAM)_props->value);
-    SendMessage(hwnd, TBM_SETPAGESIZE, 0, (LPARAM)_props->pageSize);
+    SendMessage(hwnd, TBM_SETRANGEMIN, FALSE, (LPARAM)_range.first);
+    SendMessage(hwnd, TBM_SETRANGEMAX, FALSE, (LPARAM)_range.second);
+    SendMessage(hwnd, TBM_SETPOS, FALSE, (WPARAM)_value);
+    SendMessage(hwnd, TBM_SETPAGESIZE, 0, (LPARAM)_pageSize);
 }
 
-std::string TrackBar::className() const
+std::string TrackBarImpl::className() const
 {
     return TRACKBAR_CLASSA;
 }
 
-unsigned int TrackBar::styles() const
+unsigned int TrackBarImpl::styles() const
 {
-    auto styles = Control::styles();
+    auto styles = ControlImpl::styles();
 
-    if (_props->tickMarks != TrackBarTickMark::None)
+    if (_tickMarks != TrackBarTickMark::None)
     {
         styles |= TBS_AUTOTICKS;
 
-        if (_props->tickMarks == TrackBarTickMark::Both)
+        if (_tickMarks == TrackBarTickMark::Both)
         {
             styles |= TBS_BOTH;
         }
-        else if (_props->tickMarks == TrackBarTickMark::Above)
+        else if (_tickMarks == TrackBarTickMark::Above)
         {
-            styles |= (_props->vertical) ? TBS_LEFT : TBS_TOP;
+            styles |= (_vertical) ? TBS_LEFT : TBS_TOP;
         }
-        else if (_props->tickMarks == TrackBarTickMark::Below)
+        else if (_tickMarks == TrackBarTickMark::Below)
         {
-            styles |= (_props->vertical) ? TBS_RIGHT : TBS_BOTTOM;
+            styles |= (_vertical) ? TBS_RIGHT : TBS_BOTTOM;
         }
     }
     else
@@ -61,16 +59,16 @@ unsigned int TrackBar::styles() const
         styles |= TBS_NOTICKS;
     }
 
-    styles |= (_props->vertical ? TBS_VERT : TBS_HORZ);
+    styles |= (_vertical ? TBS_VERT : TBS_HORZ);
     return styles;
 }
 
-IEvent<ISharedControl>& TrackBar::ChangedEvent()
+IEvent<ISharedControl>& TrackBarImpl::ChangedEvent()
 {
-    return _props->changedEvent;
+    return _changedEvent;
 }
 
-void TrackBar::notify(dlg_message& msg)
+void TrackBarImpl::notify(DialogMessage& msg)
 {
     if (msg.wMsg == WM_NOTIFY)
     {
@@ -91,13 +89,13 @@ void TrackBar::notify(dlg_message& msg)
                 switch (nmcd.dwItemSpec)
                 {
                 case TBCD_CHANNEL:
-                    if (_props->barColor != Color::Default &&
-                        _props->barColor != Color::None)
+                    if (_barColor != Color::Default &&
+                        _barColor != Color::None)
                     {
                         HDC hdc = nmcd.hdc;
                         RECT rc = nmcd.rc;
                         SetBkMode(hdc, TRANSPARENT);
-                        SetDCBrushColor(hdc, (COLORREF)_props->barColor);
+                        SetDCBrushColor(hdc, (COLORREF)_barColor);
                         FillRect(hdc, &rc, (HBRUSH)GetStockObject(DC_BRUSH));
                         msg.msgResult = CDRF_SKIPDEFAULT;
                     }
@@ -108,13 +106,13 @@ void TrackBar::notify(dlg_message& msg)
                     break;
 
                 case TBCD_THUMB:
-                    if (_props->thumbColor != Color::Default &&
-                        _props->thumbColor != Color::None)
+                    if (_thumbColor != Color::Default &&
+                        _thumbColor != Color::None)
                     {
                         HDC hdc = nmcd.hdc;
                         RECT rc = nmcd.rc;
                         SetBkMode(hdc, TRANSPARENT);
-                        SetDCBrushColor(hdc, (COLORREF)_props->thumbColor);
+                        SetDCBrushColor(hdc, (COLORREF)_thumbColor);
                         FillRect(hdc, &rc, (HBRUSH)GetStockObject(DC_BRUSH));
                         msg.msgResult = CDRF_SKIPDEFAULT;
                     }
@@ -127,7 +125,7 @@ void TrackBar::notify(dlg_message& msg)
                 case TBCD_TICS:
                 {
                     auto fgColor = colors().first;
-                    if (_props->tickMarks != TrackBarTickMark::None &&
+                    if (_tickMarks != TrackBarTickMark::None &&
                         fgColor != Color::Default &&
                         fgColor != Color::None)
                     {
@@ -149,19 +147,19 @@ void TrackBar::notify(dlg_message& msg)
                         {
                             int pos = (int)SendMessage(hwndTrack, TBM_GETTICPOS, i, 0);
 
-                            if (_props->vertical)
+                            if (_vertical)
                             {
                                 // Vertical
-                                if (_props->tickMarks == TrackBarTickMark::Above ||
-                                    _props->tickMarks == TrackBarTickMark::Both)
+                                if (_tickMarks == TrackBarTickMark::Above ||
+                                    _tickMarks == TrackBarTickMark::Both)
                                 {
                                     // Left (Above)
                                     MoveToEx(hdc, (thumbRect.left - tickSpace) - ticLength, pos, nullptr);
                                     LineTo(hdc, (thumbRect.left - tickSpace), pos);
                                 }
 
-                                if (_props->tickMarks == TrackBarTickMark::Below ||
-                                    _props->tickMarks == TrackBarTickMark::Both)
+                                if (_tickMarks == TrackBarTickMark::Below ||
+                                    _tickMarks == TrackBarTickMark::Both)
                                 {
                                     // Right (Below)
                                     MoveToEx(hdc, (thumbRect.right + tickSpace), pos, nullptr);
@@ -171,15 +169,15 @@ void TrackBar::notify(dlg_message& msg)
                             else
                             {
                                 // Horizontal                               
-                                if (_props->tickMarks == TrackBarTickMark::Above ||
-                                    _props->tickMarks == TrackBarTickMark::Both)
+                                if (_tickMarks == TrackBarTickMark::Above ||
+                                    _tickMarks == TrackBarTickMark::Both)
                                 {
                                     MoveToEx(hdc, pos, (thumbRect.top - tickSpace) - ticLength, nullptr);
                                     LineTo(hdc, pos, (thumbRect.top - tickSpace));
                                 }
 
-                                if (_props->tickMarks == TrackBarTickMark::Below ||
-                                    _props->tickMarks == TrackBarTickMark::Both)
+                                if (_tickMarks == TrackBarTickMark::Below ||
+                                    _tickMarks == TrackBarTickMark::Both)
                                 {
                                     MoveToEx(hdc, pos, (thumbRect.bottom + tickSpace), nullptr);
                                     LineTo(hdc, pos, (thumbRect.bottom + tickSpace) + ticLength);
@@ -212,33 +210,33 @@ void TrackBar::notify(dlg_message& msg)
         // just report the new position value
         auto hwnd = reinterpret_cast<HWND>(handle());
         auto actualValue = (int)SendMessage(hwnd, TBM_GETPOS, 0, 0);
-        _props->value = actualValue;
+        _value = actualValue;
 
-        ChangedEvent().invoke(shared_from_this());
+        ChangedEvent().invoke(control());
     }
     else if (msg.wMsg == WM_VSCROLL)
     {
         // just report the new position value
         auto hwnd = reinterpret_cast<HWND>(handle());
         auto actualValue = (int)SendMessage(hwnd, TBM_GETPOS, 0, 0);
-        _props->value = actualValue;
+        _value = actualValue;
 
-        ChangedEvent().invoke(shared_from_this());
+        ChangedEvent().invoke(control());
     }
 
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-bool TrackBar::vertical() const
+bool TrackBarImpl::vertical() const
 {
-    return _props->vertical;
+    return _vertical;
 }
 
-void TrackBar::vertical(bool value)
+void TrackBarImpl::vertical(bool value)
 {
-    if (_props->vertical == value)
+    if (_vertical == value)
         return;
-    _props->vertical = value;
+    _vertical = value;
 
     if (handle() == nullptr)
         return;
@@ -248,92 +246,92 @@ void TrackBar::vertical(bool value)
     SetWindowLong(hwnd, GWL_STYLE, styles());
 }
 
-int TrackBar::value() const
+int TrackBarImpl::value() const
 {
-    return _props->value;
+    return _value;
 }
 
-void TrackBar::value(int value)
+void TrackBarImpl::value(int value)
 {
-    if (_props->value == value)
+    if (_value == value)
         return;
-    _props->value = value;
+    _value = value;
 
     if (handle() == nullptr)
         return;
 
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, TBM_SETPOS, TRUE, (WPARAM)_props->value);
+    SendMessage(hwnd, TBM_SETPOS, TRUE, (WPARAM)_value);
 }
 
-std::pair<int, int> TrackBar::range() const
+std::pair<int, int> TrackBarImpl::range() const
 {
-    return _props->range;
+    return _range;
 }
 
-void TrackBar::range(int from, int to)
+void TrackBarImpl::range(int from, int to)
 {
-    if (_props->range == std::pair<int, int>(from, to))
+    if (_range == std::pair<int, int>(from, to))
         return;
-    _props->range = std::pair<int, int>(from, to);
+    _range = std::pair<int, int>(from, to);
 
     if (handle() == nullptr)
         return;
 
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, TBM_SETRANGEMIN, TRUE, (LPARAM)_props->range.first);
-    SendMessage(hwnd, TBM_SETRANGEMAX, TRUE, (LPARAM)_props->range.second);
+    SendMessage(hwnd, TBM_SETRANGEMIN, TRUE, (LPARAM)_range.first);
+    SendMessage(hwnd, TBM_SETRANGEMAX, TRUE, (LPARAM)_range.second);
 }
 
-int TrackBar::pageSize() const
+int TrackBarImpl::pageSize() const
 {
-    return _props->pageSize;
+    return _pageSize;
 }
 
-void TrackBar::pageSize(int value)
+void TrackBarImpl::pageSize(int value)
 {
-    if (_props->pageSize == value)
+    if (_pageSize == value)
         return;
-    _props->pageSize = value;
+    _pageSize = value;
 
     if (handle() == nullptr)
         return;
 
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, TBM_SETPAGESIZE, 0, (LPARAM)_props->pageSize);
+    SendMessage(hwnd, TBM_SETPAGESIZE, 0, (LPARAM)_pageSize);
 }
 
-TrackBarTickMark TrackBar::tickMarks() const
+TrackBarTickMark TrackBarImpl::tickMarks() const
 {
-    return _props->tickMarks;
+    return _tickMarks;
 }
 
-void TrackBar::tickMarks(TrackBarTickMark value)
+void TrackBarImpl::tickMarks(TrackBarTickMark value)
 {
-    if (_props->tickMarks == value)
+    if (_tickMarks == value)
         return;
-    _props->tickMarks = value;
+    _tickMarks = value;
 
     if (handle() != nullptr)
         rebuild();
 }
 
-std::pair<Color, Color> TrackBar::barColors() const
+std::pair<Color, Color> TrackBarImpl::barColors() const
 {
-    return std::make_pair(_props->thumbColor, _props->barColor);
+    return std::make_pair(_thumbColor, _barColor);
 }
 
-void TrackBar::barColors(Color thumbColor, Color barColor)
+void TrackBarImpl::barColors(Color thumbColor, Color barColor)
 {
     bool changed = false;
-    if (_props->thumbColor != thumbColor)
+    if (_thumbColor != thumbColor)
     {
-        _props->thumbColor = thumbColor;
+        _thumbColor = thumbColor;
         changed = true;
     }
-    if (_props->barColor != barColor)
+    if (_barColor != barColor)
     {
-        _props->barColor = barColor;
+        _barColor = barColor;
         changed = true;
     }
 

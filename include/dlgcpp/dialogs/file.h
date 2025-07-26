@@ -1,6 +1,7 @@
 #pragma once
 
-#include "dlgcpp/dlgcpp.h"
+#include "dlgcpp/defs.h"
+#include <string>
 
 namespace dlgcpp
 {
@@ -20,11 +21,13 @@ namespace dlgcpp
             virtual bool save() = 0;
         };
 
+        class FileDialogImpl;
+
         class FileDialog : public IFileDialog
         {
         public:
             explicit FileDialog(ISharedDialog parent = nullptr);
-            virtual ~FileDialog();
+            virtual ~FileDialog() = default;
 
             // IFileDialog impl.
             const std::string& fileName() const override;
@@ -38,9 +41,9 @@ namespace dlgcpp
             bool save() override;
 
         private:
-            struct file_props* _props;
+            FileDialog(std::shared_ptr<FileDialogImpl> impl);
 
-            bool show(bool isSaveFile, unsigned int flags, const std::string& defaultTitle);
+            std::shared_ptr<FileDialogImpl> _impl;
         };
     }
 }

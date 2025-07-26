@@ -1,38 +1,26 @@
 #include "listbox_p.h"
-#include "utility/message.h"
 #include "utility/string.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-ListBox::ListBox(const Position& p) :
-    Control(std::string(), p),
-    _props(new listbox_props())
+ListBoxImpl::ListBoxImpl(ListBox& listBox, const Position& p) :
+    ControlImpl(listBox, std::string(), p),
+    _listBox(listBox)
 {
     this->border(BorderStyle::Sunken);
 }
 
-ListBox::~ListBox()
+ListBoxImpl::~ListBoxImpl()
 {
-    delete _props;
 }
 
-IEvent<ISharedControl>& ListBox::SelChangedEvent()
-{
-    return _props->selChangedEvent;
-}
-
-IEvent<ISharedControl>& ListBox::SelCancelEvent()
-{
-    return _props->selCancelEvent;
-}
-
-std::string ListBox::className() const
+std::string ListBoxImpl::className() const
 {
     return "LISTBOX";
 }
 
-void ListBox::notify(dlg_message& msg)
+void ListBoxImpl::notify(DialogMessage& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {
@@ -43,67 +31,67 @@ void ListBox::notify(dlg_message& msg)
         else if (HIWORD(msg.wParam) == LBN_SELCANCEL)
         {
             readSelection();
-            SelCancelEvent().invoke(shared_from_this());
+            SelCancelEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == LBN_DBLCLK)
         {
-            DoubleClickEvent().invoke(shared_from_this());
+            DoubleClickEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == LBN_SETFOCUS)
         {
-            FocusEvent().invoke(shared_from_this(), true);
+            FocusEvent().invoke(control(), true);
         }
         else if (HIWORD(msg.wParam) == LBN_KILLFOCUS)
         {
-            FocusEvent().invoke(shared_from_this(), false);
+            FocusEvent().invoke(control(), false);
         }
     }
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-void ListBox::rebuild()
+void ListBoxImpl::rebuild()
 {
-    Control::rebuild();
+    ControlImpl::rebuild();
     updateItems();
     updateSelection();
 }
 
-unsigned int ListBox::styles() const
+unsigned int ListBoxImpl::styles() const
 {
-    auto styles = Control::styles();
+    auto styles = ControlImpl::styles();
     styles |= LBS_NOTIFY | LBS_HASSTRINGS | LBS_NOINTEGRALHEIGHT | WS_HSCROLL | WS_VSCROLL;
 
-    if (!_props->highlight)
+    if (!_highlight)
         styles |= LBS_NOSEL;
 
-    if (_props->multiselect)
+    if (_multiselect)
         styles |= LBS_MULTIPLESEL | LBS_EXTENDEDSEL;
 
-    if (_props->sorted)
+    if (_sorted)
         styles |= LBS_SORT;
 
     return styles;
 }
 
-int ListBox::currentIndex() const
+int ListBoxImpl::currentIndex() const
 {
-    if (_props->multiselect)
+    if (_multiselect)
         return -1;
-    return _props->currentIndex;
+    return _currentIndex;
 }
 
-void ListBox::currentIndex(int value)
+void ListBoxImpl::currentIndex(int value)
 {
-    if (_props->multiselect)
+    if (_multiselect)
         return;
-    if (_props->currentIndex == value)
+    if (_currentIndex == value)
         return;
 
-    _props->currentIndex = value;
+    _currentIndex = value;
 
     // TODO: override text()
-    if (_props->currentIndex < _props->items.size())
-        text(_props->items.at(_props->currentIndex));
+    if (_currentIndex < _items.size())
+        text(_items.at(_currentIndex));
     else
         text(std::string());
 
@@ -111,46 +99,46 @@ void ListBox::currentIndex(int value)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    SendMessage(hwnd, LB_SETCURSEL, (WPARAM)_props->currentIndex, 0);
+    SendMessage(hwnd, LB_SETCURSEL, (WPARAM)_currentIndex, 0);
 }
 
-const std::vector<int>& ListBox::currentIndexes() const
+const std::vector<int>& ListBoxImpl::currentIndexes() const
 {
     static const std::vector<int> empty;
-    if (!_props->multiselect)
+    if (!_multiselect)
         return empty;
-    return _props->currentIndexes;
+    return _currentIndexes;
 }
 
-void ListBox::currentIndexes(const std::vector<int>& indexes)
+void ListBoxImpl::currentIndexes(const std::vector<int>& indexes)
 {
-    if (!_props->multiselect)
+    if (!_multiselect)
         return;
-    if (_props->currentIndexes == indexes)
+    if (_currentIndexes == indexes)
         return;
 
-    _props->currentIndexes.clear();
+    _currentIndexes.clear();
     for (int index : indexes)
     {
         // skip invalid
-        if (_props->items.empty() ||
+        if (_items.empty() ||
             index < 0 ||
-            index >(int)_props->items.size())
+            index >(int)_items.size())
             continue;
 
         // skip duplicates
-        if (std::find(_props->currentIndexes.begin(),
-            _props->currentIndexes.end(),
-            index) != _props->currentIndexes.end())
+        if (std::find(_currentIndexes.begin(),
+            _currentIndexes.end(),
+            index) != _currentIndexes.end())
             continue;
 
-        _props->currentIndexes.push_back(index);
+        _currentIndexes.push_back(index);
     }
 
     updateSelection();
 }
 
-void ListBox::readSelection()
+void ListBoxImpl::readSelection()
 {
     // if the control input has been changed by the user, save the content
     if (handle() == nullptr)
@@ -158,108 +146,108 @@ void ListBox::readSelection()
 
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    if (_props->multiselect)
+    if (_multiselect)
     {
-        _props->currentIndexes.clear();
-        _props->currentIndexes.resize(_props->items.size());
+        _currentIndexes.clear();
+        _currentIndexes.resize(_items.size());
         auto count = (int)SendMessage(hwnd,
             LB_GETSELITEMS,
-            (WPARAM)_props->currentIndexes.size(),
-            (LPARAM)&_props->currentIndexes[0]);
+            (WPARAM)_currentIndexes.size(),
+            (LPARAM)&_currentIndexes[0]);
         if (count < 1)
-            _props->currentIndexes.clear();
+            _currentIndexes.clear();
         else
-            _props->currentIndexes.resize(count);
+            _currentIndexes.resize(count);
     }
     else
     {
         auto index = (int)SendMessage(hwnd, LB_GETCURSEL, 0, 0);
 
-        if (index != _props->currentIndex)
+        if (index != _currentIndex)
         {
             currentIndex(index);
-            SelChangedEvent().invoke(shared_from_this());
+            SelChangedEvent().invoke(control());
         }
     }
 }
 
-void ListBox::updateSelection()
+void ListBoxImpl::updateSelection()
 {
     if (handle() == nullptr)
         return;
 
     auto hwnd = reinterpret_cast<HWND>(handle());
-    if (_props->multiselect)
+    if (_multiselect)
     {
-        for (int index = 0; index < (int)_props->items.size(); index++)
+        for (int index = 0; index < (int)_items.size(); index++)
         {
-            bool selected = std::find(_props->currentIndexes.begin(),
-                _props->currentIndexes.end(),
-                index) != _props->currentIndexes.end();
+            bool selected = std::find(_currentIndexes.begin(),
+                _currentIndexes.end(),
+                index) != _currentIndexes.end();
             SendMessage(hwnd, LB_SETSEL, selected, index);
         }
     }
     else
     {
-        SendMessage(hwnd, LB_SETCURSEL, (WPARAM)_props->currentIndex, 0);
+        SendMessage(hwnd, LB_SETCURSEL, (WPARAM)_currentIndex, 0);
     }
 }
 
-bool ListBox::highlight() const
+bool ListBoxImpl::highlight() const
 {
-    return _props->highlight;
+    return _highlight;
 }
 
-void ListBox::highlight(bool value)
+void ListBoxImpl::highlight(bool value)
 {
-    if (_props->highlight == value)
+    if (_highlight == value)
         return;
 
-    _props->highlight = value;
+    _highlight = value;
     rebuild();
 }
 
-bool ListBox::multiselect() const
+bool ListBoxImpl::multiselect() const
 {
-    return _props->multiselect;
+    return _multiselect;
 }
 
-void ListBox::multiselect(bool value)
+void ListBoxImpl::multiselect(bool value)
 {
-    if (_props->multiselect == value)
+    if (_multiselect == value)
         return;
 
-    _props->multiselect = value;
+    _multiselect = value;
     rebuild();
 }
 
-bool ListBox::sorted() const
+bool ListBoxImpl::sorted() const
 {
-    return _props->sorted;
+    return _sorted;
 }
 
-void ListBox::sorted(bool value)
+void ListBoxImpl::sorted(bool value)
 {
-    if (_props->sorted == value)
+    if (_sorted == value)
         return;
 
-    _props->sorted = value;
+    _sorted = value;
     rebuild();
 }
 
-const std::vector<std::string>& ListBox::items() const
+const std::vector<std::string>& ListBoxImpl::items() const
 {
-    return _props->items;
+    return _items;
 }
 
-void ListBox::items(const std::vector<std::string>& items)
+void ListBoxImpl::items(const std::vector<std::string>& items)
 {
-    _props->items = items;
+    _items = items;
     updateItems();
     updateSelection();
 }
 
-void ListBox::updateItems()
+void ListBoxImpl::updateItems()
 {
     if (handle() == nullptr)
         return;
@@ -268,8 +256,18 @@ void ListBox::updateItems()
     SendMessage(hwnd, LB_RESETCONTENT, 0, 0);
     readSelection(); // remove the selection
 
-    for (const auto& item : _props->items)
+    for (const auto& item : _items)
     {
         SendMessageW(hwnd, LB_ADDSTRING, 0, (LPARAM)toWide(item).c_str());
     }
+}
+
+IEvent<ISharedControl>& ListBoxImpl::SelChangedEvent()
+{
+    return _selChangedEvent;
+}
+
+IEvent<ISharedControl>& ListBoxImpl::SelCancelEvent()
+{
+    return _selCancelEvent;
 }

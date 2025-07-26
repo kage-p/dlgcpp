@@ -1,80 +1,75 @@
 #include "image_p.h"
 #include "utility/image.h"
-#include "utility/message.h"
 #include "utility/units.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-Image::Image(const Position& p) :
-    Control(std::string(), p),
-    _props(new img_props()),
-    _state(new img_state())
+ImageImpl::ImageImpl(Image& image, const Position& p)
+    : ControlImpl(image, std::string(), p),
+    _image(image)
 {
 }
 
-Image::~Image()
+ImageImpl::~ImageImpl()
 {
-    if (_state->hImage != NULL)
+    if (_hImage != NULL)
     {
-        DeleteObject(_state->hImage);
-        _state->hImage = NULL;
+        DeleteObject(_hImage);
+        _hImage = NULL;
     }
-
-    delete _props;
-    delete _state;
 }
 
-void Image::notify(dlg_message& msg)
+void ImageImpl::notify(DialogMessage& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {
         if (HIWORD(msg.wParam) == STN_CLICKED)
         {
-            ClickEvent().invoke(shared_from_this());
+            ClickEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == STN_DBLCLK)
         {
-            DoubleClickEvent().invoke(shared_from_this());
+            DoubleClickEvent().invoke(control());
         }
     }
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-void Image::rebuild()
+void ImageImpl::rebuild()
 {
-    Control::rebuild();
+    ControlImpl::rebuild();
 
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    if (_state->hImage != NULL)
+    if (_hImage != NULL)
     {
-        auto imageType = (_props->image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
-        SendMessage(hwnd, STM_SETIMAGE, (WPARAM)imageType, (LPARAM)_state->hImage);
+        auto imageType = (_imageSource.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
+        SendMessage(hwnd, STM_SETIMAGE, (WPARAM)imageType, (LPARAM)_hImage);
     }
 }
 
-unsigned int Image::styles() const
+unsigned int ImageImpl::styles() const
 {
-    auto styles = Control::styles();
+    auto styles = ControlImpl::styles();
     styles = styles & ~WS_TABSTOP;
     styles |= SS_NOTIFY;
 
-    if (_props->image.isIcon)
+    if (_imageSource.isIcon)
         styles |= SS_ICON;
     else
         styles |= SS_BITMAP;
 
-    if (_props->autoSize)
+    if (_autoSize)
     {
         // use actual image size
         styles |= SS_REALSIZEIMAGE;
     }
     else
     {
-        if (_props->centered)
+        if (_centered)
             // center image in control; image may be clipped to fit
             styles |= SS_CENTERIMAGE;
         else
@@ -85,67 +80,67 @@ unsigned int Image::styles() const
     return styles;
 }
 
-void Image::updateImage()
+void ImageImpl::updateImage()
 {
-    if (_state->hImage != NULL)
+    if (_hImage != NULL)
     {
-        DeleteObject(_state->hImage);
-        _state->hImage = NULL;
+        DeleteObject(_hImage);
+        _hImage = NULL;
     }
 
     Size imgSizePx;
-    if (!_props->autoSize)
+    if (!_autoSize)
     {
         // image is same size as control
         imgSizePx = p().size();
         toPixels(HWND_DESKTOP, imgSizePx);
     }
 
-    _state->hImage = loadImage(_props->image, imgSizePx);
-    if (_props->autoSize)
+    _hImage = loadImage(_imageSource, imgSizePx);
+    if (_autoSize)
     {
         // resize the control to fit the image
         Size imgSizeDu(imgSizePx);
         toUnits(HWND_DESKTOP, imgSizeDu);
-        Control::resize(imgSizeDu);
+        ControlImpl::resize(imgSizeDu);
     }
 
     rebuild();
 }
 
-bool Image::autoSize() const
+bool ImageImpl::autoSize() const
 {
-    return _props->autoSize;
+    return _autoSize;
 }
 
-void Image::autoSize(bool value)
+void ImageImpl::autoSize(bool value)
 {
-    if (_props->autoSize == value)
+    if (_autoSize == value)
         return;
-    _props->autoSize = value;
+    _autoSize = value;
     updateImage();
 }
 
-bool Image::centered() const
+bool ImageImpl::centered() const
 {
-    return _props->centered;
+    return _centered;
 }
 
-void Image::centered(bool value)
+void ImageImpl::centered(bool value)
 {
-    if (_props->centered == value)
+    if (_centered == value)
         return;
-    _props->centered = value;
+    _centered = value;
     rebuild();
 }
 
-const ImageSource& Image::image() const
+const ImageSource& ImageImpl::image() const
 {
-    return _props->image;
+    return _imageSource;
 }
 
-void Image::image(const ImageSource& image)
+void ImageImpl::image(const ImageSource& image)
 {
-    _props->image = image;
+    _imageSource = image;
     updateImage();
 }

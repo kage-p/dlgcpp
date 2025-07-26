@@ -1,7 +1,6 @@
 #include "splash_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::dialogs;
 
 std::shared_ptr<SplashDialog> splashDlg;
 

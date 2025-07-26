@@ -1,21 +1,19 @@
 #pragma once
-#include "../control.h"
-#include "../dialog.h"
+
+#include "dlgcpp/controls/control.h"
 
 namespace dlgcpp
 {
     namespace controls
     {
-        class Label : public dlgcpp::Control
+        class LabelImpl;
+
+        class Label : public Control
         {
         public:
             explicit Label(const std::string& text = std::string(), const Position& p = Position());
             ~Label() override;
 
-            using dlgcpp::Control::p;
-            void p(const Position& p) override;
-            void text(const std::string& value) override;
-            void font(const Font& value) override;
             bool autoSize() const;
             void autoSize(bool value);
             bool clickable() const;
@@ -28,13 +26,9 @@ namespace dlgcpp
             void verticalAlignment(VerticalAlign value);
 
         private:
-            struct lbl_props* _props;
+            Label(std::shared_ptr<LabelImpl> impl);
 
-            void rebuild() override;
-            unsigned int styles() const override;
-            void notify(dlg_message&) override;
-
-            void updateAutoSize();
+            std::shared_ptr<LabelImpl> _impl;
         };
     }
 }

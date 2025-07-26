@@ -1,6 +1,7 @@
 #pragma once
-#include "../control.h"
-#include "listview_col.h"
+
+#include "dlgcpp/controls/control.h"
+#include "dlgcpp/controls/listview_col.h"
 #include <vector>
 
 namespace dlgcpp
@@ -66,17 +67,15 @@ namespace dlgcpp
             virtual IEvent<ISharedControl, size_t, int>& ItemDoubleClickEvent() = 0;
         };
 
-        typedef std::shared_ptr<IListView> ISharedListView;
+        class ListViewImpl;
 
-        class ListView : public dlgcpp::Control,
+        class ListView :
+            public Control,
             public IListView
         {
         public:
             explicit ListView(const Position& p = Position());
             ~ListView() override;
-
-            void notify(struct ctl_message&) override;
-            void colors(Color fgColor, Color bgColor) override;
 
             // IListView impl.
             ListViewDisplay display() const override;
@@ -119,22 +118,9 @@ namespace dlgcpp
             IEvent<ISharedControl, size_t, int>& ItemDoubleClickEvent() override;
 
         private:
-            struct listview_priv* _priv;
+            ListView(std::shared_ptr<ListViewImpl> impl);
 
-            std::string className() const override;
-            unsigned int styles() const override;
-            void notify(dlg_message&) override;
-            void rebuild() override;
-
-            void updateSelection();
-            void updateColumns();
-            void updateRows();
-            void updateDisplayStyles();
-            void updateExtStyles();
-
-            void onColumnsChanged();
-            void onRowsChanged();
-            void onSelectionChanged();
+            std::shared_ptr<ListViewImpl> _impl;
         };
     }
 }

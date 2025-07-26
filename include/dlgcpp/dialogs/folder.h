@@ -1,6 +1,7 @@
 #pragma once
 
-#include "dlgcpp/dlgcpp.h"
+#include "dlgcpp/defs.h"
+#include <string>
 
 namespace dlgcpp
 {
@@ -19,11 +20,13 @@ namespace dlgcpp
             virtual bool open() = 0;
         };
 
+        class FolderDialogImpl;
+
         class FolderDialog : public IFolderDialog
         {
         public:
             explicit FolderDialog(ISharedDialog parent = nullptr);
-            virtual ~FolderDialog();
+            virtual ~FolderDialog() = default;
 
             // IFolderDialog impl.
             const std::string& folderName() const override;
@@ -36,9 +39,9 @@ namespace dlgcpp
             bool open() override;
 
         private:
-            struct folder_props* _props;
+            FolderDialog(std::shared_ptr<FolderDialogImpl> impl);
 
-            bool show(unsigned int flags);
+            std::shared_ptr<FolderDialogImpl> _impl;
         };
     }
 }

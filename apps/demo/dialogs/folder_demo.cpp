@@ -1,7 +1,6 @@
 #include "folder_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::dialogs;
 
 void dialogs_folder_demo(ISharedDialog parent)
 {

@@ -1,7 +1,6 @@
 #include "notes_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 void advanced_note_keeper_demo(ISharedDialog parent)
 {
@@ -38,7 +37,7 @@ void advanced_note_keeper_demo(ISharedDialog parent)
     {
         auto menu = std::make_shared<Menu>();
 
-        std::shared_ptr<IMenuItem> item;
+        ISharedMenuItem item;
 
         auto file = std::make_shared<MenuItem>("&File");
         menu->add(file);

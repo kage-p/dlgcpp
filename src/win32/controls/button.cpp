@@ -1,41 +1,33 @@
 #include "button_p.h"
-#include "utility/message.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-Button::Button(const std::string& text, const Position& p) :
-    Control(text, p),
-    _props(new button_props())
+ButtonImpl::ButtonImpl(
+    Button& button,
+    const std::string& text,
+    const Position& p) :
+    ControlImpl(button, text, p),
+    _button(button)
 {
 }
 
-Button::~Button()
+ButtonImpl::~ButtonImpl()
 {
-    delete _props;
 }
 
-void Button::rebuild()
-{
-    Control::rebuild();
-
-    if (handle() == nullptr)
-        return;
-    //auto hwnd = reinterpret_cast<HWND>(handle());
-}
-
-std::string Button::className() const
+std::string ButtonImpl::className() const
 {
     return "BUTTON";
 }
 
-unsigned int Button::styles() const
+unsigned int ButtonImpl::styles() const
 {
-    auto styles = Control::styles();
+    auto styles = ControlImpl::styles();
 
     styles |= BS_PUSHBUTTON | BS_NOTIFY;
 
-    switch (_props->horzAlign)
+    switch (_horzAlign)
     {
     case HorizontalAlign::Left:
         styles |= BS_LEFT;
@@ -48,7 +40,7 @@ unsigned int Button::styles() const
         break;
     }
 
-    switch (_props->vertAlign)
+    switch (_vertAlign)
     {
     case VerticalAlign::Top:
         styles |= BS_TOP;
@@ -64,53 +56,53 @@ unsigned int Button::styles() const
     return styles;
 }
 
-void Button::notify(dlg_message& msg)
+void ButtonImpl::notify(DialogMessage& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {
         if (HIWORD(msg.wParam) == BN_CLICKED)
         {
-            ClickEvent().invoke(shared_from_this());
+            ClickEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == BN_DBLCLK)
         {
-            DoubleClickEvent().invoke(shared_from_this());
+            DoubleClickEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == BN_SETFOCUS)
         {
-            FocusEvent().invoke(shared_from_this(), true);
+            FocusEvent().invoke(control(), true);
         }
         else if (HIWORD(msg.wParam) == BN_KILLFOCUS)
         {
-            FocusEvent().invoke(shared_from_this(), false);
+            FocusEvent().invoke(control(), false);
         }
     }
 
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-HorizontalAlign Button::horizontalAlignment() const
+HorizontalAlign ButtonImpl::horizontalAlignment() const
 {
-    return _props->horzAlign;
+    return _horzAlign;
 }
 
-void Button::horizontalAlignment(HorizontalAlign value)
+void ButtonImpl::horizontalAlignment(HorizontalAlign value)
 {
-    if (_props->horzAlign == value)
+    if (_horzAlign == value)
         return;
-    _props->horzAlign = value;
+    _horzAlign = value;
     rebuild();
 }
 
-VerticalAlign Button::verticalAlignment() const
+VerticalAlign ButtonImpl::verticalAlignment() const
 {
-    return _props->vertAlign;
+    return _vertAlign;
 }
 
-void Button::verticalAlignment(VerticalAlign value)
+void ButtonImpl::verticalAlignment(VerticalAlign value)
 {
-    if (_props->vertAlign == value)
+    if (_vertAlign == value)
         return;
-    _props->vertAlign = value;
+    _vertAlign = value;
     rebuild();
 }

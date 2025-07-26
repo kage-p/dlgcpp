@@ -1,7 +1,9 @@
 #pragma once
 
+#include "control_p.h"
 #include "dlgcpp/controls/listbox.h"
-#include "../event_p.h"
+#include "utility/event.h"
+
 #include <vector>
 
 #define NOMINMAX
@@ -12,16 +14,50 @@ namespace dlgcpp
 {
     namespace controls
     {
-        struct listbox_props
+        class ListBoxImpl : public ControlImpl
         {
-            bool highlight = true;
-            bool multiselect = false;
-            bool sorted = true;
-            std::vector<std::string> items;
-            int currentIndex = -1;
-            std::vector<int> currentIndexes;
-            Event<ISharedControl> selChangedEvent;
-            Event<ISharedControl> selCancelEvent;
+        public:
+            explicit ListBoxImpl(
+                ListBox& listBox,
+                const Position& p = Position());
+
+            ~ListBoxImpl() override;
+
+            int currentIndex() const;
+            void currentIndex(int value);
+            const std::vector<int>& currentIndexes() const;
+            void currentIndexes(const std::vector<int>& indexes);
+            bool highlight() const;
+            void highlight(bool value);
+            bool multiselect() const;
+            void multiselect(bool value);
+            bool sorted() const;
+            void sorted(bool value);
+            const std::vector<std::string>& items() const;
+            void items(const std::vector<std::string>& items);
+
+            IEvent<ISharedControl>& SelChangedEvent();
+            IEvent<ISharedControl>& SelCancelEvent();
+
+        private:
+            ListBox& _listBox;
+            bool _highlight = true;
+            bool _multiselect = false;
+            bool _sorted = true;
+            std::vector<std::string> _items;
+            int _currentIndex = -1;
+            std::vector<int> _currentIndexes;
+            Event<ISharedControl> _selChangedEvent;
+            Event<ISharedControl> _selCancelEvent;
+
+            void rebuild() override;
+            std::string className() const override;
+            void notify(DialogMessage&) override;
+            unsigned int styles() const override;
+
+            void readSelection();
+            void updateSelection();
+            void updateItems();
         };
     }
 }

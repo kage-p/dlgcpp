@@ -8,21 +8,39 @@ namespace dlgcpp
 {
     namespace dialogs
     {
-        struct about_props
+        class AboutDialogImpl
         {
-            ISharedDialog parent;
-            std::string title;
-            std::string appDetails;
-            std::string description;
-            std::string homePageLink;
-            std::string releaseDate;
-            std::string logoBitmapId;
-            std::string logoIconId;
-        };
+        public:
+            AboutDialogImpl(AboutDialog& aboutDialog, ISharedDialog parent);
+            ~AboutDialogImpl() = default;
 
-        struct about_state
-        {
+            const std::string& title() const;
+            void title(const std::string& value);
+            const std::string& appDetails() const;
+            void appDetails(const std::string& value);
+            const std::string& description() const;
+            void description(const std::string& value);
+            const std::string& homePageLink() const;
+            void homePageLink(const std::string& value);
+            const std::string& releaseDate() const;
+            void releaseDate(const std::string& value);
+            const std::string& logoBitmapId() const;
+            void logoBitmapId(const std::string& value);
+            const std::string& logoIconId() const;
+            void logoIconId(const std::string& value);
 
+            void show();
+
+        private:
+            AboutDialog& _aboutDialog;
+            ISharedDialog _parent;
+            std::string _title;
+            std::string _appDetails;
+            std::string _description;
+            std::string _homePageLink;
+            std::string _releaseDate;
+            std::string _logoBitmapId;
+            std::string _logoIconId;
         };
     }
 }

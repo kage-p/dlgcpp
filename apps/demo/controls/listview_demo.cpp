@@ -2,7 +2,6 @@
 #include <map>
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 std::shared_ptr<Menu> createMenu(
     std::shared_ptr<ListViewDemoImpl> listview);
@@ -74,7 +73,7 @@ std::shared_ptr<Menu> createMenu(
     std::shared_ptr<ListViewDemoImpl> listview)
 {
     auto menu = std::make_shared<Menu>();
-    std::shared_ptr<IMenuItem> item;
+    ISharedMenuItem item;
 
     item = std::make_shared<MenuItem>("Switch view");
     menu->add(item);

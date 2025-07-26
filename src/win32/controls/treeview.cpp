@@ -1,6 +1,5 @@
 #include "control_p.h"
 #include "treeview_p.h"
-#include "utility/message.h"
 #include "utility/string.h"
 #include "utility/units.h"
 #include <strsafe.h>
@@ -10,37 +9,30 @@
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-HTREEITEM itemFromNode(
-    treeview_priv& priv,
-    std::shared_ptr<TreeViewNode> node);
-
-std::shared_ptr<TreeViewNode> nodeFromItem(
-    treeview_priv& priv,
-    HTREEITEM hitem);
-
-TreeView::TreeView(const Position& p) :
-    Control(std::string(), p),
-    _priv(new treeview_priv())
+TreeViewImpl::TreeViewImpl(
+    TreeView& treeView,
+    const Position& p) :
+    ControlImpl(treeView, std::string(), p),
+    _treeView(treeView)
 {
-    Control::border(BorderStyle::Sunken);
+    ControlImpl::border(BorderStyle::Sunken);
 
-    _priv->rootNodeChangedEvent += [this](ISharedControl) { onRootNodeChanged(); };
-    _priv->expandNodePrivateEvent += [this](std::shared_ptr<TreeViewNode> node) { expand(node, true); };
+    _rootNodeChangedEvent += [this](ISharedControl) { onRootNodeChanged(); };
+    _expandNodePrivateEvent += [this](std::shared_ptr<TreeViewNode> node) { expand(node, true); };
 }
 
-TreeView::~TreeView()
+TreeViewImpl::~TreeViewImpl()
 {
-    delete _priv;
 }
 
-std::string TreeView::className() const
+std::string TreeViewImpl::className() const
 {
     return WC_TREEVIEWA;
 }
 
-unsigned int TreeView::styles() const
+unsigned int TreeViewImpl::styles() const
 {
-    auto styles = Control::styles();
+    auto styles = ControlImpl::styles();
 
     styles |=
         TVS_HASBUTTONS |
@@ -49,21 +41,20 @@ unsigned int TreeView::styles() const
         TVS_FULLROWSELECT |
         TVS_EDITLABELS;
 
-    if (_priv->checkboxes)
+    if (_checkboxes)
         styles |= TVS_CHECKBOXES;
 
     return styles;
 }
 
-void TreeView::notify(ctl_message& msg)
+void TreeViewImpl::notify(ControlMessage& msg)
 {
     if (msg.wMsg == WM_CTLCOLOREDIT)
     {
         // use the treeview colors
-        auto ctl_priv = priv();
         auto hdc = (HDC)msg.wParam;
 
-        auto clrPair = Control::colors();
+        auto clrPair = ControlImpl::colors();
 
         if (clrPair.second != Color::Default &&
             clrPair.second != Color::None)
@@ -76,7 +67,8 @@ void TreeView::notify(ctl_message& msg)
 
             SetTextColor(hdc, textColor);
             SetBkColor(hdc, (COLORREF)clrPair.second);
-            msg.result = (LRESULT)ctl_priv->state.hbrBack;
+
+            msg.result = (LRESULT)backgroundBrush();
         }
         else if (clrPair.first != Color::Default)
         {
@@ -89,10 +81,10 @@ void TreeView::notify(ctl_message& msg)
         return;
     }
 
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-void TreeView::notify(dlg_message& msg)
+void TreeViewImpl::notify(DialogMessage& msg)
 {
     if (msg.wMsg == WM_NOTIFY)
     {
@@ -102,7 +94,7 @@ void TreeView::notify(dlg_message& msg)
         {
             auto& nmdi = *((NMTVDISPINFO*)msg.lParam);
 
-            auto node = nodeFromItem(*_priv, nmdi.item.hItem);
+            auto node = nodeFromItem(nmdi.item.hItem);
             if (node == nullptr)
                 return;
 
@@ -125,30 +117,30 @@ void TreeView::notify(dlg_message& msg)
                 return;
             }
 
-            auto node = nodeFromItem(*_priv, hitem);
+            auto node = nodeFromItem(hitem);
             if (node != nullptr)
                 updateChildNodes(node);
         }
         else if (nmhdr.code == TVN_SELCHANGED)
         {
             auto& nmtv = *((LPNMTREEVIEW)msg.lParam);
-            if (!_priv->multiselect)
+            if (!_multiselect)
             {
                 // single selection changed
-                _priv->selectedNodes.clear();
+                _selectedNodes.clear();
                 if (nmtv.itemNew.hItem != NULL)
                 {
-                    auto node = nodeFromItem(*_priv, nmtv.itemNew.hItem);
+                    auto node = nodeFromItem(nmtv.itemNew.hItem);
                     if (node != nullptr)
-                        _priv->selectedNodes.push_back(node);
+                        _selectedNodes.push_back(node);
                 }
-                DLGCPP_CMSG("TVN_SELCHANGED: " << _priv->selectedNodes.size() << " item(s) selected.");
-                _priv->selChangedEvent.invoke(shared_from_this());
+                DLGCPP_CMSG("TVN_SELCHANGED: " << _selectedNodes.size() << " item(s) selected.");
+                _selChangedEvent.invoke(control());
             }
         }
         else if (nmhdr.code == TVN_ITEMCHANGED)
         {
-            if (_priv->inhibitSelectionMessages.get())
+            if (_inhibitSelectionMessages.get())
                 return;
 
             auto& nmic = *((NMTVITEMCHANGE*)msg.lParam);
@@ -157,11 +149,11 @@ void TreeView::notify(dlg_message& msg)
                 // update node check state
                 auto hitem = nmic.hItem;
                 bool checked = TreeView_GetCheckState(nmhdr.hwndFrom, hitem) == 1;
-                auto node = nodeFromItem(*_priv, hitem);
+                auto node = nodeFromItem(hitem);
                 if (node != nullptr)
                     node->checked(checked);
 
-                if (_priv->multiselect)
+                if (_multiselect)
                 {
                     bool wasSelected = nmic.uStateOld & TVIS_SELECTED;
                     bool isSelected = nmic.uStateNew & TVIS_SELECTED;
@@ -169,29 +161,29 @@ void TreeView::notify(dlg_message& msg)
                     // item selection state changes
                     if (!wasSelected && isSelected)
                     {
-                        auto node = nodeFromItem(*_priv, nmic.hItem);
+                        auto node = nodeFromItem(nmic.hItem);
                         if (node == nullptr)
                             return;
-                        _priv->selectedNodes.push_back(node);
+                        _selectedNodes.push_back(node);
                     }
                     else if (wasSelected && !isSelected)
                     {
-                        auto node = nodeFromItem(*_priv, nmic.hItem);
+                        auto node = nodeFromItem(nmic.hItem);
                         if (node == nullptr)
                             return;
 
-                        _priv->selectedNodes.erase(
+                        _selectedNodes.erase(
                             std::remove(
-                                _priv->selectedNodes.begin(),
-                                _priv->selectedNodes.end(),
+                                _selectedNodes.begin(),
+                                _selectedNodes.end(),
                                 node),
-                            _priv->selectedNodes.end());
+                            _selectedNodes.end());
                     }
                     else
                         return;
 
-                    _priv->selChangedEvent.invoke(shared_from_this());
-                    DLGCPP_CMSG("TVN_ITEMCHANGED: " << _priv->selectedNodes.size() << " item(s) selected.");
+                    _selChangedEvent.invoke(control());
+                    DLGCPP_CMSG("TVN_ITEMCHANGED: " << _selectedNodes.size() << " item(s) selected.");
                 }
             }
         }
@@ -201,41 +193,41 @@ void TreeView::notify(dlg_message& msg)
 
             // remove from our map
             auto hitem = nmtv.itemOld.hItem;
-            _priv->nodeMap.erase(hitem);
+            _nodeMap.erase(hitem);
 
-            DLGCPP_CMSG("TVN_DELETEITEM: nodeMap.size = " << _priv->nodeMap.size());
+            DLGCPP_CMSG("TVN_DELETEITEM: nodeMap.size = " << _nodeMap.size());
         }
         else if (nmhdr.code == TVN_BEGINLABELEDIT)
         {
             auto& nmdi = *((NMTVDISPINFO*)msg.lParam);
 
             auto hitem = nmdi.item.hItem;
-            auto node = nodeFromItem(*_priv, hitem);
+            auto node = nodeFromItem(hitem);
             if (node == nullptr ||
-                !beginEdit(node))
+                !_treeView.beginEdit(node))
             {
                 // prevent edit of this item
                 msg.dlgResult = TRUE;
                 msg.msgResult = TRUE;
                 return;
             }
-            _priv->editingLabel = true;
+            _editingLabel = true;
             msg.dlgResult = TRUE;
             msg.msgResult = FALSE;
         }
         else if (nmhdr.code == TVN_ENDLABELEDIT)
         {
-            _priv->editingLabel = false;
+            _editingLabel = false;
 
             auto& nmdi = *((NMTVDISPINFO*)msg.lParam);
             if (nmdi.item.pszText != NULL)
             {
                 // save the edited text
                 auto hitem = nmdi.item.hItem;
-                auto node = nodeFromItem(*_priv, hitem);
+                auto node = nodeFromItem(hitem);
                 if (node != nullptr)
                 {
-                    if (!endEdit(node, toBytes(nmdi.item.pszText)))
+                    if (!_treeView.endEdit(node, toBytes(nmdi.item.pszText)))
                     {
                         msg.dlgResult = TRUE;
                         msg.msgResult = FALSE;
@@ -265,12 +257,12 @@ void TreeView::notify(dlg_message& msg)
 
             if (hit.hItem != NULL && (hit.flags & TVHT_ONITEM))
             {
-                auto node = nodeFromItem(*_priv, hit.hItem);
+                auto node = nodeFromItem(hit.hItem);
                 if (node != nullptr)
                 {
                     // fire item click event
-                    _priv->itemClickEvent.invoke(
-                        shared_from_this(),
+                    _itemClickEvent.invoke(
+                        control(),
                         node
                     );
                 }
@@ -289,27 +281,27 @@ void TreeView::notify(dlg_message& msg)
 
             if (hit.hItem != NULL && (hit.flags & TVHT_ONITEM))
             {
-                auto node = nodeFromItem(*_priv, hit.hItem);
+                auto node = nodeFromItem(hit.hItem);
                 if (node != nullptr)
                 {
                     // fire item double click event
-                    _priv->itemDblClickEvent.invoke(
-                        shared_from_this(),
+                    _itemDblClickEvent.invoke(
+                        control(),
                         node);
                 }
             }
         }
     }
 
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-void TreeView::rebuild()
+void TreeViewImpl::rebuild()
 {
     // remove editor
     cancelEditing();
 
-    Control::rebuild();
+    ControlImpl::rebuild();
 
     if (handle() == nullptr)
         return;
@@ -320,9 +312,9 @@ void TreeView::rebuild()
     updateSelection();
 }
 
-void TreeView::colors(Color fgColor, Color bgColor)
+void TreeViewImpl::colors(Color fgColor, Color bgColor)
 {
-    Control::colors(fgColor, bgColor);
+    ControlImpl::colors(fgColor, bgColor);
 
     if (handle() == nullptr)
         return;
@@ -330,98 +322,98 @@ void TreeView::colors(Color fgColor, Color bgColor)
     updateDisplayStyles();
 }
 
-std::shared_ptr<TreeViewNode> TreeView::selectedNode() const
+std::shared_ptr<TreeViewNode> TreeViewImpl::selectedNode() const
 {
-    if (_priv->multiselect || _priv->selectedNodes.empty())
+    if (_multiselect || _selectedNodes.empty())
         return nullptr;
-    return _priv->selectedNodes.at(0);
+    return _selectedNodes.at(0);
 }
 
-void TreeView::selectedNode(std::shared_ptr<TreeViewNode> node)
+void TreeViewImpl::selectedNode(std::shared_ptr<TreeViewNode> node)
 {
-    if (_priv->multiselect)
+    if (_multiselect)
         return;
 
-    if (!_priv->selectedNodes.empty() &&
-        _priv->selectedNodes.front() == node)
+    if (!_selectedNodes.empty() &&
+        _selectedNodes.front() == node)
         // already selected
         return;
 
-    if (itemFromNode(*_priv, node) == nullptr)
+    if (itemFromNode(node) == nullptr)
         // cannot select if the node is not in the tree.
         return;
 
-    _priv->selectedNodes.clear();
-    _priv->selectedNodes.push_back(node);
+    _selectedNodes.clear();
+    _selectedNodes.push_back(node);
     updateSelection();
 }
 
-const std::vector<std::shared_ptr<TreeViewNode>>& TreeView::selectedNodes() const
+const std::vector<std::shared_ptr<TreeViewNode>>& TreeViewImpl::selectedNodes() const
 {
     static const std::vector<std::shared_ptr<TreeViewNode>> empty;
-    if (!_priv->multiselect)
+    if (!_multiselect)
         return empty;
-    return _priv->selectedNodes;
+    return _selectedNodes;
 }
 
-void TreeView::selectedNodes(const std::vector<std::shared_ptr<TreeViewNode>>& nodes)
+void TreeViewImpl::selectedNodes(const std::vector<std::shared_ptr<TreeViewNode>>& nodes)
 {
-    if (!_priv->multiselect)
+    if (!_multiselect)
         return;
-    if (_priv->selectedNodes == nodes)
+    if (_selectedNodes == nodes)
         return;
 
-    _priv->selectedNodes.clear();
+    _selectedNodes.clear();
     for (auto& node : nodes)
     {
         // skip invalid
-        if (itemFromNode(*_priv, node) == nullptr)
+        if (itemFromNode(node) == nullptr)
             // cannot select if the node is not in the tree.
             continue;
 
         // skip duplicates
         if (std::find(
-            _priv->selectedNodes.begin(),
-            _priv->selectedNodes.end(),
-            node) != _priv->selectedNodes.end())
+            _selectedNodes.begin(),
+            _selectedNodes.end(),
+            node) != _selectedNodes.end())
             continue;
 
-        _priv->selectedNodes.push_back(node);
+        _selectedNodes.push_back(node);
     }
 
     updateSelection();
 }
 
-void TreeView::updateSelection()
+void TreeViewImpl::updateSelection()
 {
-    MessageLocker selectionChangedLock(_priv->inhibitSelectionMessages);
+    MessageLocker selectionChangedLock(_inhibitSelectionMessages);
 
     if (handle() == nullptr)
         return;
 
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    for (const auto& [hitem, itemNode] : _priv->nodeMap)
+    for (const auto& [hitem, itemNode] : _nodeMap)
     {
         bool selected = std::find(
-            _priv->selectedNodes.begin(),
-            _priv->selectedNodes.end(),
-            itemNode) != _priv->selectedNodes.end();
+            _selectedNodes.begin(),
+            _selectedNodes.end(),
+            itemNode) != _selectedNodes.end();
 
         TreeView_SetItemState(hwnd, hitem, selected ? TVIS_SELECTED : 0, TVIS_SELECTED);
     }
 }
 
-bool TreeView::checkboxes() const
+bool TreeViewImpl::checkboxes() const
 {
-    return _priv->checkboxes;
+    return _checkboxes;
 }
 
-void TreeView::checkboxes(bool value)
+void TreeViewImpl::checkboxes(bool value)
 {
-    if (_priv->checkboxes == value)
+    if (_checkboxes == value)
         return;
-    _priv->checkboxes = value;
+    _checkboxes = value;
 
     if (handle() == nullptr)
         return;
@@ -431,19 +423,19 @@ void TreeView::checkboxes(bool value)
     SetWindowLong(hwnd, GWL_STYLE, styles());
 }
 
-bool TreeView::editing() const
+bool TreeViewImpl::editing() const
 {
-    return _priv->editingLabel;
+    return _editingLabel;
 }
 
-bool TreeView::beginEditing(std::shared_ptr<TreeViewNode> node)
+bool TreeViewImpl::beginEditing(std::shared_ptr<TreeViewNode> node)
 {
     if (handle() == nullptr)
         return false;
 
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    auto hitem = itemFromNode(*_priv, node);
+    auto hitem = itemFromNode(node);
     if (hitem == NULL)
         return false;
 
@@ -453,9 +445,9 @@ bool TreeView::beginEditing(std::shared_ptr<TreeViewNode> node)
     return true;
 }
 
-void TreeView::confirmEditing()
+void TreeViewImpl::confirmEditing()
 {
-    if (!_priv->editingLabel)
+    if (!_editingLabel)
         return;
 
     if (handle() == nullptr)
@@ -465,11 +457,11 @@ void TreeView::confirmEditing()
     TreeView_EndEditLabelNow(hwnd, FALSE);
 }
 
-void TreeView::cancelEditing()
+void TreeViewImpl::cancelEditing()
 {
-    if (!_priv->editingLabel)
+    if (!_editingLabel)
         return;
-    _priv->editingLabel = false;
+    _editingLabel = false;
 
     if (handle() == nullptr)
         return;
@@ -478,16 +470,16 @@ void TreeView::cancelEditing()
     TreeView_EndEditLabelNow(hwnd, TRUE);
 }
 
-bool TreeView::multiselect() const
+bool TreeViewImpl::multiselect() const
 {
-    return _priv->multiselect;
+    return _multiselect;
 }
 
-void TreeView::multiselect(bool value)
+void TreeViewImpl::multiselect(bool value)
 {
-    if (_priv->multiselect == value)
+    if (_multiselect == value)
         return;
-    _priv->multiselect = value;
+    _multiselect = value;
 
     if (handle() == nullptr)
         return;
@@ -495,38 +487,14 @@ void TreeView::multiselect(bool value)
     updateExtStyles();
 
     // clear selections
-    _priv->selectedNodes.clear();
+    _selectedNodes.clear();
     updateSelection();
 }
 
-std::shared_ptr<TreeViewNode> TreeView::rootNode() const
-{
-    // placeholder
-    return nullptr;
-}
-
-std::vector<std::shared_ptr<TreeViewNode>> TreeView::childNodes(std::shared_ptr<TreeViewNode> parent) const
-{
-    // placeholder
-    return {};
-}
-
-bool TreeView::beginEdit(std::shared_ptr<TreeViewNode> node)
-{
-    // placeholder
-    return false;
-}
-
-bool TreeView::endEdit(std::shared_ptr<TreeViewNode> node, const std::string& text)
-{
-    // placeholder
-    return false;
-}
-
-void TreeView::updateDisplayStyles()
+void TreeViewImpl::updateDisplayStyles()
 {
     auto hwnd = (HWND)handle();
-    auto clrPair = Control::colors();
+    auto clrPair = ControlImpl::colors();
 
     COLORREF backColor =
         clrPair.second != Color::Default
@@ -541,28 +509,28 @@ void TreeView::updateDisplayStyles()
     TreeView_SetTextColor(hwnd, textColor);
 }
 
-void TreeView::updateExtStyles()
+void TreeViewImpl::updateExtStyles()
 {
     auto hwnd = reinterpret_cast<HWND>(handle());
     auto dwStyle = (UINT)SendMessage(hwnd, TVM_GETEXTENDEDSTYLE, 0, 0);
 
-    if (_priv->multiselect)
+    if (_multiselect)
         dwStyle |= TVS_EX_MULTISELECT;
 
     SendMessage(hwnd, TVM_SETEXTENDEDSTYLE, 0, dwStyle);
 }
 
-void TreeView::updateRootNode()
+void TreeViewImpl::updateRootNode()
 {
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    auto node = rootNode();
+    auto node = _treeView.rootNode();
     TreeView_DeleteAllItems(hwnd);
 
-    _priv->hRootNode = NULL;
-    _priv->nodeMap.clear();
+    _hRootNode = NULL;
+    _nodeMap.clear();
 
     if (node == nullptr)
         return;
@@ -573,7 +541,7 @@ void TreeView::updateRootNode()
     tvis.item.mask = TVIF_TEXT | TVIF_CHILDREN;
     tvis.item.pszText = LPSTR_TEXTCALLBACK;
 
-    auto childCount = childNodes(node).size();
+    auto childCount = _treeView.childNodes(node).size();
     tvis.item.cChildren = (int)childCount;
 
     auto hItem = TreeView_InsertItem(hwnd, &tvis);
@@ -581,12 +549,12 @@ void TreeView::updateRootNode()
     if (hItem == NULL)
         DLGCPP_CERR("TreeView_InsertItem " << hItem << "   GetLastError = " << GetLastError());
 
-    _priv->hRootNode = hItem;
-    _priv->nodeMap[hItem] = node;
-    DLGCPP_CMSG("Set root node " << node->id() << "  " << node->text() << "  nodeMap.size = " << _priv->nodeMap.size());
+    _hRootNode = hItem;
+    _nodeMap[hItem] = node;
+    DLGCPP_CMSG("Set root node " << node->id() << "  " << node->text() << "  nodeMap.size = " << _nodeMap.size());
 }
 
-void TreeView::updateChildNodes(std::shared_ptr<TreeViewNode> parent)
+void TreeViewImpl::updateChildNodes(std::shared_ptr<TreeViewNode> parent)
 {
     if (parent == nullptr)
         return;
@@ -595,13 +563,13 @@ void TreeView::updateChildNodes(std::shared_ptr<TreeViewNode> parent)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    auto children = childNodes(parent);
+    auto children = _treeView.childNodes(parent);
     if (children.empty())
     {
         return;
     }
 
-    auto hParent = itemFromNode(*_priv, parent);
+    auto hParent = itemFromNode(parent);
     if (hParent == NULL)
         return;
 
@@ -613,7 +581,7 @@ void TreeView::updateChildNodes(std::shared_ptr<TreeViewNode> parent)
 
     for (auto& node : children)
     {
-        auto childCount = childNodes(node).size();
+        auto childCount = _treeView.childNodes(node).size();
         tvis.item.cChildren = (int)childCount;
 
         auto hItem = TreeView_InsertItem(hwnd, &tvis);
@@ -624,19 +592,19 @@ void TreeView::updateChildNodes(std::shared_ptr<TreeViewNode> parent)
             break;
         }
 
-        _priv->nodeMap[hItem] = node;
+        _nodeMap[hItem] = node;
         tvis.hInsertAfter = hItem;
 
-        DLGCPP_CMSG("Added child node " << node->id() << "  " << node->text() << "  nodeMap.size = " << _priv->nodeMap.size());
+        DLGCPP_CMSG("Added child node " << node->id() << "  " << node->text() << "  nodeMap.size = " << _nodeMap.size());
     }
 }
 
-void TreeView::onRootNodeChanged()
+void TreeViewImpl::onRootNodeChanged()
 {
     updateRootNode();
 }
 
-void TreeView::expand(
+void TreeViewImpl::expand(
     std::shared_ptr<TreeViewNode> node,
     bool allChildNodes)
 {
@@ -644,7 +612,7 @@ void TreeView::expand(
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    auto hitem = itemFromNode(*_priv, node);
+    auto hitem = itemFromNode(node);
     if (hitem == NULL)
         return;
 
@@ -657,14 +625,14 @@ void TreeView::expand(
         while (hitem != NULL)
         {
             // expand further with the event
-            _priv->expandNodePrivateEvent.invoke(nodeFromItem(*_priv, hitem));
+            _expandNodePrivateEvent.invoke(nodeFromItem(hitem));
 
             hitem = TreeView_GetNextSibling(hwnd, hitem);
         }
     }
 }
 
-void TreeView::collapse(
+void TreeViewImpl::collapse(
     std::shared_ptr<TreeViewNode> node,
     bool allChildNodes)
 {
@@ -672,7 +640,7 @@ void TreeView::collapse(
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    auto hitem = itemFromNode(*_priv, node);
+    auto hitem = itemFromNode(node);
     if (hitem == NULL)
         return;
 
@@ -685,31 +653,29 @@ void TreeView::collapse(
     TreeView_Expand(hwnd, hitem, flags);
 }
 
-IEvent<ISharedControl>& TreeView::RootNodeChangedEvent()
+IEvent<ISharedControl>& TreeViewImpl::RootNodeChangedEvent()
 {
-    return _priv->rootNodeChangedEvent;
+    return _rootNodeChangedEvent;
 }
 
-IEvent<ISharedControl>& TreeView::SelChangedEvent()
+IEvent<ISharedControl>& TreeViewImpl::SelChangedEvent()
 {
-    return _priv->selChangedEvent;
+    return _selChangedEvent;
 }
 
-IEvent<ISharedControl, std::shared_ptr<TreeViewNode>>& TreeView::ItemClickEvent()
+IEvent<ISharedControl, std::shared_ptr<TreeViewNode>>& TreeViewImpl::ItemClickEvent()
 {
-    return _priv->itemClickEvent;
+    return _itemClickEvent;
 }
 
-IEvent<ISharedControl, std::shared_ptr<TreeViewNode>>& TreeView::ItemDoubleClickEvent()
+IEvent<ISharedControl, std::shared_ptr<TreeViewNode>>& TreeViewImpl::ItemDoubleClickEvent()
 {
-    return _priv->itemDblClickEvent;
+    return _itemDblClickEvent;
 }
 
-HTREEITEM itemFromNode(
-    treeview_priv& priv,
-    std::shared_ptr<TreeViewNode> node)
+HTREEITEM TreeViewImpl::itemFromNode(std::shared_ptr<TreeViewNode> node)
 {
-    for (const auto& [hitem, itemNode] : priv.nodeMap)
+    for (const auto& [hitem, itemNode] : _nodeMap)
     {
         if (itemNode == node)
         {
@@ -719,12 +685,10 @@ HTREEITEM itemFromNode(
     return NULL;
 }
 
-std::shared_ptr<TreeViewNode> nodeFromItem(
-    treeview_priv& priv,
-    HTREEITEM hitem)
+std::shared_ptr<TreeViewNode> TreeViewImpl::nodeFromItem(HTREEITEM hitem)
 {
-    auto it = priv.nodeMap.find(hitem);
-    if (it == priv.nodeMap.end())
+    auto it = _nodeMap.find(hitem);
+    if (it == _nodeMap.end())
         return nullptr;
     return it->second;
 }

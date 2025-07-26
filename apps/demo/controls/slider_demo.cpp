@@ -1,7 +1,6 @@
 #include "slider_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 void controls_slider_demo(ISharedDialog parent)
 {

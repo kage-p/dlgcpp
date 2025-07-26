@@ -1,6 +1,7 @@
 #pragma once
 
-#include "dlgcpp/dlgcpp.h"
+#include "dlgcpp/defs.h"
+#include <string>
 
 namespace dlgcpp
 {
@@ -25,11 +26,13 @@ namespace dlgcpp
             virtual bool show() = 0;
         };
 
+        class PropertyDialogImpl;
+
         class PropertyDialog : public IPropertyDialog
         {
         public:
             explicit PropertyDialog(ISharedDialog parent = nullptr);
-            virtual ~PropertyDialog();
+            virtual ~PropertyDialog() = default;
 
             // IPropertyDialog impl.
             const std::string& title() const override;
@@ -41,8 +44,9 @@ namespace dlgcpp
             bool show() override;
 
         private:
-            struct propdlg_props* _props;
-            struct propdlg_state* _state;
+            PropertyDialog(std::shared_ptr<PropertyDialogImpl> impl);
+
+            std::shared_ptr<PropertyDialogImpl> _impl;
         };
     }
 }

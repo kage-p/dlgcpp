@@ -1,3 +1,4 @@
+#include "dlgcpp/dialogs/dialog.h"
 #include "folder_p.h"
 #include "utility/string.h"
 
@@ -9,72 +10,70 @@
 using namespace dlgcpp;
 using namespace dlgcpp::dialogs;
 
-FolderDialog::FolderDialog(ISharedDialog parent)
-    : _props(new folder_props())
+FolderDialogImpl::FolderDialogImpl(
+    FolderDialog& folderDialog,
+    ISharedDialog parent)
+    : _folderDialog(folderDialog),
+    _parent(parent)
 {
-    _props->parent = parent;
 }
 
-FolderDialog::~FolderDialog()
+const std::string& FolderDialogImpl::folderName() const
 {
-    delete _props;
+    return _folderName;
 }
 
-const std::string& FolderDialog::folderName() const
+void FolderDialogImpl::folderName(const std::string& value)
 {
-    return _props->folderName;
+    _folderName = value;
 }
 
-void FolderDialog::folderName(const std::string& value)
+const std::string& FolderDialogImpl::message() const
 {
-    _props->folderName = value;
+    return _message;
 }
 
-const std::string& FolderDialog::message() const
+void FolderDialogImpl::message(const std::string& value)
 {
-    return _props->message;
+    _message = value;
 }
 
-void FolderDialog::message(const std::string& value)
+const std::string& FolderDialogImpl::title() const
 {
-    _props->message = value;
+    return _title;
 }
 
-const std::string& FolderDialog::title() const
+void FolderDialogImpl::title(const std::string& value)
 {
-    return _props->title;
+    _title = value;
 }
 
-void FolderDialog::title(const std::string& value)
-{
-    _props->title = value;
-}
-
-bool FolderDialog::create()
+bool FolderDialogImpl::create()
 {
     unsigned int flags = BIF_EDITBOX;
-    std::string title = _props->title;
+    std::string title = _title;
     return show(flags);
 }
 
-bool FolderDialog::open()
+bool FolderDialogImpl::open()
 {
     unsigned int flags = BIF_NONEWFOLDERBUTTON;
     return show(flags);
 }
 
-int CALLBACK browseFolderProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
+int CALLBACK FolderDialogImpl::browseFolderProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
 {
-    auto props = (folder_props*)lpData;
+    auto impl = (FolderDialogImpl*)lpData;
 
     switch (uMsg)
     {
     case BFFM_INITIALIZED:
         // initialize additional properties
-        if (!props->folderName.empty())
-            SendMessageW(hwnd, BFFM_SETSELECTION, 1, (LPARAM)toWide(props->folderName).c_str());
-        if (!props->title.empty())
-            SetWindowTextW(hwnd, toWide(props->title).c_str());
+        if (!impl->folderName().empty())
+            SendMessageW(hwnd, BFFM_SETSELECTION, 1, (LPARAM)toWide(impl->folderName()).c_str());
+
+        if (!impl->title().empty())
+            SetWindowTextW(hwnd, toWide(impl->title()).c_str());
         break;
 
     case BFFM_SELCHANGED:
@@ -85,20 +84,20 @@ int CALLBACK browseFolderProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData
     return 0;
 }
 
-bool FolderDialog::show(unsigned int flags)
+bool FolderDialogImpl::show(unsigned int flags)
 {
 
     auto bi = BROWSEINFOW();
 
-    auto titleBuf = toWide(_props->message);
+    auto titleBuf = toWide(_message);
     bi.lpszTitle = titleBuf.c_str();
 
-    if (_props->parent != nullptr)
-        bi.hwndOwner = reinterpret_cast<HWND>(_props->parent->handle());
+    if (_parent != nullptr)
+        bi.hwndOwner = reinterpret_cast<HWND>(_parent->handle());
 
     bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_DONTGOBELOWDOMAIN | BIF_USENEWUI | flags;
     bi.lpfn = &browseFolderProc;
-    bi.lParam = (LPARAM)_props;
+    bi.lParam = (LPARAM)this;
 
     auto pidlList = SHBrowseForFolderW(&bi);
 
@@ -106,9 +105,9 @@ bool FolderDialog::show(unsigned int flags)
     if ((pidlList == NULL) || (SHGetPathFromIDListW(pidlList, &buf[0]) == FALSE))
         return false;
 
-    _props->folderName = toBytes(buf.c_str());
-    auto c = _props->folderName.back();
+    _folderName = toBytes(buf.c_str());
+    auto c = _folderName.back();
     if (c == '\\' || c == '/')
-        _props->folderName.pop_back();
+        _folderName.pop_back();
     return true;
 }

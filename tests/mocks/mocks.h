@@ -7,7 +7,7 @@ namespace dlgcpp
 {
     namespace tests
     {
-        class MockDialog : public IDialog
+        class MockDialog : public dlgcpp::dialogs::IDialog
         {
         public:
             // properties
@@ -15,19 +15,19 @@ namespace dlgcpp
             MOCK_METHOD(void, enabled, (bool), (override));
             MOCK_METHOD(bool, visible, (), (const, override));
             MOCK_METHOD(void, visible, (bool value), (override));
-            MOCK_METHOD(DisplayState, displayState, (), (const, override));
-            MOCK_METHOD(void, displayState, (DisplayState value), (override));
+            MOCK_METHOD(dlgcpp::dialogs::DisplayState, displayState, (), (const, override));
+            MOCK_METHOD(void, displayState, (dlgcpp::dialogs::DisplayState value), (override));
             MOCK_METHOD(const Position&, p, (), (const, override));
             MOCK_METHOD(void, p, (const Position&), (override));
-            MOCK_METHOD(DialogType, type, (), (const, override));
+            MOCK_METHOD(dlgcpp::dialogs::DialogType, type, (), (const, override));
             MOCK_METHOD(bool, showHelp, (), (const, override));
             MOCK_METHOD(void, showHelp, (bool value), (override));
             MOCK_METHOD(const std::string&, title, (), (const, override));
             MOCK_METHOD(void, title, (const std::string& value), (override));
             MOCK_METHOD(const ImageSource&, image, (), (const, override));
             MOCK_METHOD(void, image, (const ImageSource& image), (override));
-            MOCK_METHOD(std::shared_ptr<IMenu>, menu, (), (const, override));
-            MOCK_METHOD(void, menu, (std::shared_ptr<IChildMenu> menu), (override));
+            MOCK_METHOD(std::shared_ptr<dlgcpp::menus::Menu>, menu, (), (const, override));
+            MOCK_METHOD(void, menu, (std::shared_ptr<dlgcpp::menus::Menu> menu), (override));
             MOCK_METHOD(Color, color, (), (const, override));
             MOCK_METHOD(void, color, (Color value), (override));
             MOCK_METHOD(Cursor, cursor, (), (const, override));
@@ -39,7 +39,7 @@ namespace dlgcpp
             MOCK_METHOD(void*, handle, (), (const, override));
             MOCK_METHOD(void*, user, (), (const, override));
             MOCK_METHOD(void, user, (void* value), (override));
-            MOCK_METHOD(ISharedDialog, parent, (), (override));
+            MOCK_METHOD(ISharedDialog, parent, (), (const, override));
 
             // actions
             MOCK_METHOD(void, show, (), (override));
@@ -56,12 +56,12 @@ namespace dlgcpp
             MOCK_METHOD(void, sendUserEvent, (int param), (override));
 
             // child management
-            MOCK_METHOD(void, add, (std::shared_ptr<IChildControl> child), (override));
-            MOCK_METHOD(void, remove, (std::shared_ptr<IChildControl> child), (override));
-            MOCK_METHOD(std::vector<std::shared_ptr<IControl>>, controls, (), (const, override));
-            MOCK_METHOD(void, add, (std::shared_ptr<IChildDialog> child), (override));
-            MOCK_METHOD(void, remove, (std::shared_ptr<IChildDialog> child), (override));
-            MOCK_METHOD(std::vector<ISharedDialog>, dialogs, (), (const, override));
+            MOCK_METHOD(void, add, (std::shared_ptr<dlgcpp::controls::Control> child), (override));
+            MOCK_METHOD(void, remove, (std::shared_ptr<dlgcpp::controls::Control> child), (override));
+            MOCK_METHOD(std::vector<std::shared_ptr<dlgcpp::controls::Control>>, controls, (), (const, override));
+            MOCK_METHOD(void, add, (std::shared_ptr<dlgcpp::dialogs::Dialog> child), (override));
+            MOCK_METHOD(void, remove, (std::shared_ptr<dlgcpp::dialogs::Dialog> child), (override));
+            MOCK_METHOD(std::vector<std::shared_ptr<dlgcpp::dialogs::Dialog>>, dialogs, (), (const, override));
 
             // events
             MOCK_METHOD((IEvent<ISharedDialog>&), ConfirmEvent, (), (override));
@@ -82,7 +82,7 @@ namespace dlgcpp
             MOCK_METHOD((IEvent<ISharedDialog, int>&), UserEvent, (), (override));
         };
 
-        class MockControl : public IControl
+        class MockControl : public dlgcpp::controls::IControl
         {
         public:
             MOCK_METHOD(bool, enabled, (), (const, override));
@@ -93,8 +93,8 @@ namespace dlgcpp
             MOCK_METHOD(void, p, (const Position& position), (override));
             MOCK_METHOD(void, move, (const Point& point), (override));
             MOCK_METHOD(void, resize, (const Size& size), (override));
-            MOCK_METHOD(BorderStyle, border, (), (const, override));
-            MOCK_METHOD(void, border, (BorderStyle value), (override));
+            MOCK_METHOD(dlgcpp::controls::BorderStyle, border, (), (const, override));
+            MOCK_METHOD(void, border, (dlgcpp::controls::BorderStyle value), (override));
             MOCK_METHOD(const std::string&, text, (), (const, override));
             MOCK_METHOD(void, text, (const std::string& value), (override));
             MOCK_METHOD((std::pair<Color, Color>), colors, (), (const, override));
@@ -122,7 +122,7 @@ namespace dlgcpp
             MOCK_METHOD((IEvent<ISharedControl>&), SizeEvent, (), (override));
         };
 
-        class MockMenu : public IMenu
+        class MockMenu : public dlgcpp::menus::IMenu
         {
         public:
             MOCK_METHOD(void, add, (ISharedMenuItem), (override));
@@ -132,49 +132,6 @@ namespace dlgcpp
 
             MOCK_METHOD(void, popup, (ISharedControl, const Point&), (override));
             MOCK_METHOD(void, popup, (ISharedDialog, const Point&), (override));
-        };
-
-        class MockChildControl : public IChildControl
-        {
-        public:
-            MOCK_METHOD(ISharedDialog, parent, (), (const, override));
-            MOCK_METHOD(void, parent, (ISharedDialog), (override));
-            MOCK_METHOD(int, id, (), (const, override));
-            MOCK_METHOD(void, id, (int value), (override));
-            MOCK_METHOD(void, notify, (dlg_message&), (override));
-            MOCK_METHOD(void, rebuild, (), (override));
-
-            MOCK_METHOD(std::shared_ptr<IControl>, control, (), (override));
-
-            //MOCK_METHOD(ctl_state, state, (), (override));
-        };
-
-        class MockChildDialog : public IChildDialog
-        {
-        public:
-            MOCK_METHOD(ISharedDialog, parent, (), (const, override));
-            MOCK_METHOD(void, parent, (ISharedDialog), (override));
-            MOCK_METHOD(int, id, (), (const, override));
-            MOCK_METHOD(void, id, (int value), (override));
-            MOCK_METHOD(int, idRange, (), (const, override));
-            MOCK_METHOD(void, notify, (dlg_message&), (override));
-            MOCK_METHOD(void, rebuild, (), (override));
-
-            MOCK_METHOD(std::shared_ptr<IDialog>, dialog, (), (override));
-        };
-
-        class MockChildMenu : public IChildMenu
-        {
-        public:
-            MOCK_METHOD(ISharedDialog, parent, (), (const, override));
-            MOCK_METHOD(void, parent, (ISharedDialog), (override));
-            MOCK_METHOD(int, id, (), (const, override));
-            MOCK_METHOD(void, id, (int value), (override));
-            MOCK_METHOD(int, idRange, (), (const, override));
-            MOCK_METHOD(void, notify, (dlg_message&), (override));
-            MOCK_METHOD(void, rebuild, (), (override));
-
-            MOCK_METHOD(std::shared_ptr<IMenu>, menu, (), (override));
         };
 
         template <class... Args>

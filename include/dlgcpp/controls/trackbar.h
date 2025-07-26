@@ -1,5 +1,6 @@
 #pragma once
-#include "../control.h"
+
+#include "dlgcpp/controls/control.h"
 
 namespace dlgcpp
 {
@@ -34,8 +35,10 @@ namespace dlgcpp
             virtual IEvent<ISharedControl>& ChangedEvent() = 0;
         };
 
+        class TrackBarImpl;
+
         class TrackBar :
-            public dlgcpp::Control,
+            public Control,
             public ITrackBar
         {
         public:
@@ -59,11 +62,9 @@ namespace dlgcpp
             IEvent<ISharedControl>& ChangedEvent() override;
 
         private:
-            struct trackbar_props* _props;
-            void rebuild() override;
-            std::string className() const override;
-            unsigned int styles() const override;
-            void notify(dlg_message&) override;
+            TrackBar(std::shared_ptr<TrackBarImpl> impl);
+
+            std::shared_ptr<TrackBarImpl> _impl;
         };
     }
 }

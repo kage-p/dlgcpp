@@ -1,7 +1,6 @@
 #include "toolbar_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 void controls_toolbar_demo(ISharedDialog parent)
 {

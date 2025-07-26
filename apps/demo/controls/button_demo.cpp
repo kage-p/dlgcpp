@@ -1,7 +1,6 @@
 #include "button_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::controls;
 
 void controls_button_demo(ISharedDialog parent)
 {

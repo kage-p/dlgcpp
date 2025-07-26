@@ -1,11 +1,14 @@
 #pragma once
-#include "../control.h"
+
+#include "dlgcpp/controls/control.h"
 
 namespace dlgcpp
 {
     namespace controls
     {
-        class Image : public dlgcpp::Control
+        class ImageImpl;
+
+        class Image : public Control
         {
         public:
             explicit Image(const Position& p = Position());
@@ -19,14 +22,9 @@ namespace dlgcpp
             void image(const ImageSource& image);
 
         private:
-            struct img_props* _props;
-            struct img_state* _state;
+            Image(std::shared_ptr<ImageImpl> impl);
 
-            void rebuild() override;
-            unsigned int styles() const override;
-            void notify(dlg_message&) override;
-
-            void updateImage();
+            std::shared_ptr<ImageImpl> _impl;
         };
     }
 }

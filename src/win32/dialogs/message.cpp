@@ -1,3 +1,4 @@
+#include "dlgcpp/dialogs/dialog.h"
 #include "message_p.h"
 #include "utility/string.h"
 
@@ -8,86 +9,83 @@
 using namespace dlgcpp;
 using namespace dlgcpp::dialogs;
 
-MessageDialog::MessageDialog(ISharedDialog parent) :
-    _props(new msgdlg_props())
+MessageDialogImpl::MessageDialogImpl(
+    MessageDialog& messageDialog,
+    ISharedDialog parent) :
+    _messageDialog(messageDialog),
+    _parent(parent)
 {
-    _props->parent = parent;
 }
 
-MessageDialog::~MessageDialog()
+const std::string& MessageDialogImpl::title() const
 {
-    delete _props;
+    return _title;
 }
 
-const std::string& MessageDialog::title() const
+void MessageDialogImpl::title(const std::string& value)
 {
-    return _props->title;
+    _title = value;
 }
 
-void MessageDialog::title(const std::string& value)
+const std::string& MessageDialogImpl::message() const
 {
-    _props->title = value;
+    return _message;
 }
 
-const std::string& MessageDialog::message() const
+void MessageDialogImpl::message(const std::string& value)
 {
-    return _props->message;
+    _message = value;
 }
 
-void MessageDialog::message(const std::string& value)
+MessageDialogButtonGroup MessageDialogImpl::buttons() const
 {
-    _props->message = value;
+    return _buttons;
 }
 
-MessageDialogButtonGroup MessageDialog::buttons() const
+void MessageDialogImpl::buttons(MessageDialogButtonGroup value)
 {
-    return _props->buttons;
+    _buttons = value;
 }
 
-void MessageDialog::buttons(MessageDialogButtonGroup value)
+MessageDialogIcon MessageDialogImpl::icon() const
 {
-    _props->buttons = value;
+    return _icon;
 }
 
-MessageDialogIcon MessageDialog::icon() const
+void MessageDialogImpl::icon(MessageDialogIcon value)
 {
-    return _props->icon;
+    _icon = value;
 }
 
-void MessageDialog::icon(MessageDialogIcon value)
+MessageDialogButton MessageDialogImpl::defaultButton() const
 {
-    _props->icon = value;
+    return _defaultButton;
 }
 
-MessageDialogButton MessageDialog::defaultButton() const
+void MessageDialogImpl::defaultButton(MessageDialogButton value)
 {
-    return _props->defaultButton;
+    _defaultButton = value;
 }
 
-void MessageDialog::defaultButton(MessageDialogButton value)
+bool MessageDialogImpl::showHelp() const
 {
-    _props->defaultButton = value;
+    return _showHelp;
 }
 
-bool MessageDialog::showHelp() const
+void MessageDialogImpl::showHelp(bool value)
 {
-    return _props->showHelp;
+    _showHelp = value;
 }
 
-void MessageDialog::showHelp(bool value)
-{
-    _props->showHelp = value;
-}
-
-MessageDialogButton MessageDialog::show()
+MessageDialogButton MessageDialogImpl::show()
 {
     auto hwndParent = (HWND)HWND_DESKTOP;
-    if (_props->parent != nullptr)
-        hwndParent = reinterpret_cast<HWND>(_props->parent->handle());
+    if (_parent != nullptr)
+        hwndParent = reinterpret_cast<HWND>(_parent->handle());
 
     UINT flags = 0;
 
-    switch (_props->icon)
+    switch (_icon)
     {
     case MessageDialogIcon::Warning:
         flags |= MB_ICONWARNING;
@@ -104,63 +102,63 @@ MessageDialogButton MessageDialog::show()
         break;
     };
 
-    switch (_props->buttons)
+    switch (_buttons)
     {
     case MessageDialogButtonGroup::OkCancel:
         flags |= MB_OKCANCEL;
-        if (_props->defaultButton == MessageDialogButton::Ok)
+        if (_defaultButton == MessageDialogButton::Ok)
             flags |= MB_DEFBUTTON1;
-        else if (_props->defaultButton == MessageDialogButton::Cancel)
+        else if (_defaultButton == MessageDialogButton::Cancel)
             flags |= MB_DEFBUTTON2;
         break;
     case MessageDialogButtonGroup::AbortRetryIgnore:
         flags |= MB_ABORTRETRYIGNORE;
-        if (_props->defaultButton == MessageDialogButton::Abort)
+        if (_defaultButton == MessageDialogButton::Abort)
             flags |= MB_DEFBUTTON1;
-        else if (_props->defaultButton == MessageDialogButton::Retry)
+        else if (_defaultButton == MessageDialogButton::Retry)
             flags |= MB_DEFBUTTON2;
-        else if (_props->defaultButton == MessageDialogButton::Ignore)
+        else if (_defaultButton == MessageDialogButton::Ignore)
             flags |= MB_DEFBUTTON3;
         break;
     case MessageDialogButtonGroup::YesNoCancel:
         flags |= MB_YESNOCANCEL;
-        if (_props->defaultButton == MessageDialogButton::Yes)
+        if (_defaultButton == MessageDialogButton::Yes)
             flags |= MB_DEFBUTTON1;
-        else if (_props->defaultButton == MessageDialogButton::No)
+        else if (_defaultButton == MessageDialogButton::No)
             flags |= MB_DEFBUTTON2;
-        else if (_props->defaultButton == MessageDialogButton::Cancel)
+        else if (_defaultButton == MessageDialogButton::Cancel)
             flags |= MB_DEFBUTTON3;
         break;
     case MessageDialogButtonGroup::YesNo:
         flags |= MB_YESNO;
-        if (_props->defaultButton == MessageDialogButton::Yes)
+        if (_defaultButton == MessageDialogButton::Yes)
             flags |= MB_DEFBUTTON1;
-        else if (_props->defaultButton == MessageDialogButton::No)
+        else if (_defaultButton == MessageDialogButton::No)
             flags |= MB_DEFBUTTON2;
         break;
     case MessageDialogButtonGroup::RetryCancel:
         flags |= MB_RETRYCANCEL;
-        if (_props->defaultButton == MessageDialogButton::Retry)
+        if (_defaultButton == MessageDialogButton::Retry)
             flags |= MB_DEFBUTTON1;
-        else if (_props->defaultButton == MessageDialogButton::Cancel)
+        else if (_defaultButton == MessageDialogButton::Cancel)
             flags |= MB_DEFBUTTON2;
         break;
     case MessageDialogButtonGroup::Ok:
     default:
         flags |= MB_OK;
-        if (_props->defaultButton == MessageDialogButton::Ok)
+        if (_defaultButton == MessageDialogButton::Ok)
             flags |= MB_DEFBUTTON1;
         break;
     }
 
-    if (_props->showHelp)
+    if (_showHelp)
         flags |= MB_HELP;
 
-    auto titleText = toWide(_props->title);
-    if (titleText.empty() && _props->parent != nullptr)
-        titleText = toWide(_props->parent->title());
+    auto titleText = toWide(_title);
+    if (titleText.empty() && _parent != nullptr)
+        titleText = toWide(_parent->title());
 
-    auto messageText = toWide(_props->message);
+    auto messageText = toWide(_message);
 
     auto buttonId = MessageBoxW(hwndParent,
         messageText.c_str(),

@@ -1,7 +1,6 @@
 #include "property_demo.h"
 
 using namespace dlgcpp;
-using namespace dlgcpp::dialogs;
 
 void dialogs_property_demo(ISharedDialog parent)
 {

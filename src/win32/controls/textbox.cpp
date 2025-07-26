@@ -1,56 +1,56 @@
 #include "textbox_p.h"
-#include "utility/message.h"
 #include "utility/string.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-TextBox::TextBox(const std::string& text,
+TextBoxImpl::TextBoxImpl(
+    TextBox& textBox,
+    const std::string& text,
     const Position& p) :
-    Control(text, p),
-    _props(new textbox_props())
+    ControlImpl(textBox, text, p),
+    _textBox(textBox)
 {
     this->border(BorderStyle::Sunken);
 }
 
-TextBox::~TextBox()
+TextBoxImpl::~TextBoxImpl()
 {
-    delete _props;
 }
 
-void TextBox::rebuild()
+void TextBoxImpl::rebuild()
 {
-    Control::rebuild();
+    ControlImpl::rebuild();
 
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, EM_LIMITTEXT, (WPARAM)_props->maxChars, 0);
+    SendMessage(hwnd, EM_LIMITTEXT, (WPARAM)_maxChars, 0);
 }
 
-std::string TextBox::className() const
+std::string TextBoxImpl::className() const
 {
     return "EDIT";
 }
 
-unsigned int TextBox::styles() const
+unsigned int TextBoxImpl::styles() const
 {
-    auto styles = Control::styles();
-    if (_props->password)
+    auto styles = ControlImpl::styles();
+    if (_password)
         styles |= ES_PASSWORD;
-    if (_props->readOnly)
+    if (_readOnly)
         styles |= ES_READONLY;
 
-    if (_props->multiline)
+    if (_multiline)
     {
         styles |= ES_MULTILINE | ES_WANTRETURN | ES_AUTOVSCROLL | WS_VSCROLL;
-        if (!_props->wrapText)
+        if (!_wrapText)
             styles |= ES_AUTOHSCROLL | WS_HSCROLL;
     }
     else
         styles |= ES_AUTOHSCROLL;
 
-    switch (_props->horzAlign)
+    switch (_horzAlign)
     {
     case HorizontalAlign::Left:
         styles |= ES_LEFT;
@@ -66,33 +66,33 @@ unsigned int TextBox::styles() const
     return styles;
 }
 
-IEvent<ISharedControl>& TextBox::ChangedEvent()
+IEvent<ISharedControl>& TextBoxImpl::ChangedEvent()
 {
-    return _props->changedEvent;
+    return _changedEvent;
 }
 
-void TextBox::notify(dlg_message& msg)
+void TextBoxImpl::notify(DialogMessage& msg)
 {
     if (msg.wMsg == WM_COMMAND)
     {
         if (HIWORD(msg.wParam) == EN_CHANGE)
         {
             readInput();
-            ChangedEvent().invoke(shared_from_this());
+            ChangedEvent().invoke(control());
         }
         else if (HIWORD(msg.wParam) == EN_SETFOCUS)
         {
-            FocusEvent().invoke(shared_from_this(), true);
+            FocusEvent().invoke(control(), true);
         }
         else if (HIWORD(msg.wParam) == EN_KILLFOCUS)
         {
-            FocusEvent().invoke(shared_from_this(), false);
+            FocusEvent().invoke(control(), false);
         }
     }
-    Control::notify(msg);
+    ControlImpl::notify(msg);
 }
 
-void TextBox::readInput()
+void TextBoxImpl::readInput()
 {
     // if the control input has been changed by the user, save the content
     if (handle() == nullptr)
@@ -105,95 +105,95 @@ void TextBox::readInput()
     text(toBytes(buf.c_str()));
 }
 
-HorizontalAlign TextBox::horizontalAlignment() const
+HorizontalAlign TextBoxImpl::horizontalAlignment() const
 {
-    return _props->horzAlign;
+    return _horzAlign;
 }
 
-void TextBox::horizontalAlignment(HorizontalAlign value)
+void TextBoxImpl::horizontalAlignment(HorizontalAlign value)
 {
-    if (_props->horzAlign == value)
+    if (_horzAlign == value)
         return;
-    _props->horzAlign = value;
+    _horzAlign = value;
     rebuild();
 }
 
-int TextBox::maxChars() const
+int TextBoxImpl::maxChars() const
 {
-    return _props->maxChars;
+    return _maxChars;
 }
 
-void TextBox::maxChars(int value)
+void TextBoxImpl::maxChars(int value)
 {
     if (value < 0)
         value = 0;
-    if (_props->maxChars == value)
+    if (_maxChars == value)
         return;
-    _props->maxChars = value;
+    _maxChars = value;
 
     // auto truncate
-    if (_props->maxChars > 0 && text().size() > (size_t)_props->maxChars)
-        text(text().substr(0, (size_t)_props->maxChars));
+    if (_maxChars > 0 && text().size() > (size_t)_maxChars)
+        text(text().substr(0, (size_t)_maxChars));
 
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, EM_LIMITTEXT, (WPARAM)_props->maxChars, 0);
+    SendMessage(hwnd, EM_LIMITTEXT, (WPARAM)_maxChars, 0);
 }
 
-bool TextBox::password() const
+bool TextBoxImpl::password() const
 {
-    return _props->password;
+    return _password;
 }
 
-void TextBox::password(bool value)
+void TextBoxImpl::password(bool value)
 {
-    if (_props->password == value)
+    if (_password == value)
         return;
-    _props->password = value;
+    _password = value;
 
     rebuild();
 }
 
-bool TextBox::readOnly() const
+bool TextBoxImpl::readOnly() const
 {
-    return _props->readOnly;
+    return _readOnly;
 }
 
-void TextBox::readOnly(bool value)
+void TextBoxImpl::readOnly(bool value)
 {
-    if (_props->readOnly == value)
+    if (_readOnly == value)
         return;
-    _props->readOnly = value;
+    _readOnly = value;
 
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
-    SendMessage(hwnd, EM_SETREADONLY, (WPARAM)_props->readOnly, 0);
+    SendMessage(hwnd, EM_SETREADONLY, (WPARAM)_readOnly, 0);
 }
 
-bool TextBox::multiline() const
+bool TextBoxImpl::multiline() const
 {
-    return _props->multiline;
+    return _multiline;
 }
 
-void TextBox::multiline(bool value)
+void TextBoxImpl::multiline(bool value)
 {
-    if (_props->multiline == value)
+    if (_multiline == value)
         return;
-    _props->multiline = value;
+    _multiline = value;
     rebuild();
 }
 
-bool TextBox::wrapText() const
+bool TextBoxImpl::wrapText() const
 {
-    return _props->wrapText;
+    return _wrapText;
 }
 
-void TextBox::wrapText(bool value)
+void TextBoxImpl::wrapText(bool value)
 {
-    if (_props->wrapText == value)
+    if (_wrapText == value)
         return;
-    _props->wrapText = value;
+    _wrapText = value;
     rebuild();
 }
