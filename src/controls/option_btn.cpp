@@ -1,10 +1,11 @@
 #include "controls/option_btn_p.h"
+#include "dlgcpp/controls/option_btn.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 OptionButton::OptionButton(const std::string& text, const Position& p)
-    : OptionButton(std::make_shared<OptionButtonImpl>(*this, text, p))
+    : OptionButton(std::make_shared<OptionButtonImpl>(text, p))
 {
 }
 

@@ -1,15 +1,14 @@
 #include "toolbar_p.h"
-#include "utility/image.h"
-#include "utility/string.h"
-#include "utility/units.h"
+#include "utility/convert.h"
+#include "utility/image_reader.h"
+#include "utility/string_encoder.h"
 #include <strsafe.h>
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-ToolBarImpl::ToolBarImpl(ToolBar& toolBar, const Position& p) :
-    ControlImpl(toolBar, std::string(), p),
-    _toolBar(toolBar)
+ToolBarImpl::ToolBarImpl(const Position& p) :
+    ControlImpl(std::string(), p)
 {
     this->border(BorderStyle::None);
 }
@@ -57,7 +56,7 @@ void ToolBarImpl::notify(DialogMessage& msg)
                 return;
 
             // use own buffer
-            _tooltipBuf = toWide(item->toolTipText());
+            _tooltipBuf = StringEncoder::toWide(item->toolTipText());
             ttdi->lpszText = _tooltipBuf.data();
         }
     }
@@ -72,11 +71,11 @@ void ToolBarImpl::rebuild()
     if (handle() == nullptr)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
+    auto hwndParent = GetParent(hwnd);
 
     if (!_buttonSize.empty())
     {
-        Size size = _buttonSize;
-        toPixels(GetParent(hwnd), size);
+        Size size = Convert(hwndParent).toPixels(_buttonSize);
         SendMessage(hwnd, TB_SETBITMAPSIZE, 0, MAKELPARAM(size.width(), size.height()));
     }
 
@@ -157,7 +156,6 @@ ISharedToolBarItem ToolBarImpl::findItemById(int ctlId) const
     return _items.at(index);
 }
 
-
 void ToolBarImpl::updateItems()
 {
     if (handle() == nullptr)
@@ -173,8 +171,7 @@ void ToolBarImpl::updateItems()
 
     SendMessage(hwnd, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0);
 
-    Size imageSize = _imageSize;
-    toPixels(hDlg, imageSize);
+    Size imageSize = Convert(hDlg).toPixels(_imageSize);
 
     auto hImageList = ImageList_Create(
         imageSize.width(),
@@ -192,7 +189,7 @@ void ToolBarImpl::updateItems()
         // use reserved range for button id (id()+1 to reserved)
         const int btnId = id() + (index + 1);
         int imageId = 0;
-        auto text = toWide(item->text());
+        auto text = StringEncoder::toWide(item->text());
 
         BYTE style = 0;
         if (item->separator())
@@ -213,7 +210,7 @@ void ToolBarImpl::updateItems()
         if (!item->image().id.empty())
         {
             // add the image to the image list
-            HANDLE hImage = loadImage(
+            HANDLE hImage = ImageReader::load(
                 item->image(),
                 imageSize,
                 clrPair.second);
@@ -242,8 +239,7 @@ void ToolBarImpl::updateItems()
 
     if (!_buttonSize.empty())
     {
-        Size size = _buttonSize;
-        toPixels(hDlg, size);
+        Size size = Convert(hDlg).toPixels(_buttonSize);
         SendMessage(hwnd, TB_SETBUTTONSIZE, 0, MAKELPARAM(size.width(), size.height()));
     }
 

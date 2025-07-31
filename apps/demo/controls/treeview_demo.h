@@ -5,18 +5,18 @@
 
 void controls_treeview_demo(dlgcpp::ISharedDialog parent);
 
-struct TreeViewDemoItem
+struct DemoTreeViewItem
 {
     std::string path;
     std::string text;
 };
 
-class TreeViewDemoImpl : public dlgcpp::TreeView
+class DemoTreeView : public dlgcpp::TreeView
 {
 public:
-    TreeViewDemoImpl();
+    DemoTreeView();
 
-    void setItems(const std::vector<TreeViewDemoItem>& items);
+    void setItems(const std::vector<DemoTreeViewItem>& items);
 
     // TreeView impl.
     std::shared_ptr<dlgcpp::TreeViewNode> rootNode() const override;

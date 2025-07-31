@@ -17,7 +17,6 @@ namespace dlgcpp
         {
         public:
             explicit TabsImpl(
-                Tabs& tabs,
                 const Position& p = Position());
 
             ~TabsImpl() override;
@@ -30,7 +29,6 @@ namespace dlgcpp
             IEvent<ISharedControl>& SelChangedEvent();
 
         private:
-            Tabs& _tabs;
             std::vector<ISharedTabItem> _items;
             int _currentIndex = -1;
             Event<ISharedControl> _selChangedEvent;

@@ -1,3 +1,4 @@
+#include "dlgcpp/dialogs/message.h"
 #include "dialogs/message_p.h"
 
 using namespace dlgcpp;

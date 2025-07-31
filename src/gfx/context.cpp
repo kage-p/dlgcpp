@@ -1,4 +1,4 @@
-
+#include "dlgcpp/gfx/context.h"
 #include "gfx/context_p.h"
 
 using namespace dlgcpp;
@@ -7,7 +7,6 @@ using namespace dlgcpp::gfx;
 DrawingContext::DrawingContext(std::shared_ptr<DrawingContextImpl> impl)
     : _impl(impl)
 {
-
 }
 
 bool DrawingContext::handled() const

@@ -54,19 +54,19 @@ set(platform_src
     menus/menu.cpp
     menus/menu_p.h
     menus/menu_item.cpp
-	menus/menu_item_p.h
-    utility/font.cpp
-    utility/font.h
-    utility/image.cpp
-    utility/image.h
-    utility/keys.cpp
-    utility/keys.h
+    menus/menu_item_p.h
+    utility/convert.cpp
+    utility/convert.h
+    utility/font_loader.cpp
+    utility/font_loader.h
+    utility/image_reader.cpp
+    utility/image_reader.h
+    utility/key_mapper.cpp
+    utility/key_mapper.h
     utility/message.cpp
     utility/message.h
-    utility/string.cpp
-    utility/string.h
-    utility/units.cpp
-    utility/units.h
+    utility/string_encoder.cpp
+    utility/string_encoder.h
 )
 
 # prefix paths
@@ -79,6 +79,7 @@ set(platform_includes
 set(platform_deps
     comctl32
     gdiplus
+	Msimg32
 )
 
 set(platform_src ${platform_src} PARENT_SCOPE)

@@ -1,14 +1,12 @@
 #include "combobox_p.h"
-#include "utility/string.h"
+#include "utility/string_encoder.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 ComboBoxImpl::ComboBoxImpl(
-    ComboBox& comboBox,
     const Position& p) :
-    ControlImpl(comboBox, std::string(), p),
-    _comboBox(comboBox)
+    ControlImpl(std::string(), p)
 {
     this->border(BorderStyle::Sunken);
 }
@@ -170,6 +168,9 @@ void ComboBoxImpl::dropDown(bool value)
         return;
 
     _dropDown = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -184,6 +185,9 @@ void ComboBoxImpl::editable(bool value)
         return;
 
     _editable = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -198,6 +202,9 @@ void ComboBoxImpl::sorted(bool value)
         return;
 
     _sorted = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -224,7 +231,7 @@ void ComboBoxImpl::updateItems()
 
     for (const auto& item : _items)
     {
-        SendMessageW(hwnd, CB_ADDSTRING, 0, (LPARAM)toWide(item).c_str());
+        SendMessageW(hwnd, CB_ADDSTRING, 0, (LPARAM)StringEncoder::toWide(item).c_str());
     }
 }
 
@@ -238,7 +245,7 @@ void ComboBoxImpl::readInput()
     auto cb = (int)GetWindowTextLengthW(hwnd) + 1;
     std::wstring buf(cb, 0);
     GetWindowTextW(hwnd, &buf[0], cb);
-    text(toBytes(buf.c_str()));
+    text(StringEncoder::toBytes(buf.c_str()));
 }
 
 IEvent<ISharedControl>& ComboBoxImpl::SelChangedEvent()

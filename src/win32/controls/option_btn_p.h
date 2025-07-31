@@ -15,7 +15,6 @@ namespace dlgcpp
         {
         public:
             explicit OptionButtonImpl(
-                OptionButton& optionBtn,
                 const std::string& text = std::string(),
                 const Position& p = Position());
 
@@ -29,7 +28,6 @@ namespace dlgcpp
             void verticalAlignment(VerticalAlign value);
 
         private:
-            OptionButton& _optionBtn;
             bool _checked = false;
             HorizontalAlign _horzAlign = HorizontalAlign::Left;
             VerticalAlign _vertAlign = VerticalAlign::Center;

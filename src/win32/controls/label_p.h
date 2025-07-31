@@ -15,7 +15,6 @@ namespace dlgcpp
         {
         public:
             explicit LabelImpl(
-                Label& label,
                 const std::string& text = std::string(),
                 const Position& p = Position());
 
@@ -36,7 +35,6 @@ namespace dlgcpp
             void verticalAlignment(VerticalAlign value);
 
         private:
-            Label& _label;
             bool _autoSize = false;
             bool _elipsis = false;
             bool _clickable = true;

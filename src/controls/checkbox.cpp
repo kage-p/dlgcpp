@@ -1,10 +1,11 @@
 #include "controls/checkbox_p.h"
+#include "dlgcpp/controls/checkbox.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 CheckBox::CheckBox(const std::string& text, const Position& p)
-    : CheckBox(std::make_shared<CheckBoxImpl>(*this, text, p))
+    : CheckBox(std::make_shared<CheckBoxImpl>(text, p))
 {
 }
 

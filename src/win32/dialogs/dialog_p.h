@@ -15,7 +15,7 @@ namespace dlgcpp
         {
         public:
             explicit DialogImpl(
-                Dialog& dialog,
+                IDialog& dialog,
                 DialogType type = DialogType::Application,
                 ISharedDialog parent = nullptr);
             virtual ~DialogImpl();
@@ -108,7 +108,7 @@ namespace dlgcpp
             void rebuild();
 
         private:
-            Dialog& _dialog;
+            IDialog& _dialog;
             ISharedDialog _parent;
             DialogType _type = DialogType::Application;
             int _id = 0;

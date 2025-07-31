@@ -17,7 +17,6 @@ namespace dlgcpp
         {
         public:
             explicit ComboBoxImpl(
-                ComboBox& comboBox,
                 const Position& p = Position());
 
             ~ComboBoxImpl() override;
@@ -40,7 +39,6 @@ namespace dlgcpp
             IEvent<ISharedControl>& ListCloseEvent();
 
         private:
-            ComboBox& _comboBox;
             bool _editable = true;
             bool _dropDown = false;
             bool _sorted = true;

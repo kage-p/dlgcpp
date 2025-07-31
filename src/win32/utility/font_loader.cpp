@@ -1,14 +1,14 @@
-#include "font.h"
-#include "string.h"
+#include "font_loader.h"
+#include "string_encoder.h"
 
 #include <strsafe.h>
 
 using namespace dlgcpp;
 
-HFONT dlgcpp::toGdiFont(const Font& font)
+HFONT FontLoader::toGdiFont(const Font& font)
 {
     LOGFONTW lf = {};
-    StringCchCopyW(lf.lfFaceName, LF_FACESIZE, toWide(font.family).c_str());
+    StringCchCopyW(lf.lfFaceName, LF_FACESIZE, StringEncoder::toWide(font.family).c_str());
 
     HDC hdc = GetDC(nullptr);
     lf.lfHeight = -MulDiv(abs(font.pointSize), GetDeviceCaps(hdc, LOGPIXELSY), 72);
@@ -22,7 +22,7 @@ HFONT dlgcpp::toGdiFont(const Font& font)
     return CreateFontIndirectW(&lf);
 }
 
-Font dlgcpp::toFont(HFONT gdiFont)
+Font FontLoader::toFont(HFONT gdiFont)
 {
     Font font;
 
@@ -34,7 +34,7 @@ Font dlgcpp::toFont(HFONT gdiFont)
     }
 
     // Set face name (assume ANSI for std::string)
-    font.family = toBytes(lf.lfFaceName);
+    font.family = StringEncoder::toBytes(lf.lfFaceName);
 
     // Convert height to point size
     HDC hdc = GetDC(nullptr);

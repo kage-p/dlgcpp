@@ -5,7 +5,7 @@ namespace dlgcpp
 {
     namespace controls
     {
-        class IButton
+        class IButton : public virtual IControl
         {
         public:
             virtual HorizontalAlign horizontalAlignment() const = 0;
@@ -13,6 +13,8 @@ namespace dlgcpp
             virtual VerticalAlign verticalAlignment() const = 0;
             virtual void verticalAlignment(VerticalAlign value) = 0;
         };
+
+        typedef std::shared_ptr<IButton> ISharedButton;
 
         class ButtonImpl;
 

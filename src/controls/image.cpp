@@ -1,10 +1,11 @@
 #include "controls/image_p.h"
+#include "dlgcpp/controls/image.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Image::Image(const Position& p)
-    : Image(std::make_shared<ImageImpl>(*this, p))
+    : Image(std::make_shared<ImageImpl>(p))
 {
 }
 

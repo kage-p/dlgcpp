@@ -1,12 +1,12 @@
 #include "listbox_p.h"
-#include "utility/string.h"
+#include "utility/string_encoder.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-ListBoxImpl::ListBoxImpl(ListBox& listBox, const Position& p) :
-    ControlImpl(listBox, std::string(), p),
-    _listBox(listBox)
+ListBoxImpl::ListBoxImpl(
+    const Position& p) :
+    ControlImpl(std::string(), p)
 {
     this->border(BorderStyle::Sunken);
 }
@@ -204,6 +204,9 @@ void ListBoxImpl::highlight(bool value)
         return;
 
     _highlight = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -218,6 +221,9 @@ void ListBoxImpl::multiselect(bool value)
         return;
 
     _multiselect = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -232,6 +238,9 @@ void ListBoxImpl::sorted(bool value)
         return;
 
     _sorted = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -258,7 +267,7 @@ void ListBoxImpl::updateItems()
 
     for (const auto& item : _items)
     {
-        SendMessageW(hwnd, LB_ADDSTRING, 0, (LPARAM)toWide(item).c_str());
+        SendMessageW(hwnd, LB_ADDSTRING, 0, (LPARAM)StringEncoder::toWide(item).c_str());
     }
 }
 

@@ -17,7 +17,7 @@ namespace dlgcpp
         class ListViewEditProps
         {
         public:
-            ListView* listView = nullptr;
+            IListView* listView = nullptr;
             bool editing = false;
             int idEditor = 100;
             HWND hwndEditor = 0;
@@ -31,7 +31,7 @@ namespace dlgcpp
         {
         public:
             explicit ListViewImpl(
-                ListView& listView,
+                IListView* listView,
                 const Position& p = Position());
 
             ~ListViewImpl() override;
@@ -57,6 +57,12 @@ namespace dlgcpp
             const std::vector<int>& selectedIndexes() const;
             void selectedIndexes(const std::vector<int>& indexes);
 
+            bool columnHeader() const;
+            void columnHeader(bool value);
+
+            bool sortColumns() const;
+            void sortColumns(bool value);
+
             IEvent<ISharedControl>& SelChangedEvent();
             IEvent<ISharedControl>& ColumnsChangedEvent();
             IEvent<ISharedControl>& RowsChangedEvent();
@@ -68,10 +74,12 @@ namespace dlgcpp
             void colors(Color fgColor, Color bgColor) override;
 
         private:
-            ListView& _listView;
+            IListView* _listView = nullptr;
             bool _checkboxes = false;
             bool _gridlines = false;
             bool _multiselect = false;
+            bool _columnHeader = true;
+            bool _sortColumns = true;
             ListViewDisplay _displayType = ListViewDisplay::Details;
             int _selectedIndex = -1;
             std::vector<int> _selectedIndexes;

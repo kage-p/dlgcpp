@@ -1,10 +1,11 @@
 #include "controls/label_p.h"
+#include "dlgcpp/controls/label.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Label::Label(const std::string& text, const Position& p)
-    : Label(std::make_shared<LabelImpl>(*this, text, p))
+    : Label(std::make_shared<LabelImpl>(text, p))
 {
 }
 

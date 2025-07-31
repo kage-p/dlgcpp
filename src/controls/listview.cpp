@@ -1,10 +1,11 @@
 #include "controls/listview_p.h"
+#include "dlgcpp/controls/listview.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 ListView::ListView(const Position& p)
-    : ListView(std::make_shared<ListViewImpl>(*this, p))
+    : ListView(std::make_shared<ListViewImpl>(this, p))
 {
     Control::border(BorderStyle::Sunken);
 }
@@ -63,6 +64,30 @@ void ListView::checkboxes(bool value)
     if (_impl->checkboxes() == value)
         return;
     _impl->checkboxes(value);
+}
+
+bool ListView::columnHeader() const
+{
+    return _impl->columnHeader();
+}
+
+void ListView::columnHeader(bool value)
+{
+    if (_impl->columnHeader() == value)
+        return;
+    _impl->columnHeader(value);
+}
+
+bool ListView::sortColumns() const
+{
+    return _impl->sortColumns();
+}
+
+void ListView::sortColumns(bool value)
+{
+    if (_impl->sortColumns() == value)
+        return;
+    _impl->sortColumns(value);
 }
 
 bool ListView::editing() const

@@ -1,6 +1,6 @@
-#include "../mocks/mocks.h"
 #include "dialog_tests.h"
-#include "dlgcpp/dlgcpp.h"
+#include "dlgcpp/controls/label.h"
+#include "mocks/mock_dialog.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::dialogs;
@@ -8,18 +8,18 @@ using namespace dlgcpp::controls;
 using namespace dlgcpp::menus;
 using namespace dlgcpp::tests;
 
-TEST(DialogTests, constructor_default)
+TEST_F(DialogTests, constructor_default)
 {
     auto target = std::make_shared<Dialog>();
     EXPECT_EQ(target->type(), DialogType::Application);
     EXPECT_EQ(target->p(), Position(0, 0, 600, 400));
 }
 
-TEST(DialogTests, test_constructor_with_params)
+TEST_F(DialogTests, test_constructor_with_params)
 {
     auto parent = std::make_shared<MockDialog>();
 
-    ON_CALL(*parent, p()).WillByDefault(testing::ReturnRefOfCopy(Position(10, 20, 30, 40)));
+    EXPECT_CALL(*parent, p()).WillRepeatedly(testing::ReturnRefOfCopy(Position(10, 20, 30, 40)));
 
     auto target = std::make_shared<Dialog>(DialogType::Popup, parent);
     EXPECT_EQ(target->type(), DialogType::Popup);
@@ -27,7 +27,7 @@ TEST(DialogTests, test_constructor_with_params)
     EXPECT_EQ(target->p(), Position(10, 20, 600, 400));
 }
 
-TEST(DialogTests, show)
+TEST_F(DialogTests, show)
 {
     int resultCode = 12345;
     auto target = std::make_shared<Dialog>();
@@ -39,13 +39,13 @@ TEST(DialogTests, show)
     EXPECT_EQ(result, resultCode);
 }
 
-TEST(DialogTests, parent)
+TEST_F(DialogTests, parent)
 {
     auto target = std::make_shared<Dialog>();
     EXPECT_EQ(target->parent(), nullptr);
 }
 
-TEST(DialogTests, enabled)
+TEST_F(DialogTests, enabled)
 {
     auto target = std::make_shared<Dialog>();
     target->enabled(true);
@@ -54,7 +54,7 @@ TEST(DialogTests, enabled)
     EXPECT_FALSE(target->enabled());
 }
 
-TEST(DialogTests, visible)
+TEST_F(DialogTests, visible)
 {
     auto target = std::make_shared<Dialog>();
     target->visible(true);
@@ -63,7 +63,7 @@ TEST(DialogTests, visible)
     EXPECT_FALSE(target->visible());
 }
 
-TEST(DialogTests, move)
+TEST_F(DialogTests, move)
 {
     auto target = std::make_shared<Dialog>();
     Point p(10, 20);
@@ -72,7 +72,7 @@ TEST(DialogTests, move)
     EXPECT_EQ(target->p().y(), 20);
 }
 
-TEST(DialogTests, resize)
+TEST_F(DialogTests, resize)
 {
     auto target = std::make_shared<Dialog>();
     Size s(100, 200);
@@ -81,7 +81,7 @@ TEST(DialogTests, resize)
     EXPECT_EQ(target->p().height(), 200);
 }
 
-TEST(DialogTests, showHelp)
+TEST_F(DialogTests, showHelp)
 {
     auto target = std::make_shared<Dialog>();
     target->showHelp(true);
@@ -90,7 +90,7 @@ TEST(DialogTests, showHelp)
     EXPECT_FALSE(target->showHelp());
 }
 
-TEST(DialogTests, color)
+TEST_F(DialogTests, color)
 {
     auto target = std::make_shared<Dialog>();
     Color c = Color::Red;
@@ -98,7 +98,7 @@ TEST(DialogTests, color)
     EXPECT_EQ(target->color(), c);
 }
 
-TEST(DialogTests, cursor)
+TEST_F(DialogTests, cursor)
 {
     auto target = std::make_shared<Dialog>();
     Cursor c = Cursor::Busy;
@@ -106,7 +106,7 @@ TEST(DialogTests, cursor)
     EXPECT_EQ(target->cursor(), c);
 }
 
-TEST(DialogTests, title)
+TEST_F(DialogTests, title)
 {
     auto target = std::make_shared<Dialog>();
 
@@ -117,7 +117,7 @@ TEST(DialogTests, title)
     EXPECT_EQ(target->title(), title);
 }
 
-TEST(DialogTests, image)
+TEST_F(DialogTests, image)
 {
     auto target = std::make_shared<Dialog>();
     ImageSource img{ "path/to/image", false, false };
@@ -131,7 +131,7 @@ TEST(DialogTests, image)
     EXPECT_EQ(target->image(), img);
 }
 
-TEST(DialogTests, menu)
+TEST_F(DialogTests, menu)
 {
     auto target = std::make_shared<Dialog>();
     auto menu = std::make_shared<Menu>();
@@ -139,13 +139,13 @@ TEST(DialogTests, menu)
     EXPECT_EQ(target->menu(), menu);
 }
 
-TEST(DialogTests, handle)
+TEST_F(DialogTests, handle)
 {
     auto target = std::make_shared<Dialog>();
     EXPECT_EQ(target->handle(), nullptr);
 }
 
-TEST(DialogTests, user)
+TEST_F(DialogTests, user)
 {
     auto target = std::make_shared<Dialog>();
     void* userData = reinterpret_cast<void*>(0x1234);
@@ -153,10 +153,10 @@ TEST(DialogTests, user)
     EXPECT_EQ(target->user(), userData);
 }
 
-TEST(DialogTests, addRemoveChildControl)
+TEST_F(DialogTests, addRemoveChildControl)
 {
     auto target = std::make_shared<Dialog>();
-    auto child = std::make_shared<Button>();
+    auto child = std::make_shared<Label>();
 
     target->add(child);
     auto controls = target->controls();
@@ -168,7 +168,7 @@ TEST(DialogTests, addRemoveChildControl)
     EXPECT_TRUE(controls.empty());
 }
 
-TEST(DialogTests, addRemoveChildDialog)
+TEST_F(DialogTests, addRemoveChildDialog)
 {
     auto target = std::make_shared<Dialog>();
     auto child = std::make_shared<Dialog>(DialogType::Frameless);
@@ -182,7 +182,7 @@ TEST(DialogTests, addRemoveChildDialog)
     EXPECT_TRUE(dialogs.empty());
 }
 
-TEST(DialogTests, events)
+TEST_F(DialogTests, events)
 {
     auto target = std::make_shared<Dialog>();
     auto& dropEvent = target->DropEvent();

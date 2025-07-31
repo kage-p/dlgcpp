@@ -1,3 +1,4 @@
+#include "dlgcpp/dialogs/dialog.h"
 #include "controls/control_p.h"
 #include "dialogs/dialog_p.h"
 
@@ -184,6 +185,11 @@ void* Dialog::user() const
 void Dialog::user(void* value)
 {
     _impl->user(value);
+}
+
+ISharedDialog Dialog::ptr()
+{
+    return std::dynamic_pointer_cast<IDialog>(shared_from_this());
 }
 
 ISharedDialog Dialog::parent() const

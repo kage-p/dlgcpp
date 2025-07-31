@@ -5,7 +5,7 @@
 #include "advanced/clock_demo.h"
 #include "advanced/drawing_demo.h"
 #include "advanced/graph_demo.h"
-#include "advanced/notes_demo.h"
+#include "advanced/note_keeper_demo.h"
 #include "advanced/popup_menu_demo.h"
 
 #include "controls/button_demo.h"

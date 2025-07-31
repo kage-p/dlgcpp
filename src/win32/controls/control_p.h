@@ -26,11 +26,14 @@ namespace dlgcpp
         {
         public:
             ControlImpl(
-                Control& control,
                 const std::string& text,
                 const Position& p);
 
             virtual ~ControlImpl();
+
+            // set hard link to parent control
+            // not ideal but we can't use a shared_ptr or pollute the interface
+            void control(Control* ptr);
 
             // properties
             virtual bool enabled() const;
@@ -94,7 +97,6 @@ namespace dlgcpp
             int id() const;
             void id(int value);
             virtual int idRange() const;
-            std::shared_ptr<IControl> control();
             virtual void notify(DialogMessage&);
             virtual void rebuild();
             void parent(ISharedDialog);
@@ -103,6 +105,7 @@ namespace dlgcpp
 
         protected:
             // shared with derived internal class only
+            ISharedControl control();
             bool wantInternalEvents() const;
             void wantInternalEvents(bool value);
 
@@ -113,7 +116,7 @@ namespace dlgcpp
             virtual void notify(ControlMessage&);
 
         private:
-            Control& _control;
+            Control* _control = nullptr;
             ISharedDialog _parent;
             bool _enabled = true;
             bool _visible = true;
@@ -150,10 +153,11 @@ namespace dlgcpp
             Event<int> _userEvent;
 
             // state properties
-            HWND _hwnd = NULL;
-            HFONT _hFont = NULL;
-            HBRUSH _hbrBack = NULL;
-            WNDPROC _prevWndProc = NULL;
+            HWND _hwnd = 0;
+            HWND _hwndParent = 0;
+            HFONT _hFont = 0;
+            HBRUSH _hbrBack = 0;
+            WNDPROC _prevWndProc = 0;
 
             void destruct();
             bool mustBeSubclassed() const;

@@ -15,14 +15,12 @@ namespace dlgcpp
         {
         public:
             explicit CustomImpl(
-                Custom& custom,
                 const std::string& className,
                 const Position& p = Position());
 
             ~CustomImpl() override;
 
         private:
-            Custom& _custom;
             std::string _className;
 
             std::string className() const override;

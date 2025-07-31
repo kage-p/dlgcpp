@@ -1,10 +1,11 @@
 #include "controls/combobox_p.h"
+#include "dlgcpp/controls/combobox.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 ComboBox::ComboBox(const Position& p)
-    : ComboBox(std::make_shared<ComboBoxImpl>(*this, p))
+    : ComboBox(std::make_shared<ComboBoxImpl>(p))
 {
 }
 

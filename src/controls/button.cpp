@@ -1,10 +1,11 @@
 #include "controls/button_p.h"
+#include "dlgcpp/controls/button.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Button::Button(const std::string& text, const Position& p)
-    : Button(std::make_shared<ButtonImpl>(*this, text, p))
+    : Button(std::make_shared<ButtonImpl>(text, p))
 {
 }
 

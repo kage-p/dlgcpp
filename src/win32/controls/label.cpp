@@ -1,18 +1,16 @@
 #include "dlgcpp/dialogs/dialog.h"
 #include "label_p.h"
-#include "utility/font.h"
-#include "utility/string.h"
-#include "utility/units.h"
+#include "utility/convert.h"
+#include "utility/font_loader.h"
+#include "utility/string_encoder.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 LabelImpl::LabelImpl(
-    Label& label,
     const std::string& text,
     const Position& p) :
-    ControlImpl(label, text, p),
-    _label(label)
+    ControlImpl(text, p)
 {
 }
 
@@ -145,19 +143,18 @@ void LabelImpl::updateAutoSize()
 
     auto f = ControlImpl::font();
     if (!f.family.empty())
-        hFont = toGdiFont(f);
+        hFont = FontLoader::toGdiFont(f);
 
     auto hdc = CreateCompatibleDC(NULL);
     auto szl = SIZE();
     SelectObject(hdc, hFont);
     std::string text = ControlImpl::text();
-    GetTextExtentPoint32W(hdc, toWide(text).c_str(), (int)text.size(), &szl);
+    GetTextExtentPoint32W(hdc, StringEncoder::toWide(text).c_str(), (int)text.size(), &szl);
     DeleteDC(hdc);
     DeleteObject(hFont);
 
     auto hwndParent = reinterpret_cast<HWND>(parent()->handle());
-    Size size(szl.cx + 1, szl.cy + 1);
-    toUnits(hwndParent, size);
+    Size size = Convert(hwndParent).toUnits(Size(szl.cx + 1, szl.cy + 1));
     ControlImpl::resize(size);
 }
 
@@ -171,6 +168,9 @@ void LabelImpl::elipsis(bool value)
     if (_elipsis == value)
         return;
     _elipsis = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -184,6 +184,9 @@ void LabelImpl::horizontalAlignment(HorizontalAlign value)
     if (_horzAlign == value)
         return;
     _horzAlign = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -202,5 +205,8 @@ void LabelImpl::verticalAlignment(VerticalAlign value)
         return;
 
     _vertAlign = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }

@@ -4,11 +4,9 @@ using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 CheckBoxImpl::CheckBoxImpl(
-    CheckBox& checkBox,
     const std::string& text,
     const Position& p) :
-    ControlImpl(checkBox, text, p),
-    _checkBox(checkBox)
+    ControlImpl(text, p)
 {
 }
 
@@ -130,7 +128,6 @@ void CheckBoxImpl::autoCheck(bool value)
 
     if (handle() == nullptr)
         return;
-
     rebuild();
 }
 
@@ -144,6 +141,9 @@ void CheckBoxImpl::horizontalAlignment(HorizontalAlign value)
     if (_horzAlign == value)
         return;
     _horzAlign = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -157,5 +157,8 @@ void CheckBoxImpl::verticalAlignment(VerticalAlign value)
     if (_vertAlign == value)
         return;
     _vertAlign = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }

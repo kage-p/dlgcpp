@@ -3,9 +3,9 @@
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-ProgressImpl::ProgressImpl(Progress& progressBar, const Position& p) :
-    ControlImpl(progressBar, std::string(), p),
-    _progressBar(progressBar)
+ProgressImpl::ProgressImpl(
+    const Position& p) :
+    ControlImpl(std::string(), p)
 {
     this->border(BorderStyle::Thin);
 }

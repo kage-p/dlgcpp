@@ -4,7 +4,7 @@
 using namespace dlgcpp;
 
 std::shared_ptr<Menu> createMenu(
-    std::shared_ptr<TreeViewDemoImpl> TreeView);
+    std::shared_ptr<DemoTreeView> TreeView);
 
 void controls_treeview_demo(ISharedDialog parent)
 {
@@ -16,7 +16,7 @@ void controls_treeview_demo(ISharedDialog parent)
     auto label = std::make_shared<Label>("Right click on tree for options", Position{ 10, 10, 430, 15 });
     dlg->add(label);
 
-    auto treeView = std::make_shared<TreeViewDemoImpl>();
+    auto treeView = std::make_shared<DemoTreeView>();
     treeView->p(Position{ 10, 25, 430, 315 });
     treeView->colors(Color::Gray, Color::White);
     treeView->font({ "Arial", 12, 0 });
@@ -56,7 +56,7 @@ void controls_treeview_demo(ISharedDialog parent)
 
     // create sample items using path
 
-    auto items = std::vector<TreeViewDemoItem>
+    auto items = std::vector<DemoTreeViewItem>
     {
         { "Root", "Root" },
         { "Root/Group1", "Group 1" },
@@ -78,7 +78,7 @@ void controls_treeview_demo(ISharedDialog parent)
 }
 
 std::shared_ptr<Menu> createMenu(
-    std::shared_ptr<TreeViewDemoImpl> treeView)
+    std::shared_ptr<DemoTreeView> treeView)
 {
     auto menu = std::make_shared<Menu>();
     ISharedMenuItem item;
@@ -121,17 +121,17 @@ std::shared_ptr<Menu> createMenu(
     return menu;
 }
 
-TreeViewDemoImpl::TreeViewDemoImpl() :
+DemoTreeView::DemoTreeView() :
     TreeView()
 {
 }
 
-std::shared_ptr<TreeViewNode> TreeViewDemoImpl::rootNode() const
+std::shared_ptr<TreeViewNode> DemoTreeView::rootNode() const
 {
     return _rootNode;
 }
 
-std::vector<std::shared_ptr<TreeViewNode>> TreeViewDemoImpl::childNodes(std::shared_ptr<TreeViewNode> parent) const
+std::vector<std::shared_ptr<TreeViewNode>> DemoTreeView::childNodes(std::shared_ptr<TreeViewNode> parent) const
 {
     // return nodes for parent item
     auto children = std::vector<std::shared_ptr<TreeViewNode>>();
@@ -143,7 +143,7 @@ std::vector<std::shared_ptr<TreeViewNode>> TreeViewDemoImpl::childNodes(std::sha
     return children;
 }
 
-bool TreeViewDemoImpl::beginEdit(std::shared_ptr<TreeViewNode> node)
+bool DemoTreeView::beginEdit(std::shared_ptr<TreeViewNode> node)
 {
     if (node == rootNode())
         // prevent editing root node
@@ -153,7 +153,7 @@ bool TreeViewDemoImpl::beginEdit(std::shared_ptr<TreeViewNode> node)
     return true;
 }
 
-bool TreeViewDemoImpl::endEdit(std::shared_ptr<TreeViewNode> node, const std::string& text)
+bool DemoTreeView::endEdit(std::shared_ptr<TreeViewNode> node, const std::string& text)
 {
     if (node == rootNode())
         // prevent editing root node
@@ -163,8 +163,8 @@ bool TreeViewDemoImpl::endEdit(std::shared_ptr<TreeViewNode> node, const std::st
     return true;
 }
 
-void TreeViewDemoImpl::setItems(
-    const std::vector<TreeViewDemoItem>& items)
+void DemoTreeView::setItems(
+    const std::vector<DemoTreeViewItem>& items)
 {
     _rootNode = nullptr;
 

@@ -4,8 +4,7 @@
 #include "dlgcpp/controls/label.h"
 #include "dlgcpp/controls/textbox.h"
 #include "dlgcpp/dialogs/dialog.h"
-#include "utility/image.h"
-#include "utility/string.h"
+#include "utility/string_encoder.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -147,7 +146,7 @@ void AboutDialogImpl::show()
         webLink->font(Font{ "MS Sans Serif", 8, false, false, true });
         webLink->autoSize(true);
 
-        auto homtPageText = toWide(_homePageLink);
+        auto homtPageText = StringEncoder::toWide(_homePageLink);
         webLink->ClickEvent() +=
             [homtPageText](ISharedControl control)
             {

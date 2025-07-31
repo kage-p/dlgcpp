@@ -1,3 +1,4 @@
+#include "dlgcpp/dialogs/splash.h"
 #include "dialogs/splash_p.h"
 
 using namespace dlgcpp;

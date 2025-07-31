@@ -17,7 +17,6 @@ namespace dlgcpp
         {
         public:
             explicit ProgressImpl(
-                Progress& progress,
                 const Position& p = Position());
 
             ~ProgressImpl() override;
@@ -33,7 +32,6 @@ namespace dlgcpp
             IEvent<ISharedControl>& ChangedEvent();
 
         private:
-            Progress& _progressBar;
             bool _vertical = false;
             int _value = 0;
             std::pair<int, int> _range = { 0,100 };

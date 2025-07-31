@@ -1,10 +1,11 @@
 #include "controls/tabs_p.h"
+#include "dlgcpp/controls/tabs.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Tabs::Tabs(const Position& p)
-    : Tabs(std::make_shared<TabsImpl>(*this, p))
+    : Tabs(std::make_shared<TabsImpl>(p))
 {
 }
 

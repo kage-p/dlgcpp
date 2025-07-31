@@ -1,13 +1,14 @@
 #include "slider_p.h"
-#include "utility/string.h"
+#include "utility/string_encoder.h"
 #include <strsafe.h>
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-SliderImpl::SliderImpl(Slider& slider, const std::string& text, const Position& p) :
-    ControlImpl(slider, text, p),
-    _slider(slider)
+SliderImpl::SliderImpl(
+    const std::string& text,
+    const Position& p) :
+    ControlImpl(text, p)
 {
     sldRegister();
     this->border(BorderStyle::Thin);
@@ -627,7 +628,7 @@ bool SliderImpl::sldRegister()
     WNDCLASS wc = WNDCLASS();
 
     TCHAR szClass[64];
-    StringCchCopy(szClass, 64, toWide(SliderControlClass).c_str());
+    StringCchCopy(szClass, 64, StringEncoder::toWide(SliderControlClass).c_str());
     wc.lpfnWndProc = &SliderWndProc;
     wc.hInstance = GetModuleHandle(NULL);
     wc.cbWndExtra = sizeof(LPVOID); // Correct
@@ -644,7 +645,7 @@ bool SliderImpl::sldRegister()
 bool SliderImpl::sldUnregister()
 {
     return UnregisterClass(
-        toWide(SliderControlClass).c_str(),
+        StringEncoder::toWide(SliderControlClass).c_str(),
         GetModuleHandle(NULL)) != 0;
 }
 

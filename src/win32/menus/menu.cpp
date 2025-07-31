@@ -1,9 +1,9 @@
 #include "dlgcpp/controls/control.h"
 #include "dlgcpp/dialogs/dialog.h"
 #include "menu_p.h"
+#include "utility/convert.h"
 #include "utility/message.h"
-#include "utility/string.h"
-#include "utility/units.h"
+#include "utility/string_encoder.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -101,7 +101,7 @@ MENUITEMINFOW MenuImpl::menuItemToStruct(
     std::wstring& buffer)
 {
     if (!item->separator())
-        buffer = toWide(item->text());
+        buffer = StringEncoder::toWide(item->text());
 
     UINT stateFlags = 0;
     if (item->checked())
@@ -261,8 +261,7 @@ void MenuImpl::popup(ISharedDialog parent, const Point& coords)
     }
 
     // coordinates must be in pixels
-    Point pxCoords(coords);
-    toPixels(hwndDialog, pxCoords);
+    Point pxCoords = Convert(hwndDialog).toPixels(coords);
 
     // map from dialog -> desktop
     auto pt = POINT{ pxCoords.x(), pxCoords.y() };
@@ -310,8 +309,7 @@ void MenuImpl::popup(ISharedControl parent, const Point& coords)
     }
 
     // coordinates must be in pixels
-    Point pxCoords(coords);
-    toPixels(hwndDialog, pxCoords);
+    Point pxCoords = Convert(hwndDialog).toPixels(coords);
 
     // map from control -> dialog -> desktop
     auto pt = POINT{ pxCoords.x(), pxCoords.y() };

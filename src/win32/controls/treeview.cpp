@@ -1,7 +1,6 @@
 #include "control_p.h"
 #include "treeview_p.h"
-#include "utility/string.h"
-#include "utility/units.h"
+#include "utility/string_encoder.h"
 #include <strsafe.h>
 
 #include <Windowsx.h>
@@ -10,9 +9,9 @@ using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 TreeViewImpl::TreeViewImpl(
-    TreeView& treeView,
+    ITreeView* treeView,
     const Position& p) :
-    ControlImpl(treeView, std::string(), p),
+    ControlImpl(std::string(), p),
     _treeView(treeView)
 {
     ControlImpl::border(BorderStyle::Sunken);
@@ -101,7 +100,7 @@ void TreeViewImpl::notify(DialogMessage& msg)
             // set the item text
             if (nmdi.item.mask & TVIF_TEXT)
             {
-                auto wide = toWide(node->text());
+                auto wide = StringEncoder::toWide(node->text());
                 StringCchCopy(nmdi.item.pszText, nmdi.item.cchTextMax, wide.data());
             }
         }
@@ -204,7 +203,7 @@ void TreeViewImpl::notify(DialogMessage& msg)
             auto hitem = nmdi.item.hItem;
             auto node = nodeFromItem(hitem);
             if (node == nullptr ||
-                !_treeView.beginEdit(node))
+                !_treeView->beginEdit(node))
             {
                 // prevent edit of this item
                 msg.dlgResult = TRUE;
@@ -227,7 +226,7 @@ void TreeViewImpl::notify(DialogMessage& msg)
                 auto node = nodeFromItem(hitem);
                 if (node != nullptr)
                 {
-                    if (!_treeView.endEdit(node, toBytes(nmdi.item.pszText)))
+                    if (!_treeView->endEdit(node, StringEncoder::toBytes(nmdi.item.pszText)))
                     {
                         msg.dlgResult = TRUE;
                         msg.msgResult = FALSE;
@@ -526,7 +525,7 @@ void TreeViewImpl::updateRootNode()
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    auto node = _treeView.rootNode();
+    auto node = _treeView->rootNode();
     TreeView_DeleteAllItems(hwnd);
 
     _hRootNode = NULL;
@@ -541,7 +540,7 @@ void TreeViewImpl::updateRootNode()
     tvis.item.mask = TVIF_TEXT | TVIF_CHILDREN;
     tvis.item.pszText = LPSTR_TEXTCALLBACK;
 
-    auto childCount = _treeView.childNodes(node).size();
+    auto childCount = _treeView->childNodes(node).size();
     tvis.item.cChildren = (int)childCount;
 
     auto hItem = TreeView_InsertItem(hwnd, &tvis);
@@ -563,7 +562,7 @@ void TreeViewImpl::updateChildNodes(std::shared_ptr<TreeViewNode> parent)
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    auto children = _treeView.childNodes(parent);
+    auto children = _treeView->childNodes(parent);
     if (children.empty())
     {
         return;
@@ -581,7 +580,7 @@ void TreeViewImpl::updateChildNodes(std::shared_ptr<TreeViewNode> parent)
 
     for (auto& node : children)
     {
-        auto childCount = _treeView.childNodes(node).size();
+        auto childCount = _treeView->childNodes(node).size();
         tvis.item.cChildren = (int)childCount;
 
         auto hItem = TreeView_InsertItem(hwnd, &tvis);

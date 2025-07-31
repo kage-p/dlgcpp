@@ -1,4 +1,4 @@
-#include "notes_demo.h"
+#include "note_keeper_demo.h"
 
 using namespace dlgcpp;
 

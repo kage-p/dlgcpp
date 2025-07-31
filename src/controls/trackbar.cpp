@@ -1,10 +1,11 @@
 #include "controls/trackbar_p.h"
+#include "dlgcpp/controls/trackbar.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 TrackBar::TrackBar(const Position& p)
-    : TrackBar(std::make_shared<TrackBarImpl>(*this, p))
+    : TrackBar(std::make_shared<TrackBarImpl>(p))
 {
 }
 

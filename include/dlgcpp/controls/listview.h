@@ -22,7 +22,7 @@ namespace dlgcpp
             int role = 0;
         };
 
-        class IListView
+        class IListView : public virtual IControl
         {
         public:
             virtual ListViewDisplay display() const = 0;
@@ -46,6 +46,12 @@ namespace dlgcpp
             virtual const std::vector<int>& selectedIndexes() const = 0;
             virtual void selectedIndexes(const std::vector<int>& indexes) = 0;
 
+            virtual bool columnHeader() const = 0;
+            virtual void columnHeader(bool value) = 0;
+
+            virtual bool sortColumns() const = 0;
+            virtual void sortColumns(bool value) = 0;
+
             // list data handling
             virtual int roleData(int column) const = 0;
             virtual ListViewColumn columnData(int role) const = 0;
@@ -66,6 +72,8 @@ namespace dlgcpp
             virtual IEvent<ISharedControl, size_t, int>& ItemClickEvent() = 0;
             virtual IEvent<ISharedControl, size_t, int>& ItemDoubleClickEvent() = 0;
         };
+
+        typedef std::shared_ptr<IListView> ISharedListView;
 
         class ListViewImpl;
 
@@ -99,6 +107,12 @@ namespace dlgcpp
             const std::vector<int>& selectedIndexes() const override;
             void selectedIndexes(const std::vector<int>& indexes) override;
 
+            bool columnHeader() const override;
+            void columnHeader(bool value) override;
+
+            bool sortColumns() const override;
+            void sortColumns(bool value) override;
+
             // placeholders
             int roleData(int column) const override;
             ListViewColumn columnData(int role) const override;
@@ -108,7 +122,7 @@ namespace dlgcpp
             bool beginEdit(size_t row, int role) override;
             bool endEdit(size_t row, int role, const std::string& text) override;
             bool checked(size_t row) const override;
-            void checked(size_t row, bool checked);
+            void checked(size_t row, bool checked) override;
 
             IEvent<ISharedControl>& SelChangedEvent() override;
             IEvent<ISharedControl>& ColumnsChangedEvent() override;

@@ -1,13 +1,15 @@
 #include "listview_p.h"
-#include "utility/string.h"
-#include "utility/units.h"
+#include "utility/convert.h"
+#include "utility/string_encoder.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 
-ListViewImpl::ListViewImpl(ListView& listView, const Position& p) :
-    ControlImpl(listView, std::string(), p),
+ListViewImpl::ListViewImpl(
+    IListView* listView,
+    const Position& p) :
+    ControlImpl(std::string(), p),
     _listView(listView)
 {
     ControlImpl::border(BorderStyle::Sunken);
@@ -37,6 +39,10 @@ unsigned int ListViewImpl::styles() const
 
     if (!_multiselect)
         styles |= LVS_SINGLESEL;
+    if (!_columnHeader)
+        styles |= LVS_NOCOLUMNHEADER;
+    if (!_sortColumns)
+        styles |= LVS_NOSORTHEADER;
 
     switch (_displayType)
     {
@@ -106,21 +112,21 @@ void ListViewImpl::notify(DialogMessage& msg)
             if (nmdi.item.mask & LVIF_TEXT)
             {
                 // check the role
-                const auto colCount = _listView.columnCount();
-                if (colCount == 0 || nmdi.item.iSubItem >= (int)colCount)
-                    return;
+                const auto colCount = _listView->columnCount();
+                if (colCount > 0 || nmdi.item.iSubItem < (int)colCount)
+                {
+                    // extract text
+                    int role = _listView->roleData(nmdi.item.iSubItem);
+                    auto text = _listView->rowData(nmdi.item.iItem, role);
 
-                // extract text
-                int role = _listView.roleData(nmdi.item.iSubItem);
-                auto text = _listView.rowData(nmdi.item.iItem, role);
-
-                _displayBuffer = toWide(text);
-                nmdi.item.pszText = _displayBuffer.data();
+                    _displayBuffer = StringEncoder::toWide(text);
+                    nmdi.item.pszText = _displayBuffer.data();
+                }
             }
 
             if (nmdi.item.mask & LVIF_STATE)
             {
-                bool isChecked = _listView.checked(nmdi.item.iItem);
+                bool isChecked = _listView->checked(nmdi.item.iItem);
                 nmdi.item.stateMask = LVIS_STATEIMAGEMASK;
                 nmdi.item.state = INDEXTOSTATEIMAGEMASK(isChecked ? 2 : 1);
             }
@@ -138,6 +144,7 @@ void ListViewImpl::notify(DialogMessage& msg)
         }
         else if (nmhdr.code == NM_CLICK)
         {
+            // left click on control
             auto& nmItemActivate = *(LPNMITEMACTIVATE)msg.lParam;
 
             auto hit = LVHITTESTINFO();
@@ -149,7 +156,7 @@ void ListViewImpl::notify(DialogMessage& msg)
                 (hit.iItem >= 0))
             {
                 // checkbox clicked
-                _listView.checked(nmItemActivate.iItem, !_listView.checked(nmItemActivate.iItem));
+                _listView->checked(nmItemActivate.iItem, !_listView->checked(nmItemActivate.iItem));
                 ListView_RedrawItems(nmhdr.hwndFrom, hit.iItem, hit.iItem);
             }
             else if (hit.iItem >= 0)
@@ -158,17 +165,17 @@ void ListViewImpl::notify(DialogMessage& msg)
                 _itemClickEvent.invoke(
                     control(),
                     nmItemActivate.iItem,
-                    _listView.roleData(nmItemActivate.iSubItem));
+                    _listView->roleData(nmItemActivate.iSubItem));
             }
         }
         else if (nmhdr.code == NM_DBLCLK)
         {
-            // double click on item
+            // left-double click on control
             auto& nmItemActivate = *(LPNMITEMACTIVATE)msg.lParam;
 
             beginEditing(
                 nmItemActivate.iItem,
-                _listView.roleData(nmItemActivate.iSubItem));
+                _listView->roleData(nmItemActivate.iSubItem));
 
             if (nmItemActivate.iItem >= 0)
             {
@@ -176,7 +183,7 @@ void ListViewImpl::notify(DialogMessage& msg)
                 _itemDblClickEvent.invoke(
                     control(),
                     nmItemActivate.iItem,
-                    _listView.roleData(nmItemActivate.iSubItem));
+                    _listView->roleData(nmItemActivate.iSubItem));
             }
         }
         else if (nmhdr.code == LVN_COLUMNCLICK)
@@ -186,7 +193,7 @@ void ListViewImpl::notify(DialogMessage& msg)
 
             _columnClickEvent.invoke(
                 control(),
-                _listView.roleData(nmlv.iSubItem));
+                _listView->roleData(nmlv.iSubItem));
         }
         else if (nmhdr.code == NM_SETFOCUS)
         {
@@ -263,7 +270,7 @@ void ListViewImpl::selectedIndexes(const std::vector<int>& indexes)
     {
         // skip invalid
         if (index < 0 ||
-            index >(int)_listView.rowCount())
+            index >(int)_listView->rowCount())
             continue;
 
         // skip duplicates
@@ -328,6 +335,39 @@ void ListViewImpl::checkboxes(bool value)
     updateExtStyles();
 }
 
+
+bool ListViewImpl::columnHeader() const
+{
+    return _columnHeader;
+}
+
+void ListViewImpl::columnHeader(bool value)
+{
+    if (_columnHeader == value)
+        return;
+    _columnHeader = value;
+
+    if (handle() == nullptr)
+        return;
+    rebuild();
+}
+
+bool ListViewImpl::sortColumns() const
+{
+    return _sortColumns;
+}
+
+void ListViewImpl::sortColumns(bool value)
+{
+    if (_sortColumns == value)
+        return;
+    _sortColumns = value;
+
+    if (handle() == nullptr)
+        return;
+    rebuild();
+}
+
 bool ListViewImpl::editing() const
 {
     return _editState.editing;
@@ -350,10 +390,10 @@ bool ListViewImpl::beginEditing(size_t row, int role)
     }
 
     // request to edit the item
-    if (!_listView.beginEdit(row, role))
+    if (!_listView->beginEdit(row, role))
         return false;
 
-    std::string pretext = _listView.rowData(row, role);
+    std::string pretext = _listView->rowData(row, role);
 
     // get column from role
     auto column = _columnRoles.at(role);
@@ -370,7 +410,7 @@ bool ListViewImpl::beginEditing(size_t row, int role)
     auto hwndEditor = CreateWindowEx(
         0,
         WC_EDIT,
-        toWide(pretext).data(),
+        StringEncoder::toWide(pretext).data(),
         WS_CHILD | WS_VISIBLE | WS_BORDER | ES_AUTOHSCROLL,
         rc.left + 2,
         rc.top > 0 ? rc.top - 1 : 0,
@@ -403,7 +443,7 @@ bool ListViewImpl::beginEditing(size_t row, int role)
     SetFocus(hwndEditor);
 
     _editState.hwndEditor = hwndEditor;
-    _editState.listView = &_listView;
+    _editState.listView = _listView;
     _editState.row = row;
     _editState.column = column;
     _editState.role = role;
@@ -424,9 +464,9 @@ void ListViewImpl::confirmEditing()
     if (len > 0)
         GetWindowTextW(_editState.hwndEditor, buf.data(), len + 1);
 
-    auto text = toBytes(buf.data());
+    auto text = StringEncoder::toBytes(buf.data());
 
-    bool changed = _listView.endEdit(
+    bool changed = _listView->endEdit(
         _editState.row,
         _editState.role,
         text);
@@ -570,24 +610,28 @@ void ListViewImpl::updateColumns()
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    auto colCount = (int)_listView.columnCount();
-    int index = 0;
+    // remove existing columns
+    while (SendMessageW(hwnd, LVM_DELETECOLUMN, 0, 0) != 0);
 
+    auto colCount = (int)_listView->columnCount();
+    if (colCount == 0)
+        return;
+
+    int index = 0;
     _columnRoles.clear();
     for (auto colIdx = 0; colIdx < colCount; colIdx++)
     {
-        auto role = _listView.roleData(colIdx);
+        auto role = _listView->roleData(colIdx);
         _columnRoles[role] = colIdx;
 
-        auto colData = _listView.columnData(role);
+        auto colData = _listView->columnData(role);
 
-        auto text = toWide(colData.text());
+        auto text = StringEncoder::toWide(colData.text());
         auto lvc = LVCOLUMNW();
         lvc.mask = LVCF_TEXT | LVCF_WIDTH;
         lvc.pszText = text.data();
 
-        Size s(colData.width(), 0);
-        toPixels(GetParent(hwnd), s);
+        Size s = Convert(GetParent(hwnd)).toPixels(Size(colData.width(), 0));
         lvc.cx = s.width();
 
         SendMessageW(hwnd, LVM_INSERTCOLUMNW, (WPARAM)index, (LPARAM)&lvc);
@@ -601,7 +645,7 @@ void ListViewImpl::updateRows()
         return;
     auto hwnd = reinterpret_cast<HWND>(handle());
 
-    SendMessage(hwnd, LVM_SETITEMCOUNT, (WPARAM)_listView.rowCount(), 0);
+    SendMessage(hwnd, LVM_SETITEMCOUNT, (WPARAM)_listView->rowCount(), 0);
 }
 
 void ListViewImpl::onColumnsChanged()

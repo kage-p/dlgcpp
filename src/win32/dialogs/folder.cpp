@@ -1,6 +1,6 @@
 #include "dlgcpp/dialogs/dialog.h"
 #include "folder_p.h"
-#include "utility/string.h"
+#include "utility/string_encoder.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -70,10 +70,10 @@ int CALLBACK FolderDialogImpl::browseFolderProc(HWND hwnd, UINT uMsg, LPARAM lPa
     case BFFM_INITIALIZED:
         // initialize additional properties
         if (!impl->folderName().empty())
-            SendMessageW(hwnd, BFFM_SETSELECTION, 1, (LPARAM)toWide(impl->folderName()).c_str());
+            SendMessageW(hwnd, BFFM_SETSELECTION, 1, (LPARAM)StringEncoder::toWide(impl->folderName()).c_str());
 
         if (!impl->title().empty())
-            SetWindowTextW(hwnd, toWide(impl->title()).c_str());
+            SetWindowTextW(hwnd, StringEncoder::toWide(impl->title()).c_str());
         break;
 
     case BFFM_SELCHANGED:
@@ -86,10 +86,9 @@ int CALLBACK FolderDialogImpl::browseFolderProc(HWND hwnd, UINT uMsg, LPARAM lPa
 
 bool FolderDialogImpl::show(unsigned int flags)
 {
-
     auto bi = BROWSEINFOW();
 
-    auto titleBuf = toWide(_message);
+    auto titleBuf = StringEncoder::toWide(_message);
     bi.lpszTitle = titleBuf.c_str();
 
     if (_parent != nullptr)
@@ -105,7 +104,7 @@ bool FolderDialogImpl::show(unsigned int flags)
     if ((pidlList == NULL) || (SHGetPathFromIDListW(pidlList, &buf[0]) == FALSE))
         return false;
 
-    _folderName = toBytes(buf.c_str());
+    _folderName = StringEncoder::toBytes(buf.c_str());
     auto c = _folderName.back();
     if (c == '\\' || c == '/')
         _folderName.pop_back();

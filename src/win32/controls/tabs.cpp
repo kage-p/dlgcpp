@@ -1,14 +1,14 @@
 #include "tabs_p.h"
-#include "utility/image.h"
-#include "utility/string.h"
-#include "utility/units.h"
+#include "utility/convert.h"
+#include "utility/image_reader.h"
+#include "utility/string_encoder.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-TabsImpl::TabsImpl(Tabs& tabs, const Position& p) :
-    ControlImpl(tabs, std::string(), p),
-    _tabs(tabs)
+TabsImpl::TabsImpl(
+    const Position& p) :
+    ControlImpl(std::string(), p)
 {
 }
 
@@ -56,6 +56,7 @@ Position TabsImpl::area() const
     if (handle() == nullptr)
         return Position();
     auto hwnd = reinterpret_cast<HWND>(handle());
+    auto hwndParent = GetParent(hwnd);
 
     // adjust the rectangle to exclude the tab area
     auto rc = RECT();
@@ -63,10 +64,10 @@ Position TabsImpl::area() const
     SendMessage(hwnd, TCM_ADJUSTRECT, FALSE, (LPARAM)&rc);
 
     // map to parent dialog
-    MapWindowPoints(hwnd, GetParent(hwnd), (LPPOINT)&rc, 2);
+    MapWindowPoints(hwnd, hwndParent, (LPPOINT)&rc, 2);
 
     auto pos = Position(rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top);
-    return toUnits(GetParent(hwnd), pos);
+    return Convert(hwndParent).toUnits(pos);
 }
 
 const std::vector<ISharedTabItem>& TabsImpl::items() const
@@ -97,7 +98,7 @@ void TabsImpl::updateItems()
     {
         auto tci = TCITEMW();
 
-        auto text = toWide(item->text());
+        auto text = StringEncoder::toWide(item->text());
         if (!text.empty())
         {
             tci.mask = TCIF_TEXT;
@@ -109,7 +110,7 @@ void TabsImpl::updateItems()
             tci.mask |= TCIF_IMAGE;
             // add the image to the image list
             Size imgSize; // TODO: imageSize customisation
-            HANDLE hImage = loadImage(item->image(), imgSize);
+            HANDLE hImage = ImageReader::load(item->image(), imgSize);
 
             if (item->image().isIcon)
             {

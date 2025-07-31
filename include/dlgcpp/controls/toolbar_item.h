@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../defs.h"
-#include "../event.h"
+#include "dlgcpp/defs.h"
+#include "dlgcpp/event.h"
 #include <memory>
 
 namespace dlgcpp

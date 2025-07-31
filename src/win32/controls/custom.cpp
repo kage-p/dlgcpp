@@ -3,11 +3,9 @@
 using namespace dlgcpp::controls;
 
 CustomImpl::CustomImpl(
-    Custom& custom,
     const std::string& className,
     const Position& p) :
-    ControlImpl(custom, std::string(), p),
-    _custom(custom)
+    ControlImpl(std::string(), p)
 {
     _className = className;
 }

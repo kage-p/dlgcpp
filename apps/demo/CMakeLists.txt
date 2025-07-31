@@ -14,8 +14,8 @@ set(src_files
     advanced/drawing_demo.h
     advanced/graph_demo.cpp
     advanced/graph_demo.h
-    advanced/notes_demo.cpp
-    advanced/notes_demo.h
+    advanced/note_keeper_demo.cpp
+    advanced/note_keeper_demo.h
     advanced/popup_menu_demo.cpp
     advanced/popup_menu_demo.h
     controls/button_demo.cpp    

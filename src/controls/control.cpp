@@ -1,4 +1,5 @@
 #include "controls/control_p.h"
+#include "dlgcpp/controls/control.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
@@ -6,6 +7,7 @@ using namespace dlgcpp::controls;
 Control::Control(std::shared_ptr<ControlImpl> impl)
     : _impl(impl)
 {
+    impl->control(this);
 }
 
 Control::~Control()

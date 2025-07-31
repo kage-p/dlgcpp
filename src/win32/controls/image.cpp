@@ -1,13 +1,13 @@
 #include "image_p.h"
-#include "utility/image.h"
-#include "utility/units.h"
+#include "utility/convert.h"
+#include "utility/image_reader.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-ImageImpl::ImageImpl(Image& image, const Position& p)
-    : ControlImpl(image, std::string(), p),
-    _image(image)
+ImageImpl::ImageImpl(
+    const Position& p)
+    : ControlImpl(std::string(), p)
 {
 }
 
@@ -92,19 +92,19 @@ void ImageImpl::updateImage()
     if (!_autoSize)
     {
         // image is same size as control
-        imgSizePx = p().size();
-        toPixels(HWND_DESKTOP, imgSizePx);
+        imgSizePx = Convert().toPixels(p().size());
     }
 
-    _hImage = loadImage(_imageSource, imgSizePx);
+    _hImage = ImageReader::load(_imageSource, imgSizePx);
     if (_autoSize)
     {
         // resize the control to fit the image
-        Size imgSizeDu(imgSizePx);
-        toUnits(HWND_DESKTOP, imgSizeDu);
+        Size imgSizeDu = Convert().toUnits(imgSizePx);
         ControlImpl::resize(imgSizeDu);
     }
 
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -131,6 +131,9 @@ void ImageImpl::centered(bool value)
     if (_centered == value)
         return;
     _centered = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 

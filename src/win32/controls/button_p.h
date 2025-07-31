@@ -15,7 +15,6 @@ namespace dlgcpp
         {
         public:
             explicit ButtonImpl(
-                Button& button,
                 const std::string& text = std::string(),
                 const Position& p = Position());
 
@@ -28,7 +27,6 @@ namespace dlgcpp
             void verticalAlignment(VerticalAlign value);
 
         private:
-            Button& _button;
             HorizontalAlign _horzAlign = HorizontalAlign::Center;
             VerticalAlign _vertAlign = VerticalAlign::Center;
 

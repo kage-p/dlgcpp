@@ -4,11 +4,9 @@ using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 OptionButtonImpl::OptionButtonImpl(
-    OptionButton& optionBtn,
     const std::string& text,
     const Position& p) :
-    ControlImpl(optionBtn, text, p),
-    _optionBtn(optionBtn)
+    ControlImpl(text, p)
 {
 }
 
@@ -120,6 +118,9 @@ void OptionButtonImpl::horizontalAlignment(HorizontalAlign value)
     if (_horzAlign == value)
         return;
     _horzAlign = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -133,5 +134,8 @@ void OptionButtonImpl::verticalAlignment(VerticalAlign value)
     if (_vertAlign == value)
         return;
     _vertAlign = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }

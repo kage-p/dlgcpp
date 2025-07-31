@@ -78,7 +78,7 @@ namespace dlgcpp
         };
 
         class Control :
-            public IControl,
+            public virtual IControl,
             public std::enable_shared_from_this<Control>
         {
             friend class dlgcpp::dialogs::DialogImpl;

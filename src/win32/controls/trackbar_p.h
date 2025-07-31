@@ -17,7 +17,6 @@ namespace dlgcpp
         {
         public:
             explicit TrackBarImpl(
-                TrackBar& trackBar,
                 const Position& p = Position());
 
             ~TrackBarImpl() override;
@@ -38,7 +37,6 @@ namespace dlgcpp
             IEvent<ISharedControl>& ChangedEvent();
 
         private:
-            TrackBar& _trackBar;
             bool _vertical = false;
             int _value = 0;
             std::pair<int, int> _range = { 0,100 };

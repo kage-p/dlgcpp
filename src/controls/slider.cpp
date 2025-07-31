@@ -1,10 +1,11 @@
 #include "controls/slider_p.h"
+#include "dlgcpp/controls/slider.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Slider::Slider(const std::string& text, const Position& p)
-    : Slider(std::make_shared<SliderImpl>(*this, text, p))
+    : Slider(std::make_shared<SliderImpl>(text, p))
 {
     this->border(BorderStyle::Thin);
 }

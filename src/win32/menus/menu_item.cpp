@@ -1,8 +1,7 @@
 
 #include "menu_item_p.h"
 #include "utility/message.h"
-#include "utility/string.h"
-#include "utility/units.h"
+#include "utility/string_encoder.h"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX

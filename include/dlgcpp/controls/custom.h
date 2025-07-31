@@ -8,7 +8,8 @@ namespace dlgcpp
     {
         class CustomImpl;
 
-        class Custom : public Control
+        class Custom :
+            public Control
         {
         public:
             explicit Custom(const std::string& className, const Position& p = Position());

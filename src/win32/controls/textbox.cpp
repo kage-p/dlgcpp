@@ -1,15 +1,13 @@
 #include "textbox_p.h"
-#include "utility/string.h"
+#include "utility/string_encoder.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 TextBoxImpl::TextBoxImpl(
-    TextBox& textBox,
     const std::string& text,
     const Position& p) :
-    ControlImpl(textBox, text, p),
-    _textBox(textBox)
+    ControlImpl(text, p)
 {
     this->border(BorderStyle::Sunken);
 }
@@ -102,7 +100,7 @@ void TextBoxImpl::readInput()
     auto cb = (int)GetWindowTextLengthW(hwnd) + 1;
     std::wstring buf(cb, 0);
     GetWindowTextW(hwnd, &buf[0], cb);
-    text(toBytes(buf.c_str()));
+    text(StringEncoder::toBytes(buf.c_str()));
 }
 
 HorizontalAlign TextBoxImpl::horizontalAlignment() const
@@ -115,6 +113,9 @@ void TextBoxImpl::horizontalAlignment(HorizontalAlign value)
     if (_horzAlign == value)
         return;
     _horzAlign = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -152,6 +153,8 @@ void TextBoxImpl::password(bool value)
         return;
     _password = value;
 
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -182,6 +185,9 @@ void TextBoxImpl::multiline(bool value)
     if (_multiline == value)
         return;
     _multiline = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -195,5 +201,8 @@ void TextBoxImpl::wrapText(bool value)
     if (_wrapText == value)
         return;
     _wrapText = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "keys.h"
+#include "key_mapper.h"
 #include <map>
 
 #define WIN32_LEAN_AND_MEAN
@@ -76,7 +76,7 @@ static const std::map<UINT, Key> vkToKeyMap = {
     {VK_APPS, Key::Apps}, {VK_LWIN, Key::LWin}, {VK_RWIN, Key::RWin}, {VK_MENU, Key::Menu},
 };
 
-Key dlgcpp::MapToKey(unsigned int vk)
+Key KeyMapper::ToKey(unsigned int vk)
 {
     auto it = vkToKeyMap.find(vk);
     return (it != vkToKeyMap.end()) ? it->second : Key::Unknown;

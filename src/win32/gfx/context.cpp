@@ -1,7 +1,7 @@
 
 #include "context_p.h"
-#include "utility/image.h"
-#include "utility/string.h"
+#include "utility/image_reader.h"
+#include "utility/string_encoder.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -166,14 +166,14 @@ void DrawingContextImpl::drawText(
         break;
     }
 
-    Gdiplus::FontFamily family(toWide(font.family).data());
+    Gdiplus::FontFamily family(StringEncoder::toWide(font.family).data());
     Gdiplus::FontStyle style = Gdiplus::FontStyleRegular;
     if (font.bold) style = static_cast<Gdiplus::FontStyle>(style | Gdiplus::FontStyleBold);
     if (font.italic) style = static_cast<Gdiplus::FontStyle>(style | Gdiplus::FontStyleItalic);
 
     Gdiplus::Font gdiFont(&family, static_cast<Gdiplus::REAL>(font.pointSize), style, Gdiplus::UnitPoint);
     Gdiplus::SolidBrush brush(toGdiColor(color));
-    std::wstring wtext = toWide(text);
+    std::wstring wtext = StringEncoder::toWide(text);
 
     // Measure the size of the string
     Gdiplus::RectF textBounds;
@@ -222,7 +222,7 @@ void DrawingContextImpl::drawImage(
     auto size = Size(dest.w, dest.h);
 
     // load image
-    auto hImage = (HBITMAP)loadImage(image, size, bgColor);
+    auto hImage = (HBITMAP)ImageReader::load(image, size, bgColor);
     if (hImage == NULL)
         return;
 

@@ -18,7 +18,6 @@ namespace dlgcpp
         {
         public:
             explicit ToolBarImpl(
-                ToolBar& toolBar,
                 const Position& p = Position());
 
             ~ToolBarImpl() override;
@@ -31,7 +30,6 @@ namespace dlgcpp
             void items(const std::vector<ISharedToolBarItem>& items);
 
         private:
-            ToolBar& _toolBar;
             Size _buttonSize = Size(24, 24);
             Size _imageSize = Size(20, 20);
             std::vector<ISharedToolBarItem> _items;

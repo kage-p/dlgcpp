@@ -8,7 +8,7 @@ namespace dlgcpp
 {
     namespace controls
     {
-        class IToolBar
+        class IToolBar : public virtual IControl
         {
         public:
             virtual const Size& buttonSize() const = 0;
@@ -18,6 +18,8 @@ namespace dlgcpp
             virtual const std::vector<ISharedToolBarItem>& items() const = 0;
             virtual void items(const std::vector<ISharedToolBarItem>& items) = 0;
         };
+
+        typedef std::shared_ptr<IToolBar> ISharedToolBar;
 
         class ToolBarImpl;
 
@@ -29,6 +31,7 @@ namespace dlgcpp
             explicit ToolBar(const Position& p = Position());
             ~ToolBar() override;
 
+            // IToolBar impl.
             const Size& buttonSize() const override;
             void buttonSize(const Size& value) override;
             const Size& imageSize() const override;

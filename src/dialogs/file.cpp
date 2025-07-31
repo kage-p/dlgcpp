@@ -1,3 +1,4 @@
+#include "dlgcpp/dialogs/file.h"
 #include "dialogs/file_p.h"
 
 using namespace dlgcpp::dialogs;

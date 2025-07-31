@@ -1,6 +1,6 @@
 #include "dlgcpp/dialogs/dialog.h"
 #include "message_p.h"
-#include "utility/string.h"
+#include "utility/string_encoder.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -154,11 +154,11 @@ MessageDialogButton MessageDialogImpl::show()
     if (_showHelp)
         flags |= MB_HELP;
 
-    auto titleText = toWide(_title);
+    auto titleText = StringEncoder::toWide(_title);
     if (titleText.empty() && _parent != nullptr)
-        titleText = toWide(_parent->title());
+        titleText = StringEncoder::toWide(_parent->title());
 
-    auto messageText = toWide(_message);
+    auto messageText = StringEncoder::toWide(_message);
 
     auto buttonId = MessageBoxW(hwndParent,
         messageText.c_str(),

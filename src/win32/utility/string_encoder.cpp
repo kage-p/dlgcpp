@@ -1,4 +1,4 @@
-#include "string.h"
+#include "string_encoder.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -6,7 +6,7 @@
 
 using namespace dlgcpp;
 
-std::wstring dlgcpp::toWide(const std::string& text)
+std::wstring StringEncoder::toWide(const std::string& text)
 {
     int convertResult = MultiByteToWideChar(CP_UTF8, 0, text.c_str(), (int)text.size(), NULL, 0);
     if (convertResult <= 0)
@@ -20,7 +20,7 @@ std::wstring dlgcpp::toWide(const std::string& text)
     return buf;
 }
 
-std::string dlgcpp::toBytes(const wchar_t* str)
+std::string StringEncoder::toBytes(const wchar_t* str)
 {
     int convertResult = WideCharToMultiByte(CP_UTF8, 0, str, -1, NULL, 0, NULL, NULL);
     if (convertResult <= 0)

@@ -1,3 +1,4 @@
+#include "dlgcpp/dialogs/property.h"
 #include "dialogs/property_p.h"
 
 using namespace dlgcpp;

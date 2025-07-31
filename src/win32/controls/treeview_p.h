@@ -17,7 +17,9 @@ namespace dlgcpp
         class TreeViewImpl : public ControlImpl
         {
         public:
-            explicit TreeViewImpl(TreeView& treeView, const Position& p = Position());
+            explicit TreeViewImpl(
+                ITreeView* treeView,
+                const Position& p = Position());
             ~TreeViewImpl() override;
 
             // properties
@@ -49,7 +51,7 @@ namespace dlgcpp
             void notify(struct ControlMessage&) override;
 
         private:
-            TreeView& _treeView;
+            ITreeView* _treeView = nullptr;
             bool _checkboxes = false;
             bool _multiselect = false;
             bool _editingLabel = false;

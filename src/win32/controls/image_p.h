@@ -15,7 +15,6 @@ namespace dlgcpp
         {
         public:
             explicit ImageImpl(
-                Image& image,
                 const Position& p = Position());
 
             ~ImageImpl() override;
@@ -28,7 +27,6 @@ namespace dlgcpp
             void image(const ImageSource& image);
 
         private:
-            Image& _image;
             ImageSource _imageSource;
             bool _autoSize = false;
             bool _centered = false;

@@ -15,7 +15,6 @@ namespace dlgcpp
         {
         public:
             explicit CheckBoxImpl(
-                CheckBox& checkBox,
                 const std::string& text = std::string(),
                 const Position& p = Position());
 
@@ -31,7 +30,6 @@ namespace dlgcpp
             void verticalAlignment(VerticalAlign value);
 
         private:
-            CheckBox& _checkBox;
             bool _checked = false;
             bool _autoCheck = true;
             HorizontalAlign _horzAlign = HorizontalAlign::Left;

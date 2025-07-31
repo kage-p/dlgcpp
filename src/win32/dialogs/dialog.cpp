@@ -2,10 +2,10 @@
 
 #include "gfx/context_p.h"
 #include "menus/menu_p.h"
-#include "utility/keys.h"
+#include "utility/convert.h"
+#include "utility/key_mapper.h"
 #include "utility/message.h"
-#include "utility/string.h"
-#include "utility/units.h"
+#include "utility/string_encoder.h"
 
 #include "dialog_p.h"
 
@@ -22,7 +22,7 @@ using namespace dlgcpp::gfx;
 using namespace dlgcpp::menus;
 
 DialogImpl::DialogImpl(
-    Dialog& dialog,
+    IDialog& dialog,
     DialogType type,
     ISharedDialog parent) : _dialog(dialog)
 {
@@ -228,7 +228,7 @@ void DialogImpl::title(const std::string& value)
         return;
 
     SetWindowTextW(_hwnd,
-        toWide(_title).c_str());
+        StringEncoder::toWide(_title).c_str());
 }
 
 const ImageSource& DialogImpl::image() const
@@ -265,7 +265,7 @@ void DialogImpl::menu(std::shared_ptr<Menu> menu)
     {
         // the menu will assign itself to the dialog
         _menu->impl()->id(MenuStartId);
-        _menu->impl()->parent(_dialog.shared_from_this());
+        _menu->impl()->parent(_dialog.ptr());
         _menu->impl()->rebuild();
     }
 }
@@ -452,10 +452,10 @@ void DialogImpl::center()
         return;
 
     // use dialog-independent mapping to units
-    auto screenSize = Size(
-        GetSystemMetrics(SM_CXSCREEN),
-        GetSystemMetrics(SM_CYSCREEN));
-    toUnits(HWND_DESKTOP, screenSize);
+    auto screenSize = Convert().toUnits(
+        Size(
+            GetSystemMetrics(SM_CXSCREEN),
+            GetSystemMetrics(SM_CYSCREEN)));
 
     Point p(
         (screenSize.width() / 2) - (_p.width() / 2),
@@ -471,11 +471,11 @@ void DialogImpl::message(
     // this function only supports OK button; see dlgcpp/dialogs/message for full implementation
     UINT flags = MB_ICONINFORMATION | MB_OK;
 
-    std::wstring titleText = toWide(title);
+    std::wstring titleText = StringEncoder::toWide(title);
     if (titleText.empty())
-        titleText = toWide(_title);
+        titleText = StringEncoder::toWide(_title);
 
-    std::wstring messageText = toWide(message);
+    std::wstring messageText = StringEncoder::toWide(message);
 
     MessageBoxW(_hwnd,
         messageText.c_str(),
@@ -511,7 +511,7 @@ void DialogImpl::add(std::shared_ptr<Control> child)
     _controls.push_back(child);
 
     auto childImpl = child->impl();
-    childImpl->parent(_dialog.shared_from_this());
+    childImpl->parent(_dialog.ptr());
     childImpl->id(nextId(childImpl->idRange()));
     childImpl->rebuild();
 }
@@ -545,7 +545,7 @@ void DialogImpl::add(std::shared_ptr<Dialog> child)
     _dialogs.push_back(child);
 
     auto dialogImpl = child->impl();
-    dialogImpl->parent(_dialog.shared_from_this());
+    dialogImpl->parent(_dialog.ptr());
     dialogImpl->id(nextId());
     dialogImpl->rebuild();
 }
@@ -587,14 +587,17 @@ void DialogImpl::rebuild()
 
     // safety checks
     if (_id > 0 && _parent == nullptr)
+    {
+        DLGCPP_CERR("Called when no parent assigned but child id is assigned.");
         return;
+    }
 
     // Use the Windows dialog font
     std::wstring fontFace = L"MS Shell Dlg";
     unsigned short fontSize = 8; // Pointsize
     std::wstring text;
 
-    text = toWide(_title);
+    text = StringEncoder::toWide(_title);
     size_t cbCaption = text.size();
     size_t cbFont = fontFace.size();
 
@@ -678,7 +681,7 @@ void DialogImpl::rebuild()
     updateVisibility();
 
     // always fire the size event
-    SizeEvent().invoke(_dialog.shared_from_this());
+    SizeEvent().invoke(_dialog.ptr());
 }
 
 void DialogImpl::destruct()
@@ -791,7 +794,7 @@ void DialogImpl::notify(DialogMessage& msg)
         auto id = (int)LOWORD(wParam);
         if (id != 0)
         {
-            if (lParam != NULL)
+            if (lParam != 0)
             {
                 // message sent from a control
 
@@ -901,15 +904,15 @@ void DialogImpl::notify(DialogMessage& msg)
     case WM_KEYDOWN:
     {
         KeyboardEvent event;
-        event.key = MapToKey(static_cast<UINT>(msg.wParam));
-        KeyDownEvent().invoke(_dialog.shared_from_this(), event);
+        event.key = KeyMapper::ToKey(static_cast<UINT>(msg.wParam));
+        KeyDownEvent().invoke(_dialog.ptr(), event);
         break;
     }
     case WM_KEYUP:
     {
         KeyboardEvent event;
-        event.key = MapToKey(static_cast<UINT>(msg.wParam));
-        KeyUpEvent().invoke(_dialog.shared_from_this(), event);
+        event.key = KeyMapper::ToKey(static_cast<UINT>(msg.wParam));
+        KeyUpEvent().invoke(_dialog.ptr(), event);
         break;
     }
 
@@ -926,10 +929,12 @@ void DialogImpl::notify(DialogMessage& msg)
         else
             event.button = MouseButton::Middle;
 
-        event.point = Point(LOWORD(lParam), HIWORD(lParam));
-        toUnits(hDlg, event.point);
+        event.point = Convert(hDlg).toUnits(
+            Point(
+                LOWORD(lParam),
+                HIWORD(lParam)));
 
-        MouseDownEvent().invoke(_dialog.shared_from_this(), event);
+        MouseDownEvent().invoke(_dialog.ptr(), event);
         break;
     }
 
@@ -946,10 +951,12 @@ void DialogImpl::notify(DialogMessage& msg)
         else
             event.button = MouseButton::Middle;
 
-        event.point = Point(LOWORD(lParam), HIWORD(lParam));
-        toUnits(hDlg, event.point);
+        event.point = Convert(hDlg).toUnits(
+            Point(
+                LOWORD(lParam),
+                HIWORD(lParam)));
 
-        MouseUpEvent().invoke(_dialog.shared_from_this(), event);
+        MouseUpEvent().invoke(_dialog.ptr(), event);
         break;
     }
 
@@ -966,10 +973,12 @@ void DialogImpl::notify(DialogMessage& msg)
         else
             event.button = MouseButton::Middle;
 
-        event.point = Point(LOWORD(lParam), HIWORD(lParam));
-        toUnits(hDlg, event.point);
+        event.point = Convert(hDlg).toUnits(
+            Point(
+                LOWORD(lParam),
+                HIWORD(lParam)));
 
-        MouseDoubleClickEvent().invoke(_dialog.shared_from_this(), event);
+        MouseDoubleClickEvent().invoke(_dialog.ptr(), event);
         break;
     }
 
@@ -977,16 +986,19 @@ void DialogImpl::notify(DialogMessage& msg)
     {
         MouseEvent event;
         event.button = wMsg == WM_LBUTTONDOWN ? MouseButton::Left : wMsg == WM_RBUTTONDOWN ? MouseButton::Right : MouseButton::Middle;
-        event.point = Point(LOWORD(lParam), HIWORD(lParam));
-        toUnits(hDlg, event.point);
 
-        MouseMoveEvent().invoke(_dialog.shared_from_this(), event);
+        event.point = Convert(hDlg).toUnits(
+            Point(
+                LOWORD(lParam),
+                HIWORD(lParam)));
+
+        MouseMoveEvent().invoke(_dialog.ptr(), event);
         break;
     }
 
     case WM_CAPTURECHANGED:
     {
-        MouseCaptureLostEvent().invoke(_dialog.shared_from_this());
+        MouseCaptureLostEvent().invoke(_dialog.ptr());
         break;
     }
 
@@ -1003,14 +1015,15 @@ void DialogImpl::notify(DialogMessage& msg)
         if (IsIconic(hDlg) || IsZoomed(hDlg))
             break;
 
-        // translate using mapped value and store
-        Point posPx((int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam));
-        Point posDu(posPx);
-        toUnits(_hwnd, posDu);
+        // translate using mapped value and store         
+        Point posDu = Convert(_hwnd).toUnits(
+            Point(
+                (int)(short)LOWORD(lParam),
+                (int)(short)HIWORD(lParam)));
 
         _p.x(posDu.x());
         _p.y(posDu.y());
-        MoveEvent().invoke(_dialog.shared_from_this());
+        MoveEvent().invoke(_dialog.ptr());
 
         DLGCPP_CMSG("WM_MOVE: " <<
             "x = " << _p.x() << " " <<
@@ -1046,13 +1059,14 @@ void DialogImpl::notify(DialogMessage& msg)
             // note: we have to capture maximized state, as it will affect any potential child positioning
 
             // translate using mapped value and store
-            Size sizePx({ (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam) });
-            Size sizeDu(sizePx);
-            toUnits(_hwnd, sizeDu);
+            Size sizeDu = Convert(_hwnd).toUnits(
+                Size(
+                    (int)(short)LOWORD(lParam),
+                    (int)(short)HIWORD(lParam)));
 
             _p.width(sizeDu.width());
             _p.height(sizeDu.height());
-            SizeEvent().invoke(_dialog.shared_from_this());
+            SizeEvent().invoke(_dialog.ptr());
         }
 
         DLGCPP_CMSG("WM_SIZE: " <<
@@ -1083,7 +1097,7 @@ void DialogImpl::notify(DialogMessage& msg)
             auto context = std::make_shared<DrawingContext>(
                 std::make_shared<DrawingContextImpl>(_hwnd, ps.hdc));
 
-            _paintEvent.invoke(_dialog.shared_from_this(), context);
+            _paintEvent.invoke(_dialog.ptr(), context);
             context->render();
 
             EndPaint(_hwnd, &ps);
@@ -1134,16 +1148,16 @@ void DialogImpl::notify(DialogMessage& msg)
             std::wstring wfile(MAX_PATH, 0x0);
             if (DragQueryFileW(hDrop, i, &wfile[0], (UINT)wfile.size()) == 0)
                 continue;
-            files.push_back(toBytes(wfile.data()));
+            files.push_back(StringEncoder::toBytes(wfile.data()));
         }
         if (!files.empty())
-            DropEvent().invoke(_dialog.shared_from_this(), files);
+            DropEvent().invoke(_dialog.ptr(), files);
         break;
     }
 
     case WM_HELP:
     {
-        HelpEvent().invoke(_dialog.shared_from_this());
+        HelpEvent().invoke(_dialog.ptr());
         break;
     }
 
@@ -1152,14 +1166,14 @@ void DialogImpl::notify(DialogMessage& msg)
         auto timerId = (int)wParam;
         if (timerId > 0 && timerId == _timer.id)
         {
-            TimerEvent().invoke(_dialog.shared_from_this());
+            TimerEvent().invoke(_dialog.ptr());
         }
         break;
     }
 
     case WM_DLGCPP_USER:
     {
-        UserEvent().invoke(_dialog.shared_from_this(), (int)wParam);
+        UserEvent().invoke(_dialog.ptr(), (int)wParam);
         break;
     }
     }
@@ -1480,7 +1494,7 @@ void DialogImpl::updateIcon()
     auto hInstRes = GetModuleHandle(NULL);
     auto imageType = (_image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
     _hImage = LoadImageW(hInstRes,
-        toWide(_image.id).c_str(),
+        StringEncoder::toWide(_image.id).c_str(),
         imageType,
         0,
         0,
@@ -1554,11 +1568,11 @@ Point DialogImpl::toPixels(const Point& point) const
     {
         // child dialog; use parent client
         HWND hwndParent = (HWND)_parent->handle();
-        pointPx = dlgcpp::toPixels(hwndParent, point, true);
+        pointPx = Convert(hwndParent).toPixels(point, true);
     }
     else
     {
-        pointPx = dlgcpp::toPixels(_hwnd, point, true);
+        pointPx = Convert(_hwnd).toPixels(point, true);
     }
     return pointPx;
 }
@@ -1570,11 +1584,11 @@ Size DialogImpl::toPixels(const Size& size) const
     {
         // child dialog; use parent client
         HWND hwndParent = (HWND)_parent->handle();
-        sizePx = dlgcpp::toPixels(hwndParent, size, true);
+        sizePx = Convert(hwndParent).toPixels(size, true);
     }
     else
     {
-        sizePx = dlgcpp::toPixels(_hwnd, size, true);
+        sizePx = Convert(_hwnd).toPixels(size, true);
     }
     return sizePx;
 }
@@ -1586,11 +1600,11 @@ Position DialogImpl::toPixels(const Position& pos) const
     {
         // child dialog; use parent client
         HWND hwndParent = (HWND)_parent->handle();
-        posPx = dlgcpp::toPixels(hwndParent, pos, true);
+        posPx = Convert(hwndParent).toPixels(pos, true);
     }
     else
     {
-        posPx = dlgcpp::toPixels(_hwnd, pos, true);
+        posPx = Convert(_hwnd).toPixels(pos, true);
     }
     return posPx;
 }

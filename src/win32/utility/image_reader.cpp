@@ -1,5 +1,5 @@
-#include "image.h"
-#include "string.h"
+#include "image_reader.h"
+#include "string_encoder.h"
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -13,7 +13,7 @@ using namespace dlgcpp;
 /// <summary>
 /// Loads a bitmap-based image such as bmp/jpg/png/gif, etc.
 /// </summary>
-HBITMAP loadImageWithGDIPlus(
+HBITMAP ImageReader::loadWithGDIPlus(
     const ImageSource& image,
     const dlgcpp::Size& desiredSize,
     dlgcpp::Color maskColor)
@@ -33,12 +33,12 @@ HBITMAP loadImageWithGDIPlus(
     if (image.isFile)
     {
         // load image from file
-        source = std::make_shared<Gdiplus::Bitmap>(toWide(image.id).c_str());
+        source = std::make_shared<Gdiplus::Bitmap>(StringEncoder::toWide(image.id).c_str());
     }
     else
     {
         // load image from resource
-        HRSRC hRes = FindResourceW(nullptr, toWide(image.id).c_str(), RT_RCDATA);
+        HRSRC hRes = FindResourceW(nullptr, StringEncoder::toWide(image.id).c_str(), RT_RCDATA);
         if (!hRes)
         {
             DLGCPP_CERR("Image resource not found: " << image.id);
@@ -125,7 +125,7 @@ HBITMAP loadImageWithGDIPlus(
 /// Loads an image from ImageSource and returns it's handle (or null if load failed)
 /// Optional pixel size can be specified to resize the image.
 /// </summary>
-HANDLE dlgcpp::loadImage(
+HANDLE ImageReader::load(
     const ImageSource& image,
     Size& sizePx,
     dlgcpp::Color maskColor)
@@ -153,7 +153,7 @@ HANDLE dlgcpp::loadImage(
 
     HANDLE hImage = LoadImageW(
         hInstRes,
-        toWide(image.id).c_str(),
+        StringEncoder::toWide(image.id).c_str(),
         imageType,
         sizePx.width(),
         sizePx.height(),
@@ -161,7 +161,7 @@ HANDLE dlgcpp::loadImage(
 
     if (hImage == NULL)
     {
-        hImage = loadImageWithGDIPlus(
+        hImage = loadWithGDIPlus(
             image,
             sizePx,
             maskColor);

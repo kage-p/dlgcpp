@@ -1,10 +1,11 @@
 #include "controls/toolbar_p.h"
+#include "dlgcpp/controls/toolbar.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 ToolBar::ToolBar(const Position& p)
-    : ToolBar(std::make_shared<ToolBarImpl>(*this, p))
+    : ToolBar(std::make_shared<ToolBarImpl>(p))
 {
 }
 

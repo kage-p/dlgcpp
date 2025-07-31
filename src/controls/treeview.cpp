@@ -1,10 +1,11 @@
 #include "controls/treeview_p.h"
+#include "dlgcpp/controls/treeview.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 TreeView::TreeView(const Position& p)
-    : TreeView(std::make_shared<TreeViewImpl>(*this, p))
+    : TreeView(std::make_shared<TreeViewImpl>(this, p))
 {
 }
 

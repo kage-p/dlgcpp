@@ -1,6 +1,6 @@
 #include "dlgcpp/dialogs/dialog.h"
 #include "file_p.h"
-#include "utility/string.h"
+#include "utility/string_encoder.h"
 
 using namespace dlgcpp::dialogs;
 
@@ -84,12 +84,12 @@ bool FileDialogImpl::show(
 
     ofn.Flags = flags;
 
-    std::wstring wstrTitle = toWide(title);
+    std::wstring wstrTitle = StringEncoder::toWide(title);
     ofn.lpstrTitle = wstrTitle.c_str();
 
     std::wstring wstrFile(MAX_PATH, 0x0);
     if (!_fileName.empty())
-        wstrFile.insert(0, toWide(_fileName));
+        wstrFile.insert(0, StringEncoder::toWide(_fileName));
 
     ofn.lpstrFile = &wstrFile[0];
     ofn.nMaxFile = (DWORD)wstrFile.size();
@@ -99,7 +99,7 @@ bool FileDialogImpl::show(
     if (!filters.empty())
     {
         filters += "|All Files (*.*)|*.*||";
-        wstrFilters.insert(0, toWide(filters));
+        wstrFilters.insert(0, StringEncoder::toWide(filters));
         for (auto& c : wstrFilters) // null-splitter
             if (c == '|') c = 0;
         ofn.lpstrFilter = wstrFilters.c_str();
@@ -122,7 +122,7 @@ bool FileDialogImpl::show(
         return false;
     }
 
-    _fileName = toBytes(wstrFile.c_str());
+    _fileName = StringEncoder::toBytes(wstrFile.c_str());
     _filterIndex = ofn.nFilterIndex;
     return true;
 }

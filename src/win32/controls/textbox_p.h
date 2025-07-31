@@ -16,7 +16,6 @@ namespace dlgcpp
         {
         public:
             explicit TextBoxImpl(
-                TextBox& textBox,
                 const std::string& text = std::string(),
                 const Position& p = Position());
 
@@ -38,7 +37,6 @@ namespace dlgcpp
             IEvent<ISharedControl>& ChangedEvent();
 
         private:
-            TextBox& _textBox;
             int _maxChars = 0;
             bool _password = false;
             bool _readOnly = false;

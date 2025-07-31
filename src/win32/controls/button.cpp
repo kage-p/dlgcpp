@@ -4,11 +4,9 @@ using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 ButtonImpl::ButtonImpl(
-    Button& button,
     const std::string& text,
     const Position& p) :
-    ControlImpl(button, text, p),
-    _button(button)
+    ControlImpl(text, p)
 {
 }
 
@@ -91,6 +89,9 @@ void ButtonImpl::horizontalAlignment(HorizontalAlign value)
     if (_horzAlign == value)
         return;
     _horzAlign = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -104,5 +105,8 @@ void ButtonImpl::verticalAlignment(VerticalAlign value)
     if (_vertAlign == value)
         return;
     _vertAlign = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }

@@ -8,7 +8,7 @@ namespace dlgcpp
 {
     namespace controls
     {
-        class ITreeView
+        class ITreeView : public virtual IControl
         {
         public:
             virtual bool checkboxes() const = 0;
@@ -41,6 +41,8 @@ namespace dlgcpp
             virtual IEvent<ISharedControl, std::shared_ptr<TreeViewNode>>& ItemClickEvent() = 0;
             virtual IEvent<ISharedControl, std::shared_ptr<TreeViewNode>>& ItemDoubleClickEvent() = 0;
         };
+
+        typedef std::shared_ptr<ITreeView> ISharedTreeView;
 
         class TreeViewImpl;
 

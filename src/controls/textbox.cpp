@@ -1,10 +1,11 @@
 #include "controls/textbox_p.h"
+#include "dlgcpp/controls/textbox.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 TextBox::TextBox(const std::string& text, const Position& p)
-    : TextBox(std::make_shared<TextBoxImpl>(*this, text, p))
+    : TextBox(std::make_shared<TextBoxImpl>(text, p))
 {
     this->border(BorderStyle::Sunken);
 }

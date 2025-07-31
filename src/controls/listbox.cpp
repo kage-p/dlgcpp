@@ -1,10 +1,11 @@
 #include "controls/listbox_p.h"
+#include "dlgcpp/controls/listbox.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 ListBox::ListBox(const Position& p)
-    : ListBox(std::make_shared<ListBoxImpl>(*this, p))
+    : ListBox(std::make_shared<ListBoxImpl>(p))
 {
 }
 

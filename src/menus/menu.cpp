@@ -1,3 +1,4 @@
+#include "dlgcpp/menus/menu.h"
 #include "menus/menu_p.h"
 
 using namespace dlgcpp;

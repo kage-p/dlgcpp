@@ -14,7 +14,7 @@ namespace dlgcpp
             Both
         };
 
-        class ITrackBar
+        class ITrackBar : public virtual IControl
         {
         public:
             // properties
@@ -34,6 +34,8 @@ namespace dlgcpp
             // events
             virtual IEvent<ISharedControl>& ChangedEvent() = 0;
         };
+
+        typedef std::shared_ptr<ITrackBar> ISharedTrackBar;
 
         class TrackBarImpl;
 

@@ -3,9 +3,9 @@
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-TrackBarImpl::TrackBarImpl(TrackBar& trackBar, const Position& p) :
-    ControlImpl(trackBar, std::string(), p),
-    _trackBar(trackBar)
+TrackBarImpl::TrackBarImpl(
+    const Position& p) :
+    ControlImpl(std::string(), p)
 {
 }
 
@@ -312,8 +312,9 @@ void TrackBarImpl::tickMarks(TrackBarTickMark value)
         return;
     _tickMarks = value;
 
-    if (handle() != nullptr)
-        rebuild();
+    if (handle() == nullptr)
+        return;
+    rebuild();
 }
 
 std::pair<Color, Color> TrackBarImpl::barColors() const

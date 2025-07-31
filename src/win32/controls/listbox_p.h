@@ -18,7 +18,6 @@ namespace dlgcpp
         {
         public:
             explicit ListBoxImpl(
-                ListBox& listBox,
                 const Position& p = Position());
 
             ~ListBoxImpl() override;
@@ -40,7 +39,6 @@ namespace dlgcpp
             IEvent<ISharedControl>& SelCancelEvent();
 
         private:
-            ListBox& _listBox;
             bool _highlight = true;
             bool _multiselect = false;
             bool _sorted = true;

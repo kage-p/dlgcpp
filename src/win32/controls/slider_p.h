@@ -16,7 +16,6 @@ namespace dlgcpp
         {
         public:
             explicit SliderImpl(
-                Slider& slider,
                 const std::string& text = std::string(),
                 const Position& p = Position());
 
@@ -35,13 +34,11 @@ namespace dlgcpp
             IEvent<ISharedControl>& ChangedEvent();
 
         private:
-            Slider& _slider;
             bool _vertical = false;
             int _value = 0;
             std::pair<int, int> _range = { 0,100 };
             Color _barColor = Color::Default;
             Event<ISharedControl> _changedEvent;
-
 
             static constexpr const char* SliderControlClass = "SliderControl32";
 

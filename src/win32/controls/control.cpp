@@ -1,11 +1,11 @@
 #include "control_p.h"
 #include "dlgcpp/dialogs/dialog.h"
 #include "gfx/context_p.h"
-#include "utility/font.h"
-#include "utility/keys.h"
+#include "utility/convert.h"
+#include "utility/font_loader.h"
+#include "utility/key_mapper.h"
 #include "utility/message.h"
-#include "utility/string.h"
-#include "utility/units.h"
+#include "utility/string_encoder.h"
 #include <map>
 
 #define WIN32_LEAN_AND_MEAN
@@ -18,17 +18,15 @@ using namespace dlgcpp::controls;
 using namespace dlgcpp::gfx;
 
 ControlImpl::ControlImpl(
-    Control& control,
     const std::string& text,
     const Position& p) :
-    _control(control),
     _p(p),
     _text(text)
 {
 
     // use system default font, but store the value
     _hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
-    _font = toFont(_hFont);
+    _font = FontLoader::toFont(_hFont);
 }
 
 ControlImpl::~ControlImpl()
@@ -39,6 +37,11 @@ ControlImpl::~ControlImpl()
         DeleteObject(_hFont);
     if (_hbrBack != NULL)
         DeleteObject(_hbrBack);
+}
+
+void ControlImpl::control(Control* ptr)
+{
+    _control = ptr;
 }
 
 ISharedDialog ControlImpl::parent() const
@@ -66,11 +69,6 @@ void ControlImpl::id(int value)
 int ControlImpl::idRange() const
 {
     return 1;
-}
-
-std::shared_ptr<IControl> ControlImpl::control()
-{
-    return _control.shared_from_this();
 }
 
 HBRUSH ControlImpl::backgroundBrush() const
@@ -114,8 +112,6 @@ void ControlImpl::notify(DialogMessage& msg)
 /// <param name="msg"></param>
 void ControlImpl::notify(ControlMessage& msg)
 {
-    HWND hwndParent = GetParent(_hwnd);
-
     if (_wantKeyboardEvents)
     {
         switch (msg.wMsg)
@@ -123,14 +119,14 @@ void ControlImpl::notify(ControlMessage& msg)
         case WM_KEYDOWN:
         {
             KeyboardEvent event;
-            event.key = MapToKey(static_cast<UINT>(msg.wParam));
+            event.key = KeyMapper::ToKey(static_cast<UINT>(msg.wParam));
             _keyDownEvent.invoke(control(), event);
             break;
         }
         case WM_KEYUP:
         {
             KeyboardEvent event;
-            event.key = MapToKey(static_cast<UINT>(msg.wParam));
+            event.key = KeyMapper::ToKey(static_cast<UINT>(msg.wParam));
             _keyUpEvent.invoke(control(), event);
             break;
         }
@@ -166,9 +162,8 @@ void ControlImpl::notify(ControlMessage& msg)
                 event.button = MouseButton::Middle;
             else if (keys & MK_RBUTTON)
                 event.button = MouseButton::Right;
-            event.point = Point(LOWORD(msg.lParam), HIWORD(msg.lParam));
-            toUnits(hwndParent, event.point);
 
+            event.point = Convert(_hwndParent).toUnits(Point(LOWORD(msg.lParam), HIWORD(msg.lParam)));
             _mouseMoveEvent.invoke(control(), event);
             break;
         }
@@ -184,8 +179,7 @@ void ControlImpl::notify(ControlMessage& msg)
             {
                 MouseEvent event;
                 event.button = mouseMsgButtonMap.at(msg.wMsg);
-                event.point = Point(LOWORD(msg.lParam), HIWORD(msg.lParam));
-                toUnits(hwndParent, event.point);
+                event.point = Convert(_hwndParent).toUnits(Point(LOWORD(msg.lParam), HIWORD(msg.lParam)));
                 switch (msg.wMsg)
                 {
                 case WM_LBUTTONDOWN:
@@ -217,7 +211,7 @@ void ControlImpl::notify(ControlMessage& msg)
             // translate using mapped value and store
             Point posPx((int)(short)LOWORD(msg.lParam), (int)(short)HIWORD(msg.lParam));
             Point posDu(posPx);
-            toUnits(GetParent(_hwnd), posDu);
+            Convert(_hwndParent).toUnits(posDu);
 
             DLGCPP_CMSG("WM_MOVE: " <<
                 "x = " << posDu.x() << " (" << posPx.x() << ") " <<
@@ -234,7 +228,7 @@ void ControlImpl::notify(ControlMessage& msg)
             // translate using mapped value and store
             Size sizePx({ (int)(short)LOWORD(msg.lParam), (int)(short)HIWORD(msg.lParam) });
             Size sizeDu(sizePx);
-            toUnits(GetParent(_hwnd), sizeDu);
+            Convert(_hwndParent).toUnits(sizeDu);
 
             DLGCPP_CMSG("WM_SIZE: " <<
                 "width = " << sizeDu.width() << " (" << sizePx.width() << ") " <<
@@ -340,7 +334,7 @@ void ControlImpl::p(const Position& p)
     auto hwndParent = reinterpret_cast<HWND>(_parent->handle());
 
     // Convert units to pixels
-    auto px = toPixels(hwndParent, p);
+    auto px = Convert(hwndParent).toPixels(p);
 
     SetWindowPos(_hwnd,
         0,
@@ -359,7 +353,7 @@ void ControlImpl::move(const Point& point)
     if (_hwnd == NULL)
         return;
 
-    auto px = toPixels(GetParent(_hwnd), _p);
+    auto px = Convert(_hwndParent).toPixels(_p);
 
     SetWindowPos(_hwnd,
         0,
@@ -378,7 +372,7 @@ void ControlImpl::resize(const Size& size)
     if (_hwnd == NULL)
         return;
 
-    auto px = toPixels(GetParent(_hwnd), _p);
+    auto px = Convert(_hwndParent).toPixels(_p);
 
     SetWindowPos(_hwnd,
         0,
@@ -430,6 +424,8 @@ void ControlImpl::border(BorderStyle value)
         return;
     _borderStyle = value;
 
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -454,12 +450,12 @@ void ControlImpl::text(const std::string& value)
         cbText++;
         std::wstring buf(cbText, 0);
         GetWindowTextW(_hwnd, &buf[0], cbText);
-        if (_text == toBytes(buf.c_str()))
+        if (_text == StringEncoder::toBytes(buf.c_str()))
             return;
     }
 
     SetWindowTextW(_hwnd,
-        toWide(_text).c_str());
+        StringEncoder::toWide(_text).c_str());
 }
 
 std::pair<Color, Color> ControlImpl::colors() const
@@ -511,7 +507,7 @@ void ControlImpl::font(const Font& value)
         DeleteObject(_hFont);
 
     if (!_font.family.empty())
-        _hFont = toGdiFont(_font);
+        _hFont = FontLoader::toGdiFont(_font);
     else
         _hFont = (HFONT)GetStockObject(DEFAULT_GUI_FONT);
 
@@ -567,6 +563,9 @@ void ControlImpl::wantInternalEvents(bool value)
     if (_wantInternalEvents == value)
         return;
     _wantInternalEvents = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -586,6 +585,9 @@ void ControlImpl::wantKeyboardEvents(bool value)
     if (_wantKeyboardEvents == value)
         return;
     _wantKeyboardEvents = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -605,6 +607,9 @@ void ControlImpl::wantMouseEvents(bool value)
     if (_wantMouseEvents == value)
         return;
     _wantMouseEvents = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -625,6 +630,9 @@ void ControlImpl::wantPaintEvents(bool value)
     if (_wantPaintEvents == value)
         return;
     _wantPaintEvents = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -645,6 +653,9 @@ void ControlImpl::wantSizingEvents(bool value)
     if (_wantSizingEvents == value)
         return;
     _wantSizingEvents = value;
+
+    if (handle() == nullptr)
+        return;
     rebuild();
 }
 
@@ -667,6 +678,11 @@ void* ControlImpl::user() const
 void ControlImpl::user(void* value)
 {
     _user = value;
+}
+
+ISharedControl ControlImpl::control()
+{
+    return _control->shared_from_this();
 }
 
 std::string ControlImpl::className() const
@@ -719,21 +735,23 @@ void ControlImpl::rebuild()
     destruct();
 
     // safety checks
-    if (_parent == nullptr)
-        return;
+    if (_parent == nullptr ||
+        _id < 1)
 
-    if (_id < 1)
+    {
+        DLGCPP_CERR("Called when no parent or control id is assigned.");
         return;
+    }
 
     HWND hwndParent = reinterpret_cast<HWND>(_parent->handle());
     if (hwndParent == NULL)
         return;
 
-    auto p = toPixels(hwndParent, _p);
+    auto p = Convert(hwndParent).toPixels(_p);
 
     auto hwnd = CreateWindowExW(exStyles(),
-        toWide(className()).c_str(),
-        toWide(_text).c_str(),
+        StringEncoder::toWide(className()).c_str(),
+        StringEncoder::toWide(_text).c_str(),
         styles(),
         p.x(),
         p.y(),
@@ -746,6 +764,7 @@ void ControlImpl::rebuild()
         return;
 
     _hwnd = hwnd;
+    _hwndParent = hwndParent;
 
     if (mustBeSubclassed())
     {
@@ -785,7 +804,8 @@ void ControlImpl::destruct()
     }
 
     DestroyWindow(_hwnd);
-    _hwnd = nullptr;
+    _hwnd = 0;
+    _hwndParent = 0;
 }
 
 LRESULT CALLBACK ControlImpl::controlWndProc(HWND hwnd, UINT wMsg, WPARAM wParam, LPARAM lParam)

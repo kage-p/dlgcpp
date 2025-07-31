@@ -1,10 +1,11 @@
 #include "controls/progress_p.h"
+#include "dlgcpp/controls/progress.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Progress::Progress(const Position& p)
-    : Progress(std::make_shared<ProgressImpl>(*this, p))
+    : Progress(std::make_shared<ProgressImpl>(p))
 {
 }
 

@@ -66,6 +66,7 @@ namespace dlgcpp
             virtual void* handle() const = 0;
             virtual void* user() const = 0;
             virtual void user(void* value) = 0;
+            virtual ISharedDialog ptr() = 0;
             virtual ISharedDialog parent() const = 0;
 
             // actions
@@ -152,6 +153,7 @@ namespace dlgcpp
             void* handle() const override;
             void* user() const override;
             void user(void* value) override;
+            ISharedDialog ptr() override;
             ISharedDialog parent() const override;
 
             // actions
