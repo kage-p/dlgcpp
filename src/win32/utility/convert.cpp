@@ -31,7 +31,6 @@ Position Convert::toPixels(const Position& p, bool client)
 
         if (!client)
         {
-            // TODO: if we had IDialog::styles then we don't need HWND
             auto menu = GetMenu(_hwnd) != NULL;
             DWORD style = GetWindowLong(_hwnd, GWL_STYLE);
             DWORD exStyle = GetWindowLong(_hwnd, GWL_EXSTYLE);
@@ -42,10 +41,10 @@ Position Convert::toPixels(const Position& p, bool client)
     {
         if (!client)
         {
-            // cant do window position
+            // cannot convert non-client without parent.
             return Position();
         }
-        // map units to pixels without a dialog box
+        // map units to pixels without parent.
         Size fontDimensions;
         getFontDimensions(NULL, fontDimensions);
         rc.left = MulDiv(p.x(), fontDimensions.width(), 4);

@@ -19,12 +19,12 @@ public:
     void setItems(const std::vector<DemoTreeViewItem>& items);
 
     // TreeView impl.
-    std::shared_ptr<dlgcpp::TreeViewNode> rootNode() const override;
-    std::vector<std::shared_ptr<dlgcpp::TreeViewNode>> childNodes(std::shared_ptr<dlgcpp::TreeViewNode> parent) const override;
-    bool beginEdit(std::shared_ptr<dlgcpp::TreeViewNode> node) override;
-    bool endEdit(std::shared_ptr<dlgcpp::TreeViewNode> node, const std::string& text) override;
+    dlgcpp::ISharedTreeViewNode rootNode() const override;
+    std::vector<dlgcpp::ISharedTreeViewNode> childNodes(dlgcpp::ISharedTreeViewNode parent) const override;
+    bool beginEdit(dlgcpp::ISharedTreeViewNode node) override;
+    bool endEdit(dlgcpp::ISharedTreeViewNode node, const std::string& text) override;
 
 private:
-    std::shared_ptr<dlgcpp::TreeViewNode> _rootNode;
-    std::multimap<std::string, std::shared_ptr<dlgcpp::TreeViewNode>> _nodeMap;
+    dlgcpp::ISharedTreeViewNode _rootNode;
+    std::multimap<std::string, dlgcpp::ISharedTreeViewNode> _nodeMap;
 };

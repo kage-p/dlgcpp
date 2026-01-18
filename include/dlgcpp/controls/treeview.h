@@ -11,35 +11,37 @@ namespace dlgcpp
         class ITreeView : public virtual IControl
         {
         public:
-            virtual bool checkboxes() const = 0;
-            virtual void checkboxes(bool value) = 0;
 
-            virtual bool editing() const = 0;
-            virtual bool beginEditing(std::shared_ptr <TreeViewNode> node) = 0;
+            virtual IProperty<bool, ISharedControl>& checkboxes() = 0;
+            virtual IProperty<bool, ISharedControl>& editing() = 0;
+            virtual IProperty<bool, ISharedControl>& multiselect() = 0;
+            virtual IProperty<ISharedTreeViewNode, ISharedControl>& selectedNode() = 0;
+            virtual IProperty<std::vector<ISharedTreeViewNode>, ISharedControl>& selectedNodes() = 0;
+
+            // editing
+            virtual bool beginEditing(ISharedTreeViewNode node) = 0;
             virtual void confirmEditing() = 0;
             virtual void cancelEditing() = 0;
 
-            virtual bool multiselect() const = 0;
-            virtual void multiselect(bool value) = 0;
-            virtual std::shared_ptr<TreeViewNode> selectedNode() const = 0;
-            virtual void selectedNode(std::shared_ptr<TreeViewNode> node) = 0;
-            virtual const std::vector<std::shared_ptr<TreeViewNode>>& selectedNodes() const = 0;
-            virtual void selectedNodes(const std::vector<std::shared_ptr<TreeViewNode>>& nodes) = 0;
-
             // node handling
-            virtual std::shared_ptr<TreeViewNode> rootNode() const = 0;
-            virtual std::vector<std::shared_ptr<TreeViewNode>> childNodes(std::shared_ptr<TreeViewNode> parent) const = 0;
-            virtual bool beginEdit(std::shared_ptr<TreeViewNode> node) = 0;
-            virtual bool endEdit(std::shared_ptr<TreeViewNode> node, const std::string& text) = 0;
+            virtual ISharedTreeViewNode rootNode() const = 0;
+            virtual std::vector<ISharedTreeViewNode> childNodes(ISharedTreeViewNode parent) const = 0;
+            virtual bool beginEdit(ISharedTreeViewNode node) = 0;
+            virtual bool endEdit(ISharedTreeViewNode node, const std::string& text) = 0;
 
             // actions
-            virtual void expand(std::shared_ptr<TreeViewNode> node, bool allChildNodes = false) = 0;
-            virtual void collapse(std::shared_ptr<TreeViewNode> node, bool allChildNodes = false) = 0;
+            virtual void expand(ISharedTreeViewNode node, bool allChildNodes = false) = 0;
+            virtual void collapse(ISharedTreeViewNode node, bool allChildNodes = false) = 0;
 
+            // events
+            virtual IEvent<ISharedControl>& ClickEvent() = 0;
+            virtual IEvent<ISharedControl>& DoubleClickEvent() = 0;
+            virtual IEvent<ISharedControl>& RightClickEvent() = 0;
+            virtual IEvent<ISharedControl>& DoubleRightClickEvent() = 0;
             virtual IEvent<ISharedControl>& RootNodeChangedEvent() = 0;
             virtual IEvent<ISharedControl>& SelChangedEvent() = 0;
-            virtual IEvent<ISharedControl, std::shared_ptr<TreeViewNode>>& ItemClickEvent() = 0;
-            virtual IEvent<ISharedControl, std::shared_ptr<TreeViewNode>>& ItemDoubleClickEvent() = 0;
+            virtual IEvent<ISharedControl, ISharedTreeViewNode>& ItemClickEvent() = 0;
+            virtual IEvent<ISharedControl, ISharedTreeViewNode>& ItemDoubleClickEvent() = 0;
         };
 
         typedef std::shared_ptr<ITreeView> ISharedTreeView;
@@ -55,38 +57,62 @@ namespace dlgcpp
             ~TreeView() override;
 
             // ITreeView impl.
-            bool checkboxes() const override;
-            void checkboxes(bool value) override;
-            bool editing() const override;
-            bool beginEditing(std::shared_ptr<TreeViewNode> node) override;
+            IProperty<bool, ISharedControl>& checkboxes() override;
+            IProperty<bool, ISharedControl>& editing() override;
+            IProperty<bool, ISharedControl>& multiselect() override;
+            IProperty<ISharedTreeViewNode, ISharedControl>& selectedNode() override;
+            IProperty<std::vector<ISharedTreeViewNode>, ISharedControl>& selectedNodes() override;
+
+            bool beginEditing(ISharedTreeViewNode node) override;
             void confirmEditing() override;
             void cancelEditing() override;
-            bool multiselect() const override;
-            void multiselect(bool value) override;
-            std::shared_ptr<TreeViewNode> selectedNode() const override;
-            void selectedNode(std::shared_ptr<TreeViewNode> node) override;
-            const std::vector<std::shared_ptr<TreeViewNode>>& selectedNodes() const override;
-            void selectedNodes(const std::vector<std::shared_ptr<TreeViewNode>>& nodes) override;
 
             // placeholders
-            std::shared_ptr<TreeViewNode> rootNode() const override;
-            std::vector<std::shared_ptr<TreeViewNode>> childNodes(std::shared_ptr<TreeViewNode> parent) const override;
-            bool beginEdit(std::shared_ptr<TreeViewNode> node) override;
-            bool endEdit(std::shared_ptr<TreeViewNode> node, const std::string& text) override;
+            ISharedTreeViewNode rootNode() const override;
+            std::vector<ISharedTreeViewNode> childNodes(ISharedTreeViewNode parent) const override;
+            bool beginEdit(ISharedTreeViewNode node) override;
+            bool endEdit(ISharedTreeViewNode node, const std::string& text) override;
 
             // actions
-            void expand(std::shared_ptr<TreeViewNode> node, bool allChildNodes = false) override;
-            void collapse(std::shared_ptr<TreeViewNode> node, bool allChildNodes = false) override;
+            void expand(ISharedTreeViewNode node, bool allChildNodes = false) override;
+            void collapse(ISharedTreeViewNode node, bool allChildNodes = false) override;
 
+            // events
+            IEvent<ISharedControl>& ClickEvent() override;
+            IEvent<ISharedControl>& DoubleClickEvent() override;
+            IEvent<ISharedControl>& RightClickEvent() override;
+            IEvent<ISharedControl>& DoubleRightClickEvent() override;
             IEvent<ISharedControl>& RootNodeChangedEvent() override;
             IEvent<ISharedControl>& SelChangedEvent() override;
-            IEvent<ISharedControl, std::shared_ptr<TreeViewNode>>& ItemClickEvent() override;
-            IEvent<ISharedControl, std::shared_ptr<TreeViewNode>>& ItemDoubleClickEvent() override;
+            IEvent<ISharedControl, ISharedTreeViewNode>& ItemClickEvent() override;
+            IEvent<ISharedControl, ISharedTreeViewNode>& ItemDoubleClickEvent() override;
+
+            // compatibility setters
+            void checkboxes(bool value);
+            void multiselect(bool value);
+            void selectedNode(ISharedTreeViewNode node);
+            void selectedNodes(const std::vector<ISharedTreeViewNode>& nodes);
 
         private:
-            TreeView(std::shared_ptr<TreeViewImpl> impl);
+            TreeView(std::shared_ptr<TreeViewImpl> impl, const Position& p);
 
             std::shared_ptr<TreeViewImpl> _impl;
+
+            Property<bool, ISharedControl> _checkboxes;
+            Property<bool, ISharedControl> _editing;
+            Property<bool, ISharedControl> _multiselect;
+            Property<ISharedTreeViewNode, ISharedControl> _selectedNode;
+            Property<std::vector<ISharedTreeViewNode>, ISharedControl> _selectedNodes;
+
+            // events
+            Event<ISharedControl> _clickEvent;
+            Event<ISharedControl> _dblClickEvent;
+            Event<ISharedControl> _rightClickEvent;
+            Event<ISharedControl> _dblRightClickEvent;
+            Event<ISharedControl> _rootNodeChangedEvent;
+            Event<ISharedControl> _selChangedEvent;
+            Event<ISharedControl, ISharedTreeViewNode> _itemClickEvent;
+            Event<ISharedControl, ISharedTreeViewNode> _itemDblClickEvent;
         };
     }
 }

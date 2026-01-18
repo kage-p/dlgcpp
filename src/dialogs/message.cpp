@@ -1,89 +1,63 @@
+#include "dialogs/message_impl.h"
 #include "dlgcpp/dialogs/message.h"
-#include "dialogs/message_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::dialogs;
 
 MessageDialog::MessageDialog(ISharedDialog parent)
-    : MessageDialog(std::make_shared<MessageDialogImpl>(*this, parent))
+    : MessageDialog(std::make_shared<MessageDialogImpl>(this), parent)
 {
 }
 
-MessageDialog::MessageDialog(std::shared_ptr<MessageDialogImpl> impl)
+MessageDialog::MessageDialog(
+    std::shared_ptr<MessageDialogImpl> impl,
+    ISharedDialog parent)
     : _impl(std::move(impl))
 {
+    auto ownerFn = [this]() -> ISharedMessageDialog { return shared_from_this(); };
+
+    _parent.reset(parent, nullptr, ownerFn, "parent");
+    _title.reset(std::string(), nullptr, ownerFn, "title");
+    _message.reset(std::string(), nullptr, ownerFn, "message");
+    _buttons.reset(MessageDialogButtonGroup::Ok, nullptr, ownerFn, "buttons");
+    _icon.reset(MessageDialogIcon::Information, nullptr, ownerFn, "icon");
+    _defaultButton.reset(MessageDialogButton::Undefined, nullptr, ownerFn, "defaultButton");
+    _showHelp.reset(false, nullptr, ownerFn, "showHelp");
 }
 
-const std::string& MessageDialog::title() const
+IReadOnlyProperty<ISharedDialog, ISharedMessageDialog>& MessageDialog::parent()
 {
-    return _impl->title();
+    return _parent;
 }
 
-void MessageDialog::title(const std::string& value)
+IProperty<std::string, ISharedMessageDialog>& MessageDialog::title()
 {
-    if (_impl->title() == value)
-        return;
-    _impl->title(value);
+    return _title;
 }
 
-const std::string& MessageDialog::message() const
+IProperty<std::string, ISharedMessageDialog>& MessageDialog::message()
 {
-    return _impl->message();
+    return _message;
 }
 
-void MessageDialog::message(const std::string& value)
+IProperty<MessageDialogButtonGroup, ISharedMessageDialog>& MessageDialog::buttons()
 {
-    if (_impl->message() == value)
-        return;
-    _impl->message(value);
+    return _buttons;
 }
 
-MessageDialogButtonGroup MessageDialog::buttons() const
+IProperty<MessageDialogIcon, ISharedMessageDialog>& MessageDialog::icon()
 {
-    return _impl->buttons();
+    return _icon;
 }
 
-void MessageDialog::buttons(MessageDialogButtonGroup value)
+IProperty<MessageDialogButton, ISharedMessageDialog>& MessageDialog::defaultButton()
 {
-    if (_impl->buttons() == value)
-        return;
-    _impl->buttons(value);
+    return _defaultButton;
 }
 
-MessageDialogIcon MessageDialog::icon() const
+IProperty<bool, ISharedMessageDialog>& MessageDialog::showHelp()
 {
-    return _impl->icon();
-}
-
-void MessageDialog::icon(MessageDialogIcon value)
-{
-    if (_impl->icon() == value)
-        return;
-    _impl->icon(value);
-}
-
-MessageDialogButton MessageDialog::defaultButton() const
-{
-    return _impl->defaultButton();
-}
-
-void MessageDialog::defaultButton(MessageDialogButton value)
-{
-    if (_impl->defaultButton() == value)
-        return;
-    _impl->defaultButton(value);
-}
-
-bool MessageDialog::showHelp() const
-{
-    return _impl->showHelp();
-}
-
-void MessageDialog::showHelp(bool value)
-{
-    if (_impl->showHelp() == value)
-        return;
-    _impl->showHelp(value);
+    return _showHelp;
 }
 
 MessageDialogButton MessageDialog::show()

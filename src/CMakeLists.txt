@@ -38,7 +38,6 @@ set(src_files
     gfx/context.cpp
     menus/menu.cpp
     menus/menu_item.cpp
-    utility/event.h
 )
 
 if (WIN32)

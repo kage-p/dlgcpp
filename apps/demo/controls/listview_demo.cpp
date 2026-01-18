@@ -101,38 +101,38 @@ std::shared_ptr<Menu> createMenu(
 
     item = std::make_shared<MenuItem>("Show check boxes");
     menu->add(item);
-    item->checked(listview->checkboxes());
+    item->checked() = listview->checkboxes();
     item->ClickEvent() += [listview](ISharedMenuItem m)
         {
             listview->checkboxes(!listview->checkboxes());
-            m->checked(listview->checkboxes());
+            m->checked() = listview->checkboxes();
         };
 
     item = std::make_shared<MenuItem>("Show grid lines");
     menu->add(item);
-    item->checked(listview->gridlines());
+    item->checked() = listview->gridlines();
     item->ClickEvent() += [listview](ISharedMenuItem m)
         {
             listview->gridlines(!listview->gridlines());
-            m->checked(listview->gridlines());
+            m->checked() = listview->gridlines();
         };
 
     item = std::make_shared<MenuItem>("Multi-select items");
     menu->add(item);
-    item->checked(listview->multiselect());
+    item->checked() = listview->multiselect();
     item->ClickEvent() += [listview](ISharedMenuItem m)
         {
             listview->multiselect(!listview->multiselect());
-            m->checked(listview->multiselect());
+            m->checked() = listview->multiselect();
         };
 
     item = std::make_shared<MenuItem>("Sortable columns");
     menu->add(item);
-    item->checked(listview->sortColumns());
+    item->checked() = listview->sortColumns();
     item->ClickEvent() += [listview](ISharedMenuItem m)
         {
             listview->sortColumns(!listview->sortColumns());
-            m->checked(listview->sortColumns());
+            m->checked() = listview->sortColumns();
         };
 
     return menu;

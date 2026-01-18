@@ -1,71 +1,73 @@
 #include "dlgcpp/controls/tab_item.h"
-#include "utility/event.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-class dlgcpp::controls::TabItemImpl
-{
-public:
-    bool _highlight = false;
-    ImageSource _image;
-    std::string _text;
-    std::string _toolTipText;
-    Event<ISharedTabItem> _clickEvent;
-};
-
 TabItem::TabItem(
     const std::string& text,
     const ImageSource& image,
-    const std::string& toolTipText) :
-    _impl(std::make_shared<TabItemImpl>())
+    const std::string& toolTipText)
 {
-    _impl->_image = image;
-    _impl->_text = text;
-    _impl->_toolTipText = toolTipText;
+    auto ownerFn = [this]() -> ISharedTabItem
+        {
+            return std::static_pointer_cast<dlgcpp::controls::ITabItem>(shared_from_this());
+        };
+
+    // properties
+    _highlight.reset(false, nullptr, ownerFn, "highlight");
+    _image.reset(image, nullptr, ownerFn, "image");
+    _text.reset(text, nullptr, ownerFn, "text");
+    _toolTipText.reset(toolTipText, nullptr, ownerFn, "toolTipText");
+
+    // events
+    _clickEvent.reset(ownerFn, "ClickEvent");
 }
 
-bool TabItem::highlight() const
+TabItem& TabItem::operator=(const TabItem& other)
 {
-    return _impl->_highlight;
+    if (this != &other)
+    {
+        _image = other._image;
+        _text = other._text;
+        _toolTipText = other._toolTipText;
+    }
+    return *this;
 }
 
-void TabItem::highlight(bool value)
+bool TabItem::operator==(const TabItem& other) const
 {
-    _impl->_highlight = value;
+    return (
+        _image == other._image &&
+        _text == other._text &&
+        _toolTipText == other._toolTipText);
 }
 
-const std::string& TabItem::text() const
+bool TabItem::operator!=(const TabItem& other) const
 {
-    return _impl->_text;
+    return !(*this == other);
 }
 
-void TabItem::text(const std::string& value)
+IProperty<bool, ISharedTabItem>& TabItem::highlight()
 {
-    _impl->_text = value;
+    return _highlight;
 }
 
-const std::string& TabItem::toolTipText() const
+IProperty<std::string, ISharedTabItem>& TabItem::text()
 {
-    return _impl->_toolTipText;
+    return _text;
 }
 
-void TabItem::toolTipText(const std::string& value)
+IProperty<std::string, ISharedTabItem>& TabItem::toolTipText()
 {
-    _impl->_toolTipText = value;
+    return _toolTipText;
 }
 
-const ImageSource& TabItem::image() const
+IProperty<ImageSource, ISharedTabItem>& TabItem::image()
 {
-    return _impl->_image;
-}
-
-void TabItem::image(ImageSource& value)
-{
-    _impl->_image = value;
+    return _image;
 }
 
 IEvent<ISharedTabItem>& TabItem::ClickEvent()
 {
-    return _impl->_clickEvent;
+    return _clickEvent;
 }

@@ -18,7 +18,7 @@ void controls_label_demo(ISharedDialog parent)
     auto label2 = std::make_shared<Label>("Hello DLGCPP!", Position{ 10, 30, 120, 35 });
     label2->colors(Color::Yellow, Color::Black);
     label2->font(Font{ "sans serif", 16 });
-    label1->autoSize(false);
+    label2->autoSize(false);
     label2->verticalAlignment(VerticalAlign::Center);
     dlg->add(label2);
 

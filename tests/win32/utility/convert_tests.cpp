@@ -44,7 +44,7 @@ TEST_F(ConvertTests, toPixels_ToUnits_WithHwnd_NonClientMapping)
 
     auto dlg = std::make_shared<Dialog>();
     dlg->show();
-    auto hwnd = (HWND)dlg->handle();
+    auto hwnd = (HWND)dlg->handle().value();
 
     Convert target(hwnd);
     auto result = target.toPixels(p, false);
@@ -59,7 +59,7 @@ TEST_F(ConvertTests, toPixels_ToUnits_WithHwnd_ClientMapping)
 
     auto dlg = std::make_shared<Dialog>();
     dlg->show();
-    auto hwnd = (HWND)dlg->handle();
+    auto hwnd = (HWND)dlg->handle().value();
 
     Convert target(hwnd);
     auto result = target.toPixels(p, true);

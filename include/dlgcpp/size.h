@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ostream>
+
 namespace dlgcpp
 {
     class Size
@@ -58,6 +60,14 @@ namespace dlgcpp
         inline bool empty() const
         {
             return (_width * _height) < 1;
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, const Size& obj)
+        {
+            return os <<
+                "{ width: " << obj._width <<
+                ", height: " << obj._height <<
+                " }";
         }
 
     private:

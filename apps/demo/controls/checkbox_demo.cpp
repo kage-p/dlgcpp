@@ -9,13 +9,13 @@ void controls_checkbox_demo(ISharedDialog parent)
     dlg->resize({ 200,80 });
     dlg->center();
 
-    auto button1 = std::make_shared<CheckBox>("CheckBox 1", Position{ 10, 10, 90, 15 });
+    auto button1 = std::make_shared<CheckBox>("CheckBox 1", Position{ 10, 10, 150, 15 });
     dlg->add(button1);
 
-    auto button2 = std::make_shared<CheckBox>("CheckBox 2", Position{ 10, 30, 90, 15 });
+    auto button2 = std::make_shared<CheckBox>("CheckBox 2", Position{ 10, 30, 150, 15 });
     dlg->add(button2);
 
-    auto button3 = std::make_shared<CheckBox>("CheckBox 3 (Manual)", Position{ 10, 50, 90, 15 });
+    auto button3 = std::make_shared<CheckBox>("CheckBox 3 (Manual)", Position{ 10, 50, 150, 15 });
     // the button state is not changed automatically
     button3->autoCheck(false);
     dlg->add(button3);

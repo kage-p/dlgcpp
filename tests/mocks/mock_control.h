@@ -3,6 +3,13 @@
 #include "dlgcpp/controls/control.h"
 #include "support/unit_test.h"
 
+#pragma push_macro("CreateEvent")
+
+#ifdef CreateEvent
+// conflicts with Windows.h macro
+#undef CreateEvent
+#endif
+
 namespace dlgcpp
 {
     namespace tests
@@ -10,34 +17,38 @@ namespace dlgcpp
         class MockControl : public dlgcpp::controls::IControl
         {
         public:
-            MOCK_METHOD(bool, enabled, (), (const, override));
-            MOCK_METHOD(void, enabled, (bool value), (override));
-            MOCK_METHOD(bool, visible, (), (const, override));
-            MOCK_METHOD(void, visible, (bool value), (override));
-            MOCK_METHOD(const Position&, p, (), (const, override));
-            MOCK_METHOD(void, p, (const Position& position), (override));
-            MOCK_METHOD(void, move, (const Point& point), (override));
-            MOCK_METHOD(void, resize, (const Size& size), (override));
-            MOCK_METHOD(dlgcpp::controls::BorderStyle, border, (), (const, override));
-            MOCK_METHOD(void, border, (dlgcpp::controls::BorderStyle value), (override));
-            MOCK_METHOD(const std::string&, text, (), (const, override));
-            MOCK_METHOD(void, text, (const std::string& value), (override));
-            MOCK_METHOD((std::pair<Color, Color>), colors, (), (const, override));
-            MOCK_METHOD(void, colors, (Color fgColor, Color bgColor), (override));
-            MOCK_METHOD(const Font&, font, (), (const, override));
-            MOCK_METHOD(void, font, (const Font& value), (override));
-            MOCK_METHOD(Cursor, cursor, (), (const, override));
-            MOCK_METHOD(void, cursor, (Cursor value), (override));
-            MOCK_METHOD(void*, handle, (), (const, override));
-            MOCK_METHOD(void*, user, (), (const, override));
-            MOCK_METHOD(void, user, (void* value), (override));
-            MOCK_METHOD(ISharedDialog, parent, (), (const, override));
-            MOCK_METHOD(void, redraw, (), (override));
-            MOCK_METHOD(void, setFocus, (), (override));
+            // properties
+            MOCK_METHOD((IProperty<bool, ISharedControl>&), enabled, (), (override));
+            MOCK_METHOD((IProperty<bool, ISharedControl>&), visible, (), (override));
+            MOCK_METHOD((IProperty<Position, ISharedControl>&), p, (), (override));
+            MOCK_METHOD((IProperty<dlgcpp::controls::BorderStyle, ISharedControl>&), border, (), (override));
+            MOCK_METHOD((IProperty<std::pair<Color, Color>, ISharedControl>&), colors, (), (override));
+            MOCK_METHOD((IProperty<Font, ISharedControl>&), font, (), (override));
+            MOCK_METHOD((IProperty<Cursor, ISharedControl>&), cursor, (), (override));
+            MOCK_METHOD((IProperty<bool, ISharedControl>&), focus, (), (override));
+            MOCK_METHOD((IProperty<bool, ISharedControl>&), mouseCapture, (), (override));
+            MOCK_METHOD((IProperty<bool, ISharedControl>&), wantKeyboardEvents, (), (override));
+            MOCK_METHOD((IProperty<bool, ISharedControl>&), wantMouseEvents, (), (override));
+            MOCK_METHOD((IProperty<bool, ISharedControl>&), wantPaintEvents, (), (override));
+            MOCK_METHOD((IProperty<bool, ISharedControl>&), wantSizingEvents, (), (override));
+            MOCK_METHOD((IProperty<void*, ISharedControl>&), handle, (), (override));
+            MOCK_METHOD((IProperty<void*, ISharedControl>&), user, (), (override));
 
-            MOCK_METHOD((IEvent<ISharedControl>&), ClickEvent, (), (override));
-            MOCK_METHOD((IEvent<ISharedControl>&), DoubleClickEvent, (), (override));
-            MOCK_METHOD((IEvent<ISharedControl, bool>&), FocusEvent, (), (override));
+            // parent/child management
+            MOCK_METHOD(IWeakDialog, parent, (), (const, override));
+
+            // actions
+            MOCK_METHOD(void, move, (const Point&), (override));
+            MOCK_METHOD(void, resize, (const Size&), (override));
+            MOCK_METHOD(void, bringToFront, (), (override));
+            MOCK_METHOD(void, sendToBack, (), (override));
+            MOCK_METHOD(void, redraw, (), (override));
+
+            // events
+            MOCK_METHOD((IEvent<ISharedControl>&), CreateEvent, (), (override));
+            MOCK_METHOD((IEvent<ISharedControl>&), DestroyEvent, (), (override));
+            MOCK_METHOD((IEvent<ISharedControl, KeyboardEvent>&), KeyDownEvent, (), (override));
+            MOCK_METHOD((IEvent<ISharedControl, KeyboardEvent>&), KeyUpEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedControl, MouseEvent>&), MouseDownEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedControl, MouseEvent>&), MouseUpEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedControl, MouseEvent>&), MouseMoveEvent, (), (override));
@@ -45,6 +56,13 @@ namespace dlgcpp
             MOCK_METHOD((IEvent<ISharedControl>&), MouseCaptureLostEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedControl>&), MoveEvent, (), (override));
             MOCK_METHOD((IEvent<ISharedControl>&), SizeEvent, (), (override));
+            MOCK_METHOD((IEvent<ISharedControl, ISharedDrawingContext>&), PaintEvent, (), (override));
+            MOCK_METHOD((IEvent<ISharedControl, int>&), UserEvent, (), (override));
+
+            // internal
+            MOCK_METHOD((std::shared_ptr<dlgcpp::controls::ControlImpl>), impl, (), (override));
         };
     }
 }
+
+#pragma pop_macro("CreateEvent")

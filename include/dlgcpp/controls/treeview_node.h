@@ -1,5 +1,7 @@
 #pragma once
 
+#include "dlgcpp/defs.h"
+#include "dlgcpp/property.h"
 #include <memory>
 #include <string>
 
@@ -13,44 +15,44 @@ namespace dlgcpp
         class ITreeViewNode
         {
         public:
-            virtual int id() const = 0;
-            virtual const std::string& tag() const = 0;
-            virtual const std::string& text() const = 0;
-            virtual void text(const std::string& value) = 0;
-            virtual bool checked() const = 0;
-            virtual void checked(bool value) = 0;
+            virtual IReadOnlyProperty<int, ISharedTreeViewNode>& id() = 0;
+            virtual IReadOnlyProperty<std::string, ISharedTreeViewNode>& tag() = 0;
+            virtual IProperty<std::string, ISharedTreeViewNode>& text() = 0;
+            virtual IProperty<bool, ISharedTreeViewNode>& checked() = 0;
         };
 
-        class TreeViewNodeImpl;
-
-        class TreeViewNode : public ITreeViewNode
+        class TreeViewNode :
+            public ITreeViewNode,
+            public std::enable_shared_from_this<TreeViewNode>
         {
         public:
-            // construct with tag
-            explicit TreeViewNode(
-                const std::string& tag = {},
-                const std::string& text = {},
-                bool checked = false);
 
             // construct with id
-            TreeViewNode(
-                int id,
+            explicit TreeViewNode(
+                int id = 0,
                 const std::string& text = {},
                 bool checked = false,
                 const std::string& tag = {});
 
+            // construct with tag
+            explicit TreeViewNode(
+                const std::string& tag,
+                const std::string& text = {},
+                bool checked = false);
+
             ~TreeViewNode() = default;
 
             // ITreeViewNode impl.
-            int id() const override;
-            const std::string& tag() const override;
-            const std::string& text() const override;
-            void text(const std::string& value) override;
-            bool checked() const override;
-            void checked(bool value) override;
+            IReadOnlyProperty<int, ISharedTreeViewNode>& id() override;
+            IReadOnlyProperty<std::string, ISharedTreeViewNode>& tag() override;
+            IProperty<std::string, ISharedTreeViewNode>& text() override;
+            IProperty<bool, ISharedTreeViewNode>& checked() override;
 
         private:
-            std::shared_ptr<TreeViewNodeImpl> _impl;
+            Property<int, ISharedTreeViewNode> _id;
+            Property<std::string, ISharedTreeViewNode> _tag;
+            Property<std::string, ISharedTreeViewNode> _text;
+            Property<bool, ISharedTreeViewNode> _checked;
         };
     }
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dlgcpp/controls/control.h"
+#include <ostream>
 
 namespace dlgcpp
 {
@@ -14,25 +15,34 @@ namespace dlgcpp
             Both
         };
 
+        inline std::ostream& operator<<(std::ostream& os, TrackBarTickMark e)
+        {
+            switch (e) {
+            case TrackBarTickMark::None:   return os << "None";
+            case TrackBarTickMark::Above:  return os << "Above";
+            case TrackBarTickMark::Below: return os << "Below";
+            case TrackBarTickMark::Both:  return os << "Both";
+            }
+            return os << static_cast<int>(e); // fallback
+        }
+
         class ITrackBar : public virtual IControl
         {
         public:
             // properties
-            virtual bool vertical() const = 0;
-            virtual void vertical(bool value) = 0;
-            virtual int value() const = 0;
-            virtual void value(int value) = 0;
-            virtual std::pair<int, int> range() const = 0;
-            virtual void range(int from, int to) = 0;
-            virtual int pageSize() const = 0;
-            virtual void pageSize(int value) = 0;
-            virtual TrackBarTickMark tickMarks() const = 0;
-            virtual void tickMarks(TrackBarTickMark value) = 0;
-            virtual std::pair<Color, Color> barColors() const = 0;
-            virtual void barColors(Color thumbColor, Color barColor) = 0;
+            virtual IProperty<bool, ISharedControl>& vertical() = 0;
+            virtual IProperty<int, ISharedControl>& value() = 0;
+            virtual IProperty<std::pair<int, int>, ISharedControl>& range() = 0;
+            virtual IProperty<int, ISharedControl>& pageSize() = 0;
+            virtual IProperty<TrackBarTickMark, ISharedControl>& tickMarks() = 0;
+            virtual IProperty<Color, ISharedControl>& barColor() = 0;
+            virtual IProperty<Color, ISharedControl>& thumbColor() = 0;
 
             // events
-            virtual IEvent<ISharedControl>& ChangedEvent() = 0;
+            virtual IEvent<ISharedControl>& ClickEvent() = 0;
+            virtual IEvent<ISharedControl>& DoubleClickEvent() = 0;
+            virtual IEvent<ISharedControl>& RightClickEvent() = 0;
+            virtual IEvent<ISharedControl>& DoubleRightClickEvent() = 0;
         };
 
         typedef std::shared_ptr<ITrackBar> ISharedTrackBar;
@@ -48,25 +58,43 @@ namespace dlgcpp
             ~TrackBar() override;
 
             // ITrackBar impl.
-            bool vertical() const override;
-            void vertical(bool value) override;
-            int value() const override;
-            void value(int value) override;
-            std::pair<int, int> range() const override;
-            void range(int from, int to) override;
-            int pageSize() const override;
-            void pageSize(int value) override;
-            TrackBarTickMark tickMarks() const override;
-            void tickMarks(TrackBarTickMark value) override;
-            std::pair<Color, Color> barColors() const override;
-            void barColors(Color thumbColor, Color barColor) override;
+            IProperty<bool, ISharedControl>& vertical() override;
+            IProperty<int, ISharedControl>& value() override;
+            IProperty<std::pair<int, int>, ISharedControl>& range() override;
+            IProperty<int, ISharedControl>& pageSize() override;
+            IProperty<TrackBarTickMark, ISharedControl>& tickMarks() override;
+            IProperty<Color, ISharedControl>& barColor() override;
+            IProperty<Color, ISharedControl>& thumbColor() override;
+            IEvent<ISharedControl>& ClickEvent() override;
+            IEvent<ISharedControl>& DoubleClickEvent() override;
+            IEvent<ISharedControl>& RightClickEvent() override;
+            IEvent<ISharedControl>& DoubleRightClickEvent() override;
 
-            IEvent<ISharedControl>& ChangedEvent() override;
+            // compatibility setters
+            void vertical(bool value);
+            void value(int value);
+            void range(int from, int to);
+            void pageSize(int value);
+            void tickMarks(TrackBarTickMark value);
+            void barColor(Color value);
+            void thumbColor(Color value);
 
         private:
-            TrackBar(std::shared_ptr<TrackBarImpl> impl);
+            TrackBar(std::shared_ptr<TrackBarImpl> impl, const Position& p);
 
             std::shared_ptr<TrackBarImpl> _impl;
+
+            Property<bool, ISharedControl> _vertical;
+            Property<int, ISharedControl> _value;
+            Property<std::pair<int, int>, ISharedControl> _range;
+            Property<int, ISharedControl> _pageSize;
+            Property<TrackBarTickMark, ISharedControl> _tickMarks;
+            Property<Color, ISharedControl> _barColor;
+            Property<Color, ISharedControl> _thumbColor;
+            Event<ISharedControl> _clickEvent;
+            Event<ISharedControl> _dblClickEvent;
+            Event<ISharedControl> _rightClickEvent;
+            Event<ISharedControl> _dblRightClickEvent;
         };
     }
 }

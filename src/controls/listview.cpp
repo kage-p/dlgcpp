@@ -1,98 +1,185 @@
-#include "controls/listview_p.h"
+#include "controls/listview_impl.h"
 #include "dlgcpp/controls/listview.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 ListView::ListView(const Position& p)
-    : ListView(std::make_shared<ListViewImpl>(this, p))
+    : ListView(std::make_shared<ListViewImpl>(), p)
 {
-    Control::border(BorderStyle::Sunken);
+    border() = BorderStyle::Sunken;
+
+    auto ownerFn = [this]() -> ISharedControl { return std::static_pointer_cast<dlgcpp::controls::IControl>(shared_from_this()); };
+
+    // properties
+    _display.reset(ListViewDisplay::Details, nullptr, ownerFn, "display");
+    _columnHeader.reset(true, nullptr, ownerFn, "columnHeader");
+    _sortColumns.reset(true, nullptr, ownerFn, "sortColumns");
+    _checkboxes.reset(false, nullptr, ownerFn, "checkboxes");
+    _gridlines.reset(false, nullptr, ownerFn, "gridlines");
+    _editing.reset(false, [](auto) { return false; }, ownerFn, "editing");
+    _multiselect.reset(false, nullptr, ownerFn, "multiselect");
+
+    _selectedIndex.reset(
+        -1,
+        [&](int index)
+        {
+            if (index == -1)
+                return true;
+
+            if (_multiselect)
+                return false;
+
+            return (index > -1 && index < rowCount());
+        },
+        ownerFn, "selectedIndex");
+
+    _selectedIndexes.reset(
+        std::vector<int>(),
+        [&](const std::vector<int>& indexes)
+        {
+            if (indexes.empty())
+                return true;
+
+            if (!_multiselect)
+                return false;
+
+            std::vector<int> cleanIndexes;
+            for (int index : indexes)
+            {
+                // disallow invalid
+                if (index < 0 ||
+                    index >= (int)rowCount())
+                {
+                    return false;
+                }
+
+                // disallow duplicates
+                if (std::find(cleanIndexes.begin(),
+                    cleanIndexes.end(),
+                    index) != cleanIndexes.end())
+                {
+                    return false;
+                }
+
+                cleanIndexes.push_back(index);
+            }
+
+            return true;
+        },
+        ownerFn, "selectedIndexes");
+
+    // events
+    _clickEvent.reset(ownerFn, "ClickEvent");
+    _dblClickEvent.reset(ownerFn, "DoubleClickEvent");
+    _dblRightClickEvent.reset(ownerFn, "DoubleRightClickEvent");
+    _rightClickEvent.reset(ownerFn, "RightClickEvent");
+    _columnsChangedEvent.reset(ownerFn, "ColumnsChangedEvent");
+    _rowsChangedEvent.reset(ownerFn, "RowsChangedEvent");
+    _selChangedEvent.reset(ownerFn, "SelChangedEvent");
+    _columnClickEvent.reset(ownerFn, "ColumnClickEvent");
+    _itemClickEvent.reset(ownerFn, "ItemClickEvent");
+    _itemDblClickEvent.reset(ownerFn, "ItemDoubleClickEvent");
+
+    // pass a reference to the implementation class
+    _impl->owner(this);
 }
 
-ListView::ListView(std::shared_ptr<ListViewImpl> impl)
-    : Control(impl), _impl(std::move(impl))
+ListView::ListView(
+    std::shared_ptr<ListViewImpl> impl,
+    const Position& p)
+    : Control(impl, p), _impl(std::move(impl))
 {
 }
 
 ListView::~ListView()
 {
+    _impl.reset();
 }
 
-int ListView::selectedIndex() const
+IProperty<ListViewDisplay, ISharedControl>& ListView::display()
 {
-    if (_impl->multiselect())
-        return -1;
-    return _impl->selectedIndex();
+    return _display;
 }
 
-void ListView::selectedIndex(int value)
+void ListView::display(ListViewDisplay value)
 {
-    if (_impl->multiselect())
-        return;
-    if (_impl->selectedIndex() == value)
-        return;
-
-    _impl->selectedIndex(value);
+    _display = value;
 }
 
-const std::vector<int>& ListView::selectedIndexes() const
+IProperty<bool, ISharedControl>& ListView::columnHeader()
 {
-    static const std::vector<int> empty;
-    if (!_impl->multiselect())
-        return empty;
-    return _impl->selectedIndexes();
-}
-
-void ListView::selectedIndexes(const std::vector<int>& indexes)
-{
-    if (!_impl->multiselect())
-        return;
-    if (_impl->selectedIndexes() == indexes)
-        return;
-
-    _impl->selectedIndexes(indexes);
-}
-
-bool ListView::checkboxes() const
-{
-    return _impl->checkboxes();
-}
-
-void ListView::checkboxes(bool value)
-{
-    if (_impl->checkboxes() == value)
-        return;
-    _impl->checkboxes(value);
-}
-
-bool ListView::columnHeader() const
-{
-    return _impl->columnHeader();
+    return _columnHeader;
 }
 
 void ListView::columnHeader(bool value)
 {
-    if (_impl->columnHeader() == value)
-        return;
-    _impl->columnHeader(value);
+    _columnHeader = value;
 }
 
-bool ListView::sortColumns() const
+IProperty<bool, ISharedControl>& ListView::sortColumns()
 {
-    return _impl->sortColumns();
+    return _sortColumns;
 }
 
 void ListView::sortColumns(bool value)
 {
-    if (_impl->sortColumns() == value)
-        return;
-    _impl->sortColumns(value);
+    _sortColumns = value;
 }
 
-bool ListView::editing() const
+IProperty<bool, ISharedControl>& ListView::checkboxes()
 {
-    return _impl->editing();
+    return _checkboxes;
+}
+
+void ListView::checkboxes(bool value)
+{
+    _checkboxes = value;
+}
+
+IProperty<bool, ISharedControl>& ListView::gridlines()
+{
+    return _gridlines;
+}
+
+void ListView::gridlines(bool value)
+{
+    _gridlines = value;
+}
+
+IProperty<bool, ISharedControl>& ListView::editing()
+{
+    return _editing;
+}
+
+IProperty<bool, ISharedControl>& ListView::multiselect()
+{
+    return _multiselect;
+}
+
+void ListView::multiselect(bool value)
+{
+    _multiselect = value;
+}
+
+IProperty<int, ISharedControl>& ListView::selectedIndex()
+{
+    return _selectedIndex;
+}
+
+void ListView::selectedIndex(int value)
+{
+    _selectedIndex = value;
+}
+
+IProperty<std::vector<int>, ISharedControl>& ListView::selectedIndexes()
+{
+    return _selectedIndexes;
+}
+
+void ListView::selectedIndexes(const std::vector<int>& indexes)
+{
+    _selectedIndexes = indexes;
 }
 
 bool ListView::beginEditing(size_t row, int role)
@@ -108,43 +195,6 @@ void ListView::confirmEditing()
 void ListView::cancelEditing()
 {
     _impl->cancelEditing();
-}
-
-bool ListView::gridlines() const
-{
-    return _impl->gridlines();
-}
-
-void ListView::gridlines(bool value)
-{
-    if (_impl->gridlines() == value)
-        return;
-    _impl->gridlines(value);
-}
-
-bool ListView::multiselect() const
-{
-    return _impl->multiselect();
-}
-
-void ListView::multiselect(bool value)
-{
-    if (_impl->multiselect() == value)
-        return;
-    _impl->multiselect(value);
-}
-
-ListViewDisplay ListView::display() const
-{
-    return _impl->display();
-}
-
-void ListView::display(ListViewDisplay value)
-{
-    if (_impl->display() == value)
-        return;
-
-    _impl->display(value);
 }
 
 int ListView::roleData(int) const
@@ -205,32 +255,52 @@ void ListView::checked(size_t row, bool checked)
     // placeholder
 }
 
+IEvent<ISharedControl>& ListView::ClickEvent()
+{
+    return _clickEvent;
+}
+
+IEvent<ISharedControl>& ListView::DoubleClickEvent()
+{
+    return _dblClickEvent;
+}
+
+IEvent<ISharedControl>& ListView::RightClickEvent()
+{
+    return _rightClickEvent;
+}
+
+IEvent<ISharedControl>& ListView::DoubleRightClickEvent()
+{
+    return _dblRightClickEvent;
+}
+
 IEvent<ISharedControl>& ListView::ColumnsChangedEvent()
 {
-    return _impl->ColumnsChangedEvent();
+    return _columnsChangedEvent;
 }
 
 IEvent<ISharedControl>& ListView::RowsChangedEvent()
 {
-    return _impl->RowsChangedEvent();
+    return _rowsChangedEvent;
 }
 
 IEvent<ISharedControl>& ListView::SelChangedEvent()
 {
-    return _impl->SelChangedEvent();
+    return _selChangedEvent;
 }
 
 IEvent<ISharedControl, int>& ListView::ColumnClickEvent()
 {
-    return _impl->ColumnClickEvent();
+    return _columnClickEvent;
 }
 
 IEvent<ISharedControl, size_t, int>& ListView::ItemClickEvent()
 {
-    return _impl->ItemClickEvent();
+    return _itemClickEvent;
 }
 
 IEvent<ISharedControl, size_t, int>& ListView::ItemDoubleClickEvent()
 {
-    return _impl->ItemDoubleClickEvent();
+    return _itemDblClickEvent;
 }

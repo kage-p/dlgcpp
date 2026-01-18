@@ -9,12 +9,14 @@ namespace dlgcpp
         class IImage : public virtual IControl
         {
         public:
-            virtual bool autoSize() const = 0;
-            virtual void autoSize(bool value) = 0;
-            virtual bool centered() const = 0;
-            virtual void centered(bool value) = 0;
-            virtual const ImageSource& image() const = 0;
-            virtual void image(const ImageSource& image) = 0;
+            // properties
+            virtual IProperty<bool, ISharedControl>& autoSize() = 0;
+            virtual IProperty<bool, ISharedControl>& centered() = 0;
+            virtual IProperty<ImageSource, ISharedControl>& source() = 0;
+
+            // events
+            virtual IEvent<ISharedControl>& ClickEvent() = 0;
+            virtual IEvent<ISharedControl>& DoubleClickEvent() = 0;
         };
 
         typedef std::shared_ptr<IImage> ISharedImage;
@@ -30,17 +32,28 @@ namespace dlgcpp
             ~Image() override;
 
             // IImage impl.
-            bool autoSize() const override;
-            void autoSize(bool value) override;
-            bool centered() const override;
-            void centered(bool value) override;
-            const ImageSource& image() const override;
-            void image(const ImageSource& image) override;
+            IProperty<bool, ISharedControl>& autoSize() override;
+            IProperty<bool, ISharedControl>& centered() override;
+            IProperty<ImageSource, ISharedControl>& source() override;
+            IEvent<ISharedControl>& ClickEvent() override;
+            IEvent<ISharedControl>& DoubleClickEvent() override;
+
+            // compatibility setters
+            void autoSize(bool value);
+            void centered(bool value);
+            void source(const ImageSource& source);
+            void image(const ImageSource& source);
 
         private:
-            Image(std::shared_ptr<ImageImpl> impl);
+            Image(std::shared_ptr<ImageImpl> impl, const Position& p);
 
             std::shared_ptr<ImageImpl> _impl;
+
+            Property<bool, ISharedControl> _autoSize;
+            Property<bool, ISharedControl> _centered;
+            Property<ImageSource, ISharedControl> _source;
+            Event<ISharedControl> _clickEvent;
+            Event<ISharedControl> _dblClickEvent;
         };
     }
 }

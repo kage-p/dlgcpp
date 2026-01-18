@@ -1,19 +1,138 @@
+#include "controls/control_impl.h"
+#include "dialogs/dialog_impl.h"
 #include "dlgcpp/dialogs/dialog.h"
-#include "controls/control_p.h"
-#include "dialogs/dialog_p.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 using namespace dlgcpp::dialogs;
 using namespace dlgcpp::menus;
 
-Dialog::Dialog(DialogType type, ISharedDialog parent)
+Dialog::Dialog(DialogType type, ISharedDialog parent) :
+    Dialog::Dialog(
+        std::make_shared<DialogImpl>(),
+        type,
+        parent)
 {
-    _impl = std::make_shared<DialogImpl>(*this, type, parent);
 }
 
-Dialog::Dialog(std::shared_ptr<DialogImpl> impl) : _impl(impl)
+Dialog::Dialog(
+    std::shared_ptr<DialogImpl> impl,
+    DialogType type,
+    ISharedDialog parent) :
+    _impl(impl)
 {
+
+    auto initPos = Position(0, 0, 600, 400);
+    if (parent != nullptr)
+    {
+        // this dialog has a parent; but is not a child of the parent.
+        // default position off-parent
+        Point offset = parent->p()->point();
+        initPos = Position(
+            offset.x(),
+            offset.y(),
+            initPos.width(),
+            initPos.height());
+
+        _parent = parent;
+    }
+
+    auto ownerFn = [this]() -> ISharedDialog { return shared_from_this(); };
+
+    _active.reset(false, nullptr, ownerFn, "active");
+    _color.reset(Color::Default, nullptr, ownerFn, "color");
+    _cursor.reset(Cursor::Default, nullptr, ownerFn, "cursor");
+    _display.reset(DisplayState::Normal, nullptr, ownerFn, "display");
+    _dropTarget.reset(false, nullptr, ownerFn, "dropTarget");
+    _enabled.reset(true, nullptr, ownerFn, "enabled");
+    _image.reset(ImageSource{}, nullptr, ownerFn, "image");
+    _menu.reset(nullptr, nullptr, ownerFn, "menu");
+    _mouseCapture.reset(false, nullptr, ownerFn, "mouseCapture");
+    _p.reset(initPos, nullptr, ownerFn, "p");
+    _showHelp.reset(false, nullptr, ownerFn, "showHelp");
+    _title.reset(std::string(), nullptr, ownerFn, "title");
+    _type.reset(type, nullptr, ownerFn, "type");
+    _user.reset(nullptr, nullptr, ownerFn, "user");
+    _visible.reset(false, nullptr, ownerFn, "visible");
+
+    // changed internally only  
+    _handle.reset(nullptr, nullptr, ownerFn, "handle");
+
+    // events
+    _cancelEvent.reset(ownerFn, "CancelEvent");
+    _confirmEvent.reset(ownerFn, "ConfirmEvent");
+    _closeEvent.reset(ownerFn, "CloseEvent");
+    _createEvent.reset(ownerFn, "CreateEvent");
+    _destroyEvent.reset(ownerFn, "DestroyEvent");
+    _dropEvent.reset(ownerFn, "DropEvent");
+    _helpEvent.reset(ownerFn, "HelpEvent");
+    _keyDownEvent.reset(ownerFn, "KeyDownEvent");
+    _keyUpEvent.reset(ownerFn, "KeyUpEvent");
+    _mouseCaptureLostEvent.reset(ownerFn, "MouseCaptureLostEvent");
+    _mouseDblClickEvent.reset(ownerFn, "MouseDoubleClickEvent");
+    _mouseDownEvent.reset(ownerFn, "MouseDownEvent");
+    _mouseMoveEvent.reset(ownerFn, "MouseMoveEvent");
+    _mouseUpEvent.reset(ownerFn, "MouseUpEvent");
+    _moveEvent.reset(ownerFn, "MoveEvent");
+    _paintEvent.reset(ownerFn, "PaintEvent");
+    _sizeEvent.reset(ownerFn, "SizeEvent");
+    _timerEvent.reset(ownerFn, "TimerEvent");
+    _userEvent.reset(ownerFn, "UserEvent");
+
+    _impl->owner(this);
+
+    // forward handle property change
+    _impl->handle().event() +=
+        [&](auto)
+        {
+            if (_impl)
+                _handle = _impl->handle();
+            else
+                _handle = nullptr;
+        };
+}
+
+Dialog::~Dialog()
+{
+    // stop properties and event handlers from firing
+    _enabled.event().clear();
+    _visible.event().clear();
+    _type.event().clear();
+    _title.event().clear();
+    _image.event().clear();
+    _display.event().clear();
+    _p.event().clear();
+    _color.event().clear();
+    _cursor.event().clear();
+    _menu.event().clear();
+    _active.event().clear();
+    _dropTarget.event().clear();
+    _mouseCapture.event().clear();
+    _showHelp.event().clear();
+    _handle.event().clear();
+    _user.event().clear();
+
+    _confirmEvent.clear();
+    _cancelEvent.clear();
+    _createEvent.clear();
+    _destroyEvent.clear();
+    _keyDownEvent.clear();
+    _keyUpEvent.clear();
+    _mouseDownEvent.clear();
+    _mouseUpEvent.clear();
+    _mouseMoveEvent.clear();
+    _mouseDblClickEvent.clear();
+    _mouseCaptureLostEvent.clear();
+    _dropEvent.clear();
+    _focusEvent.clear();
+    _helpEvent.clear();
+    _moveEvent.clear();
+    _sizeEvent.clear();
+    _paintEvent.clear();
+    _timerEvent.clear();
+    _userEvent.clear();
+
+    _impl.reset();
 }
 
 std::shared_ptr<DialogImpl> Dialog::impl()
@@ -26,175 +145,159 @@ int Dialog::exec()
     return _impl->exec();
 }
 
-bool Dialog::enabled() const
+IProperty<bool, ISharedDialog>& Dialog::enabled()
 {
-    return _impl->enabled();
+    return _enabled;
 }
 
 void Dialog::enabled(bool value)
 {
-    if (_impl->enabled() == value)
-        return;
-    _impl->enabled(value);
+    _enabled = value;
 }
 
-bool Dialog::visible() const
+IProperty<bool, ISharedDialog>& Dialog::visible()
 {
-    return _impl->visible();
+    return _visible;
 }
 
 void Dialog::visible(bool value)
 {
-    if (_impl->visible() == value)
-        return;
-
-    _impl->visible(value);
+    _visible = value;
 }
 
-DisplayState Dialog::displayState() const
+IProperty<DisplayState, ISharedDialog>& Dialog::display()
 {
-    return _impl->displayState();
+    return _display;
 }
 
-void Dialog::displayState(DisplayState value)
+void Dialog::display(DisplayState value)
 {
-    if (_impl->displayState() == value)
-        return;
-    _impl->displayState(value);
+    _display = value;
 }
 
-const Position& Dialog::p() const
+IProperty<Position, ISharedDialog>& Dialog::p()
 {
-    return _impl->p();
+    return _p;
 }
 
 void Dialog::p(const Position& p)
 {
-    if (_impl->p() == p)
-        return;
-
-    _impl->p(p);
+    _p = p;
 }
 
-DialogType Dialog::type() const
+IProperty<DialogType, ISharedDialog>& Dialog::type()
 {
-    return _impl->type();
+    return _type;
 }
 
-bool Dialog::showHelp() const
+IProperty<bool, ISharedDialog>& Dialog::showHelp()
 {
-    return _impl->showHelp();
+    return _showHelp;
 }
 
 void Dialog::showHelp(bool value)
 {
-    _impl->showHelp(value);
+    _showHelp = value;
 }
 
-const std::string& Dialog::title() const
+IProperty<std::string, ISharedDialog>& Dialog::title()
 {
-    return _impl->title();
+    return _title;
 }
 
 void Dialog::title(const std::string& value)
 {
-    if (_impl->title() == value)
-        return;
-    _impl->title(value);
+    _title = value;
 }
 
-const ImageSource& Dialog::image() const
+IProperty<ImageSource, ISharedDialog>& Dialog::image()
 {
-    return _impl->image();
+    return _image;
 }
 
 void Dialog::image(const ImageSource& image)
 {
-    // must be an icon
-    if (!image.isIcon)
-        return;
-
-    _impl->image(image);
+    _image = image;
 }
 
-std::shared_ptr<Menu> Dialog::menu() const
+IProperty<std::shared_ptr<Menu>, ISharedDialog>& Dialog::menu()
 {
-    return _impl->menu();
+    return _menu;
 }
 
 void Dialog::menu(std::shared_ptr<Menu> menu)
 {
-    if (_impl->menu() == menu)
-        return;
-
-    _impl->menu(menu);
+    _menu = menu;
 }
 
-Color Dialog::color() const
+IProperty<Color, ISharedDialog>& Dialog::color()
 {
-    return _impl->color();
+    return _color;
 }
 
 void Dialog::color(Color value)
 {
-    if (_impl->color() == value)
-        return;
-    _impl->color(value);
+    _color = value;
 }
 
-Cursor Dialog::cursor() const
+IProperty<Cursor, ISharedDialog>& Dialog::cursor()
 {
-    return _impl->cursor();
+    return _cursor;
 }
 
 void Dialog::cursor(Cursor value)
 {
-    _impl->cursor(value);
+    _cursor = value;
 }
 
-bool Dialog::dropTarget() const
+IProperty<bool, ISharedDialog>& Dialog::dropTarget()
 {
-    return _impl->dropTarget();
+    return _dropTarget;
 }
 
 void Dialog::dropTarget(bool value)
 {
-    _impl->dropTarget(value);
+    _dropTarget = value;
 }
 
-bool Dialog::mouseCapture() const
+IProperty<bool, ISharedDialog>& Dialog::active()
 {
-    return _impl->mouseCapture();
+    return _active;
+}
+
+void Dialog::active(bool value)
+{
+    _active = value;
+}
+
+IProperty<bool, ISharedDialog>& Dialog::mouseCapture()
+{
+    return _mouseCapture;
 }
 
 void Dialog::mouseCapture(bool value)
 {
-    _impl->mouseCapture(value);
+    _mouseCapture = value;
 }
 
-void* Dialog::handle() const
+IReadOnlyProperty<void*, ISharedDialog>& Dialog::handle()
 {
-    return _impl->handle();
+    return _handle;
 }
 
-void* Dialog::user() const
+IProperty<void*, ISharedDialog>& Dialog::user()
 {
-    return _impl->user();
+    return _user;
 }
 
 void Dialog::user(void* value)
 {
-    _impl->user(value);
+    _user = value;
 }
 
-ISharedDialog Dialog::ptr()
+IWeakDialog Dialog::parent() const
 {
-    return std::dynamic_pointer_cast<IDialog>(shared_from_this());
-}
-
-ISharedDialog Dialog::parent() const
-{
-    return _impl->parent();
+    return _parent;
 }
 
 /// <summary>
@@ -213,11 +316,6 @@ void Dialog::close(int result)
     _impl->close(result);
 }
 
-void Dialog::setFocus()
-{
-    _impl->setFocus();
-}
-
 void Dialog::bringToFront()
 {
     _impl->bringToFront();
@@ -230,18 +328,12 @@ void Dialog::sendToBack()
 
 void Dialog::move(const Point& point)
 {
-    if (_impl->p().point() == point)
-        return;
-
-    _impl->move(point);
+    _p = Position(point.x(), point.y(), _p->width(), _p->height());
 }
 
 void Dialog::resize(const Size& size)
 {
-    if (_impl->p().size() == size)
-        return;
-
-    _impl->resize(size);
+    _p = Position(_p->x(), _p->y(), size.width(), size.height());
 }
 
 void Dialog::center()
@@ -266,34 +358,102 @@ void Dialog::timer(int timeout)
     _impl->timer(timeout);
 }
 
-void Dialog::add(std::shared_ptr<Control> child)
+void Dialog::add(ISharedControl control)
 {
-    _impl->add(child);
+    if (control == nullptr)
+    {
+        DLGCPP_CERR("Attempt to add null control.");
+        return;
+    }
+
+    if (!control->parent().expired())
+    {
+        // already has a parent
+        DLGCPP_CERR("Control already has a parent.");
+        return;
+    }
+
+    auto it = std::find(_controls.begin(), _controls.end(), control);
+    if (it != _controls.end())
+    {
+        DLGCPP_CERR("Control is already owned by this dialog.");
+        return;
+    }
+
+    auto actual = std::dynamic_pointer_cast<Control>(control);
+    actual->_parent = shared_from_this();
+
+    _controls.push_back(control);
+
+    _impl->add(control);
 }
 
-void Dialog::remove(std::shared_ptr<Control> child)
+void Dialog::remove(ISharedControl control)
 {
-    _impl->remove(child);
+    auto it = std::find(_controls.begin(), _controls.end(), control);
+    if (it == _controls.end())
+        return;
+
+    auto actual = std::dynamic_pointer_cast<Control>(control);
+    actual->_parent.reset();
+
+    _controls.erase(it);
+
+    _impl->remove(control);
 }
 
-std::vector<std::shared_ptr<Control>> Dialog::controls() const
+std::vector<ISharedControl> Dialog::controls() const
 {
-    return _impl->controls();
+    return _controls;
 }
 
-void Dialog::add(std::shared_ptr<Dialog> child)
+void Dialog::add(ISharedDialog dialog)
 {
-    _impl->add(child);
+    if (dialog == nullptr)
+    {
+        DLGCPP_CERR("Attempt to add null dialog.");
+        return;
+    }
+
+    if (!dialog->parent().expired())
+    {
+        // already has a parent
+        DLGCPP_CERR("Dialog already has a parent.");
+        return;
+    }
+
+    auto it = std::find(_dialogs.begin(), _dialogs.end(), dialog);
+    if (it != _dialogs.end())
+    {
+        DLGCPP_CERR("Dialog is already owned by this dialog.");
+        return;
+    }
+
+    auto actual = std::dynamic_pointer_cast<Dialog>(dialog);
+    actual->_parent = shared_from_this();
+
+    _dialogs.push_back(dialog);
+
+    _impl->add(dialog);
 }
 
-void Dialog::remove(std::shared_ptr<Dialog> child)
+void Dialog::remove(ISharedDialog dialog)
 {
-    _impl->remove(child);
+    auto it = std::find(_dialogs.begin(), _dialogs.end(), dialog);
+    if (it == _dialogs.end())
+        return;
+
+    auto actual = std::dynamic_pointer_cast<Dialog>(dialog);
+    actual->_parent.reset();
+
+    _dialogs.erase(it);
+
+    _impl->remove(dialog);
 }
 
-std::vector<std::shared_ptr<Dialog>> Dialog::dialogs() const
+std::vector<ISharedDialog> Dialog::dialogs() const
 {
-    return _impl->dialogs();
+    return _dialogs;
 }
 
 void Dialog::redraw(bool drawChildren)
@@ -318,80 +478,95 @@ Position Dialog::toPixels(const Position& pos) const
 
 IEvent<ISharedDialog>& Dialog::ConfirmEvent()
 {
-    return _impl->ConfirmEvent();
+    return _confirmEvent;
 }
 
 IEvent<ISharedDialog>& Dialog::CancelEvent()
 {
-    return _impl->CancelEvent();
+    return _cancelEvent;
+}
+
+IEvent<ISharedDialog, CloseDialogEvent>& Dialog::CloseEvent()
+{
+    return _closeEvent;
+}
+
+IEvent<ISharedDialog>& Dialog::CreateEvent()
+{
+    return _createEvent;
+}
+
+IEvent<ISharedDialog>& Dialog::DestroyEvent()
+{
+    return _destroyEvent;
 }
 
 IEvent<ISharedDialog>& Dialog::HelpEvent()
 {
-    return _impl->HelpEvent();
+    return _helpEvent;
 }
 
 IEvent<ISharedDialog>& Dialog::MoveEvent()
 {
-    return _impl->MoveEvent();
+    return _moveEvent;
 }
 
 IEvent<ISharedDialog>& Dialog::SizeEvent()
 {
-    return _impl->SizeEvent();
+    return _sizeEvent;
 }
 
 IEvent<ISharedDialog, ISharedDrawingContext>& Dialog::PaintEvent()
 {
-    return _impl->PaintEvent();
+    return _paintEvent;
 }
 
 IEvent<ISharedDialog>& Dialog::TimerEvent()
 {
-    return _impl->TimerEvent();
+    return _timerEvent;
 }
 
 IEvent<ISharedDialog, KeyboardEvent>& Dialog::KeyDownEvent()
 {
-    return _impl->KeyDownEvent();
+    return _keyDownEvent;
 }
 
 IEvent<ISharedDialog, KeyboardEvent>& Dialog::KeyUpEvent()
 {
-    return _impl->KeyUpEvent();
+    return _keyUpEvent;
 }
 
 IEvent<ISharedDialog, MouseEvent>& Dialog::MouseDownEvent()
 {
-    return _impl->MouseDownEvent();
+    return _mouseDownEvent;
 }
 
 IEvent<ISharedDialog, MouseEvent>& Dialog::MouseUpEvent()
 {
-    return _impl->MouseUpEvent();
+    return _mouseUpEvent;
 }
 
 IEvent<ISharedDialog, MouseEvent>& Dialog::MouseMoveEvent()
 {
-    return _impl->MouseMoveEvent();
+    return _mouseMoveEvent;
 }
 
 IEvent<ISharedDialog, MouseEvent>& Dialog::MouseDoubleClickEvent()
 {
-    return _impl->MouseDoubleClickEvent();
+    return _mouseDblClickEvent;
 }
 
 IEvent<ISharedDialog>& Dialog::MouseCaptureLostEvent()
 {
-    return _impl->MouseCaptureLostEvent();
+    return _mouseCaptureLostEvent;
 }
 
-IEvent<ISharedDialog, std::vector<std::string>>& Dialog::DropEvent()
+IEvent<ISharedDialog, DropFilesEvent>& Dialog::DropEvent()
 {
-    return _impl->DropEvent();
+    return _dropEvent;
 }
 
 IEvent<ISharedDialog, int>& Dialog::UserEvent()
 {
-    return _impl->UserEvent();
+    return _userEvent;
 }

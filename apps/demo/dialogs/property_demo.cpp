@@ -6,7 +6,7 @@ void dialogs_property_demo(ISharedDialog parent)
 {
     auto propertyDlg = std::make_shared<PropertyDialog>(parent);
 
-    propertyDlg->title("Property Pages");
+    propertyDlg->title() = "Property Pages";
 
     // TODO: add options
 

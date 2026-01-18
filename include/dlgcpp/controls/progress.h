@@ -9,14 +9,16 @@ namespace dlgcpp
         class IProgress : public virtual IControl
         {
         public:
-            virtual bool vertical() const = 0;
-            virtual void vertical(bool value) = 0;
-            virtual int value() const = 0;
-            virtual void value(int value) = 0;
-            virtual std::pair<int, int> range() const = 0;
-            virtual void range(int from, int to) = 0;
+            // properties
+            virtual IProperty<bool, ISharedControl>& vertical() = 0;
+            virtual IProperty<int, ISharedControl>& value() = 0;
+            virtual IProperty<std::pair<int, int>, ISharedControl>& range() = 0;
 
-            virtual IEvent<ISharedControl>& ChangedEvent() = 0;
+            // events
+            virtual IEvent<ISharedControl>& ClickEvent() = 0;
+            virtual IEvent<ISharedControl>& DoubleClickEvent() = 0;
+            virtual IEvent<ISharedControl>& RightClickEvent() = 0;
+            virtual IEvent<ISharedControl>& DoubleRightClickEvent() = 0;
         };
 
         typedef std::shared_ptr<IProgress> ISharedProgress;
@@ -32,19 +34,32 @@ namespace dlgcpp
             ~Progress() override;
 
             // IProgress impl.
-            bool vertical() const;
+            IProperty<bool, ISharedControl>& vertical() override;
+            IProperty<int, ISharedControl>& value() override;
+            IProperty<std::pair<int, int>, ISharedControl>& range() override;
+
+            IEvent<ISharedControl>& ClickEvent() override;
+            IEvent<ISharedControl>& DoubleClickEvent() override;
+            IEvent<ISharedControl>& RightClickEvent() override;
+            IEvent<ISharedControl>& DoubleRightClickEvent() override;
+
+            // compatibility setters
             void vertical(bool value);
-            int value() const;
             void value(int value);
-            std::pair<int, int> range() const;
             void range(int from, int to);
 
-            IEvent<ISharedControl>& ChangedEvent();
-
         private:
-            Progress(std::shared_ptr<ProgressImpl> impl);
+            Progress(std::shared_ptr<ProgressImpl> impl, const Position& p);
 
             std::shared_ptr<ProgressImpl> _impl;
+
+            Property<bool, ISharedControl> _vertical;
+            Property<int, ISharedControl> _value;
+            Property<std::pair<int, int>, ISharedControl> _range;
+            Event<ISharedControl> _clickEvent;
+            Event<ISharedControl> _dblClickEvent;
+            Event<ISharedControl> _rightClickEvent;
+            Event<ISharedControl> _dblRightClickEvent;
         };
     }
 }

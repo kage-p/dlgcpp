@@ -1,63 +1,49 @@
 #include "dlgcpp/controls/treeview_node.h"
 
+using namespace dlgcpp;
 using namespace dlgcpp::controls;
-
-class dlgcpp::controls::TreeViewNodeImpl
-{
-public:
-    int _id = 0;
-    std::string _text;
-    std::string _tag;
-    bool _checked = false;
-};
-
-TreeViewNode::TreeViewNode(
-    const std::string& tag,
-    const std::string& text,
-    bool checked) :
-    _impl(std::make_shared< TreeViewNodeImpl>())
-{
-    _impl->_text = text;
-    _impl->_checked = checked;
-    _impl->_tag = tag;
-}
 
 TreeViewNode::TreeViewNode(
     int id,
     const std::string& text,
     bool checked,
-    const std::string& tag) :
-    TreeViewNode(tag, text, checked)
+    const std::string& tag)
 {
-    _impl->_id = id;
+    auto ownerFn = [this]() -> ISharedTreeViewNode
+        {
+            return std::static_pointer_cast<dlgcpp::controls::ITreeViewNode>(shared_from_this());
+        };
+
+    _id.reset(id, nullptr, ownerFn, "id");
+    _tag.reset(tag, nullptr, ownerFn, "tag");
+    _text.reset(text, nullptr, ownerFn, "text");
+    _checked.reset(checked, nullptr, ownerFn, "checked");
 }
 
-int TreeViewNode::id() const
+TreeViewNode::TreeViewNode(
+    const std::string& tag,
+    const std::string& text,
+    bool checked) :
+    TreeViewNode(0, text, checked, tag)
 {
-    return _impl->_id;
 }
 
-const std::string& TreeViewNode::tag() const
+IReadOnlyProperty<int, ISharedTreeViewNode>& TreeViewNode::id()
 {
-    return _impl->_tag;
+    return _id;
 }
 
-const std::string& TreeViewNode::text() const
+IReadOnlyProperty<std::string, ISharedTreeViewNode>& TreeViewNode::tag()
 {
-    return _impl->_text;
+    return _tag;
 }
 
-void TreeViewNode::text(const std::string& value)
+IProperty<std::string, ISharedTreeViewNode>& TreeViewNode::text()
 {
-    _impl->_text = value;
+    return _text;
 }
 
-bool TreeViewNode::checked() const
+IProperty<bool, ISharedTreeViewNode>& TreeViewNode::checked()
 {
-    return _impl->_checked;
-}
-
-void TreeViewNode::checked(bool value)
-{
-    _impl->_checked = value;
+    return _checked;
 }

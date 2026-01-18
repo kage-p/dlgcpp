@@ -15,7 +15,7 @@ void controls_tabs_demo(ISharedDialog parent)
     auto tab2 = std::make_shared<TabItem>("Green");
     auto tab3 = std::make_shared<TabItem>("Blue");
     tabs->items({ tab1, tab2, tab3 });
-    tabs->currentIndex(0);
+    tabs->selectedIndex(0);
     dlg->add(tabs);
 
     auto subdlg = std::make_shared<Dialog>(DialogType::Frameless);
@@ -25,14 +25,14 @@ void controls_tabs_demo(ISharedDialog parent)
 
     dlg->SizeEvent() += [subdlg, tabs](ISharedDialog dlg)
         {
-            auto area = tabs->area();
+            const auto& area = tabs->area().value();
             subdlg->p(area);
             subdlg->bringToFront();
         };
 
-    tabs->SelChangedEvent() += [tabs, subdlg](auto)
+    tabs->selectedIndex().event() += [tabs, subdlg](auto)
         {
-            switch (tabs->currentIndex())
+            switch (tabs->selectedIndex())
             {
             case 0:
                 subdlg->color(Color::Red);

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "dlgcpp/defs.h"
+#include "dlgcpp/property.h"
+#include <ostream>
 #include <string>
 
 namespace dlgcpp
@@ -15,6 +17,17 @@ namespace dlgcpp
             Error
         };
 
+        inline std::ostream& operator<<(std::ostream& os, MessageDialogIcon e)
+        {
+            switch (e) {
+            case MessageDialogIcon::Information:   return os << "Information";
+            case MessageDialogIcon::Question:  return os << "Question";
+            case MessageDialogIcon::Warning: return os << "Warning";
+            case MessageDialogIcon::Error: return os << "Error";
+            }
+            return os << static_cast<int>(e); // fallback
+        }
+
         enum class MessageDialogButtonGroup
         {
             Ok = 0,
@@ -24,6 +37,19 @@ namespace dlgcpp
             YesNo,
             RetryCancel
         };
+
+        inline std::ostream& operator<<(std::ostream& os, MessageDialogButtonGroup e)
+        {
+            switch (e) {
+            case MessageDialogButtonGroup::Ok:   return os << "Ok";
+            case MessageDialogButtonGroup::OkCancel:  return os << "OkCancel";
+            case MessageDialogButtonGroup::AbortRetryIgnore: return os << "AbortRetryIgnore";
+            case MessageDialogButtonGroup::YesNoCancel:   return os << "YesNoCancel";
+            case MessageDialogButtonGroup::YesNo:  return os << "YesNo";
+            case MessageDialogButtonGroup::RetryCancel: return os << "RetryCancel";
+            }
+            return os << static_cast<int>(e); // fallback
+        }
 
         enum class MessageDialogButton
         {
@@ -37,51 +63,68 @@ namespace dlgcpp
             No
         };
 
+        inline std::ostream& operator<<(std::ostream& os, MessageDialogButton e)
+        {
+            switch (e) {
+            case MessageDialogButton::Undefined:   return os << "Undefined";
+            case MessageDialogButton::Ok:  return os << "Ok";
+            case MessageDialogButton::Cancel: return os << "Cancel";
+            case MessageDialogButton::Abort: return os << "Abort";
+            case MessageDialogButton::Retry: return os << "Retry";
+            case MessageDialogButton::Ignore: return os << "Ignore";
+            case MessageDialogButton::Yes: return os << "Yes";
+            case MessageDialogButton::No: return os << "No";
+            }
+            return os << static_cast<int>(e); // fallback
+        }
+
+        class IMessageDialog;
+        class MessageDialogImpl;
+        typedef std::shared_ptr<IMessageDialog> ISharedMessageDialog;
+
         class IMessageDialog
         {
         public:
-            virtual const std::string& title() const = 0;
-            virtual void title(const std::string& value) = 0;
-            virtual const std::string& message() const = 0;
-            virtual void message(const std::string& value) = 0;
-            virtual MessageDialogButtonGroup buttons() const = 0;
-            virtual void buttons(MessageDialogButtonGroup value) = 0;
-            virtual MessageDialogIcon icon() const = 0;
-            virtual void icon(MessageDialogIcon value) = 0;
-            virtual MessageDialogButton defaultButton() const = 0;
-            virtual void defaultButton(MessageDialogButton value) = 0;
-            virtual bool showHelp() const = 0;
-            virtual void showHelp(bool value) = 0;
+            virtual IReadOnlyProperty<ISharedDialog, ISharedMessageDialog>& parent() = 0;
+            virtual IProperty<std::string, ISharedMessageDialog>& title() = 0;
+            virtual IProperty<std::string, ISharedMessageDialog>& message() = 0;
+            virtual IProperty<MessageDialogButtonGroup, ISharedMessageDialog>& buttons() = 0;
+            virtual IProperty<MessageDialogIcon, ISharedMessageDialog>& icon() = 0;
+            virtual IProperty<MessageDialogButton, ISharedMessageDialog>& defaultButton() = 0;
+            virtual IProperty<bool, ISharedMessageDialog>& showHelp() = 0;
+
             virtual MessageDialogButton show() = 0;
         };
 
-        class MessageDialogImpl;
-
-        class MessageDialog : public IMessageDialog
+        class MessageDialog :
+            public IMessageDialog,
+            public std::enable_shared_from_this<MessageDialog>
         {
         public:
             explicit MessageDialog(ISharedDialog parent = nullptr);
             virtual ~MessageDialog() = default;
 
             // IMessageDialog impl.
-            const std::string& title() const override;
-            void title(const std::string& value) override;
-            const std::string& message() const override;
-            void message(const std::string& value) override;
-            MessageDialogButtonGroup buttons() const override;
-            void buttons(MessageDialogButtonGroup value) override;
-            MessageDialogIcon icon() const override;
-            void icon(MessageDialogIcon value) override;
-            MessageDialogButton defaultButton() const override;
-            void defaultButton(MessageDialogButton value) override;
-            bool showHelp() const override;
-            void showHelp(bool value) override;
+            IReadOnlyProperty<ISharedDialog, ISharedMessageDialog>& parent() override;
+            IProperty<std::string, ISharedMessageDialog>& title() override;
+            IProperty<std::string, ISharedMessageDialog>& message() override;
+            IProperty<MessageDialogButtonGroup, ISharedMessageDialog>& buttons() override;
+            IProperty<MessageDialogIcon, ISharedMessageDialog>& icon() override;
+            IProperty<MessageDialogButton, ISharedMessageDialog>& defaultButton() override;
+            IProperty<bool, ISharedMessageDialog>& showHelp() override;
             MessageDialogButton show() override;
 
         private:
-            MessageDialog(std::shared_ptr<MessageDialogImpl> impl);
+            MessageDialog(std::shared_ptr<MessageDialogImpl> impl, ISharedDialog parent);
 
             std::shared_ptr<MessageDialogImpl> _impl;
+            Property<ISharedDialog, ISharedMessageDialog> _parent;
+            Property<std::string, ISharedMessageDialog> _title;
+            Property<std::string, ISharedMessageDialog> _message;
+            Property<MessageDialogButtonGroup, ISharedMessageDialog> _buttons;
+            Property<MessageDialogIcon, ISharedMessageDialog> _icon;
+            Property<MessageDialogButton, ISharedMessageDialog> _defaultButton;
+            Property<bool, ISharedMessageDialog> _showHelp;
         };
     }
 }

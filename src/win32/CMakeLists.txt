@@ -1,60 +1,60 @@
 cmake_minimum_required(VERSION 3.27)
 
 set(platform_src
-    controls/control.cpp
-    controls/control_p.h
-    controls/button.cpp
-    controls/button_p.h
-    controls/checkbox.cpp
-    controls/checkbox_p.h
-    controls/combobox.cpp
-    controls/combobox_p.h
-    controls/custom.cpp
-    controls/custom_p.h
-    controls/image.cpp
-    controls/image_p.h
-    controls/label.cpp
-    controls/label_p.h
-    controls/listbox.cpp
-    controls/listbox_p.h
-    controls/listview.cpp
-    controls/listview_p.h
-    controls/option_btn.cpp
-    controls/option_btn_p.h
-    controls/progress.cpp
-    controls/progress_p.h
-    controls/slider.cpp
-    controls/slider_p.h
-    controls/tabs.cpp
-    controls/tabs_p.h
-    controls/textbox.cpp
-    controls/textbox_p.h
-    controls/toolbar.cpp
-    controls/toolbar_p.h
-    controls/trackbar.cpp
-    controls/trackbar_p.h
-    controls/treeview.cpp
-    controls/treeview_p.h
-    dialogs/dialog.cpp
-    dialogs/dialog_p.h
-    dialogs/about.cpp
-    dialogs/about_p.h
-    dialogs/file.cpp
-    dialogs/file_p.h
-    dialogs/folder.cpp
-    dialogs/folder_p.h
-    dialogs/message.cpp
-    dialogs/message_p.h
-    dialogs/property.cpp
-    dialogs/property_p.h
-    dialogs/splash.cpp
-    dialogs/splash_p.h
-    gfx/context.cpp
-    gfx/context_p.h
-    menus/menu.cpp
-    menus/menu_p.h
-    menus/menu_item.cpp
-    menus/menu_item_p.h
+    controls/button_impl.cpp
+    controls/button_impl.h
+    controls/checkbox_impl.cpp
+    controls/checkbox_impl.h
+    controls/combobox_impl.cpp
+    controls/combobox_impl.h
+    controls/control_impl.cpp
+    controls/control_impl.h
+    controls/custom_impl.cpp
+    controls/custom_impl.h
+    controls/image_impl.cpp
+    controls/image_impl.h
+    controls/label_impl.cpp
+    controls/label_impl.h
+    controls/listbox_impl.cpp
+    controls/listbox_impl.h
+    controls/listview_impl.cpp
+    controls/listview_impl.h
+    controls/option_btn_impl.cpp
+    controls/option_btn_impl.h
+    controls/progress_impl.cpp
+    controls/progress_impl.h
+    controls/slider_impl.cpp
+    controls/slider_impl.h
+    controls/tabs_impl.cpp
+    controls/tabs_impl.h
+    controls/textbox_impl.cpp
+    controls/textbox_impl.h
+    controls/toolbar_impl.cpp
+    controls/toolbar_impl.h
+    controls/trackbar_impl.cpp
+    controls/trackbar_impl.h
+    controls/treeview_impl.cpp
+    controls/treeview_impl.h
+    dialogs/about_impl.cpp
+    dialogs/about_impl.h
+    dialogs/dialog_impl.cpp
+    dialogs/dialog_impl.h
+    dialogs/file_impl.cpp
+    dialogs/file_impl.h
+    dialogs/folder_impl.cpp
+    dialogs/folder_impl.h
+    dialogs/message_impl.cpp
+    dialogs/message_impl.h
+    dialogs/property_impl.cpp
+    dialogs/property_impl.h
+    dialogs/splash_impl.cpp
+    dialogs/splash_impl.h
+    gfx/context_impl.cpp
+    gfx/context_impl.h
+    menus/menu_impl.cpp
+    menus/menu_impl.h
+    menus/menu_item_impl.cpp
+    menus/menu_item_impl.h
     utility/convert.cpp
     utility/convert.h
     utility/font_loader.cpp
@@ -79,7 +79,7 @@ set(platform_includes
 set(platform_deps
     comctl32
     gdiplus
-	Msimg32
+    Msimg32
 )
 
 set(platform_src ${platform_src} PARENT_SCOPE)

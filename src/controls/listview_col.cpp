@@ -3,61 +3,54 @@
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-class dlgcpp::controls::ListViewColumnImpl
-{
-public:
-    std::string text;
-    int width = 0;
-};
-
-ListViewColumn::ListViewColumn() :
-    _impl(new ListViewColumnImpl())
-{
-}
 
 ListViewColumn::ListViewColumn(
     const std::string& text,
-    int width) :
-    ListViewColumn()
+    int width)
 {
-    _impl->text = text;
-    _impl->width = width;
+    auto ownerFn = [this]() -> ISharedListViewColumn
+        {
+            return std::static_pointer_cast<dlgcpp::controls::IListViewColumn>(shared_from_this());
+        };
+
+    _text.reset(text, nullptr, ownerFn, "text");
+    _width.reset(width, nullptr, ownerFn, "width");
 }
 
 ListViewColumn::ListViewColumn(
     const ListViewColumn& other) :
-    ListViewColumn()
+    ListViewColumn(other._text, other._width)
 {
-    _impl->text = other.text();
-    _impl->width = other.width();
 }
 
 ListViewColumn& ListViewColumn::operator=(const ListViewColumn& other)
 {
     if (this != &other)
     {
-        _impl->text = other.text();
-        _impl->width = other.width();
+        _text = other._text;
+        _width = other._width;
     }
     return *this;
 }
 
-const std::string& ListViewColumn::text() const
+bool ListViewColumn::operator==(const ListViewColumn& other) const
 {
-    return _impl->text;
+    return (
+        _text == other._text &&
+        _width == other._width);
 }
 
-void ListViewColumn::text(const std::string& value)
+bool ListViewColumn::operator!=(const ListViewColumn& other) const
 {
-    _impl->text = value;
+    return !(*this == other);
 }
 
-int ListViewColumn::width() const
+IProperty<std::string, ISharedListViewColumn>& ListViewColumn::text()
 {
-    return _impl->width;
+    return _text;
 }
 
-void ListViewColumn::width(int value)
+IProperty<int, ISharedListViewColumn>& ListViewColumn::width()
 {
-    _impl->width = value;
+    return _width;
 }

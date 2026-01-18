@@ -3,8 +3,10 @@
 #include "dlgcpp/defs.h"
 #include "dlgcpp/event.h"
 #include "dlgcpp/gfx/context.h"
+#include "dlgcpp/property.h"
 
 #include <memory>
+#include <ostream>
 #include <string>
 
 namespace dlgcpp
@@ -19,51 +21,50 @@ namespace dlgcpp
             Raised
         };
 
+        inline std::ostream& operator<<(std::ostream& os, BorderStyle e)
+        {
+            switch (e) {
+            case BorderStyle::None:   return os << "None";
+            case BorderStyle::Thin:   return os << "Thin";
+            case BorderStyle::Sunken: return os << "Sunken";
+            case BorderStyle::Raised:  return os << "Raised";
+            }
+            return os << static_cast<int>(e); // fallback
+        }
+
         class IControl
         {
         public:
-            virtual bool enabled() const = 0;
-            virtual void enabled(bool value) = 0;
-            virtual bool visible() const = 0;
-            virtual void visible(bool value) = 0;
-            virtual const Position& p() const = 0;
-            virtual void p(const Position& p) = 0;
+            // properties
+            virtual IProperty<bool, ISharedControl>& enabled() = 0;
+            virtual IProperty<bool, ISharedControl>& visible() = 0;
+            virtual IProperty<Position, ISharedControl>& p() = 0;
+            virtual IProperty<BorderStyle, ISharedControl>& border() = 0;
+            virtual IProperty<std::pair<Color, Color>, ISharedControl>& colors() = 0;
+            virtual IProperty<Font, ISharedControl>& font() = 0;
+            virtual IProperty<Cursor, ISharedControl>& cursor() = 0;
+            virtual IProperty<bool, ISharedControl>& focus() = 0;
+            virtual IProperty<bool, ISharedControl>& mouseCapture() = 0;
+            virtual IProperty<bool, ISharedControl>& wantKeyboardEvents() = 0;
+            virtual IProperty<bool, ISharedControl>& wantMouseEvents() = 0;
+            virtual IProperty<bool, ISharedControl>& wantPaintEvents() = 0;
+            virtual IProperty<bool, ISharedControl>& wantSizingEvents() = 0;
+            virtual IReadOnlyProperty<void*, ISharedControl>& handle() = 0;
+            virtual IProperty<void*, ISharedControl>& user() = 0;
+
+            // parent/child management
+            virtual IWeakDialog parent() const = 0;
+
+            // actions
             virtual void move(const Point& point) = 0;
             virtual void resize(const Size& size) = 0;
-            virtual void setFocus() = 0;
             virtual void bringToFront() = 0;
             virtual void sendToBack() = 0;
-            virtual BorderStyle border() const = 0;
-            virtual void border(BorderStyle value) = 0;
-            virtual const std::string& text() const = 0;
-            virtual void text(const std::string& value) = 0;
-            virtual std::pair<Color, Color> colors() const = 0;
-            virtual void colors(Color fgColor, Color bgColor) = 0;
-            virtual const Font& font() const = 0;
-            virtual void font(const Font& value) = 0;
-            virtual Cursor cursor() const = 0;
-            virtual void cursor(Cursor value) = 0;
-            virtual bool mouseCapture() const = 0;
-            virtual void mouseCapture(bool value) = 0;
-            virtual bool wantKeyboardEvents() const = 0;
-            virtual void wantKeyboardEvents(bool value) = 0;
-            virtual bool wantMouseEvents() const = 0;
-            virtual void wantMouseEvents(bool value) = 0;
-            virtual bool wantPaintEvents() const = 0;
-            virtual void wantPaintEvents(bool value) = 0;
-            virtual bool wantSizingEvents() const = 0;
-            virtual void wantSizingEvents(bool value) = 0;
-            virtual ISharedDialog parent() const = 0;
-            virtual void* handle() const = 0;
-            virtual void* user() const = 0;
-            virtual void user(void* value) = 0;
             virtual void redraw() = 0;
 
-            virtual IEvent<ISharedControl>& ClickEvent() = 0;
-            virtual IEvent<ISharedControl>& RightClickEvent() = 0;
-            virtual IEvent<ISharedControl>& DoubleClickEvent() = 0;
-            virtual IEvent<ISharedControl>& DoubleRightClickEvent() = 0;
-            virtual IEvent<ISharedControl, bool>& FocusEvent() = 0;
+            // events
+            virtual IEvent<ISharedControl>& CreateEvent() = 0;
+            virtual IEvent<ISharedControl>& DestroyEvent() = 0;
             virtual IEvent<ISharedControl, KeyboardEvent>& KeyDownEvent() = 0;
             virtual IEvent<ISharedControl, KeyboardEvent>& KeyUpEvent() = 0;
             virtual IEvent<ISharedControl, MouseEvent>& MouseDownEvent() = 0;
@@ -74,59 +75,67 @@ namespace dlgcpp
             virtual IEvent<ISharedControl>& MoveEvent() = 0;
             virtual IEvent<ISharedControl>& SizeEvent() = 0;
             virtual IEvent<ISharedControl, ISharedDrawingContext>& PaintEvent() = 0;
-            virtual IEvent<int>& UserEvent() = 0;
+            virtual IEvent<ISharedControl, int>& UserEvent() = 0;
+
+            // internal
+            virtual std::shared_ptr<ControlImpl> impl() = 0;
         };
 
         class Control :
             public virtual IControl,
             public std::enable_shared_from_this<Control>
         {
-            friend class dlgcpp::dialogs::DialogImpl;
+            friend class dlgcpp::dialogs::Dialog;
 
         public:
             // IControl impl.
-            bool enabled() const override;
-            void enabled(bool value) override;
-            bool visible() const override;
-            void visible(bool value) override;
-            const Position& p() const override;
-            void p(const Position& p) override;
+
+            // properties
+            IProperty<bool, ISharedControl>& enabled() override;
+            IProperty<bool, ISharedControl>& visible() override;
+            IProperty<Position, ISharedControl>& p() override;
+            IProperty<BorderStyle, ISharedControl>& border() override;
+            IProperty<std::pair<Color, Color>, ISharedControl>& colors() override;
+            IProperty<Font, ISharedControl>& font() override;
+            IProperty<Cursor, ISharedControl>& cursor() override;
+            IProperty<bool, ISharedControl>& focus() override;
+            IProperty<bool, ISharedControl>& mouseCapture() override;
+            IProperty<bool, ISharedControl>& wantKeyboardEvents() override;
+            IProperty<bool, ISharedControl>& wantMouseEvents() override;
+            IProperty<bool, ISharedControl>& wantPaintEvents() override;
+            IProperty<bool, ISharedControl>& wantSizingEvents() override;
+            IProperty<void*, ISharedControl>& user() override;
+            IReadOnlyProperty<void*, ISharedControl>& handle() override;
+
+            // parent/child management
+            IWeakDialog parent() const override;
+
+            // compatibility setters
+            void enabled(bool value);
+            void visible(bool value);
+            void p(const Position& p);
+            void border(BorderStyle value);
+            void colors(Color fgColor, Color bgColor);
+            void font(const Font& value);
+            void cursor(Cursor value);
+            void focus(bool value);
+            void mouseCapture(bool value);
+            void wantKeyboardEvents(bool value);
+            void wantMouseEvents(bool value);
+            void wantPaintEvents(bool value);
+            void wantSizingEvents(bool value);
+            void user(void* value);
+
+            // actions
             void move(const Point& point) override;
             void resize(const Size& size) override;
-            void setFocus() override;
             void bringToFront() override;
             void sendToBack() override;
-            BorderStyle border() const override;
-            void border(BorderStyle value) override;
-            const std::string& text() const override;
-            void text(const std::string& value) override;
-            std::pair<Color, Color> colors() const override;
-            void colors(Color fgColor, Color bgColor) override;
-            const Font& font() const override;
-            void font(const Font& value) override;
-            Cursor cursor() const override;
-            void cursor(Cursor value) override;
-            bool mouseCapture() const override;
-            void mouseCapture(bool value) override;
-            bool wantKeyboardEvents() const override;
-            void wantKeyboardEvents(bool value) override;
-            bool wantMouseEvents() const override;
-            void wantMouseEvents(bool value) override;
-            bool wantPaintEvents() const override;
-            void wantPaintEvents(bool value) override;
-            bool wantSizingEvents() const override;
-            void wantSizingEvents(bool value) override;
-            void* user() const override;
-            void user(void* value) override;
-            ISharedDialog parent() const override;
-            void* handle() const override;
             void redraw() override;
 
-            IEvent<ISharedControl>& ClickEvent() override;
-            IEvent<ISharedControl>& RightClickEvent() override;
-            IEvent<ISharedControl>& DoubleClickEvent() override;
-            IEvent<ISharedControl>& DoubleRightClickEvent() override;
-            IEvent<ISharedControl, bool>& FocusEvent() override;
+            // events
+            IEvent<ISharedControl>& CreateEvent() override;
+            IEvent<ISharedControl>& DestroyEvent() override;
             IEvent<ISharedControl, KeyboardEvent>& KeyDownEvent() override;
             IEvent<ISharedControl, KeyboardEvent>& KeyUpEvent() override;
             IEvent<ISharedControl, MouseEvent>& MouseDownEvent() override;
@@ -137,16 +146,48 @@ namespace dlgcpp
             IEvent<ISharedControl>& MoveEvent() override;
             IEvent<ISharedControl>& SizeEvent() override;
             IEvent<ISharedControl, ISharedDrawingContext>& PaintEvent() override;
-            IEvent<int>& UserEvent() override;
+            IEvent<ISharedControl, int>& UserEvent() override;
+
+            // internal
+            std::shared_ptr<ControlImpl> impl() override;
 
         protected:
-            explicit Control(std::shared_ptr<ControlImpl> impl);
+            explicit Control(std::shared_ptr<ControlImpl> impl, const Position& p);
             virtual ~Control();
-
-            std::shared_ptr<ControlImpl> impl();
 
         private:
             std::shared_ptr<ControlImpl> _impl;
+            IWeakDialog _parent;
+
+            Property<bool, ISharedControl> _enabled;
+            Property<bool, ISharedControl> _visible;
+            Property<bool, ISharedControl> _mouseCapture;
+            Property<bool, ISharedControl> _wantKeyboardEvents;
+            Property<bool, ISharedControl> _wantMouseEvents;
+            Property<bool, ISharedControl> _wantPaintEvents;
+            Property<bool, ISharedControl> _wantSizingEvents;
+            Property<Position, ISharedControl> _p;
+            Property<BorderStyle, ISharedControl> _border;
+            Property<std::pair<Color, Color>, ISharedControl> _colors;
+            Property<Font, ISharedControl> _font;
+            Property<Cursor, ISharedControl> _cursor;
+            Property<bool, ISharedControl> _focus;
+            Property<void*, ISharedControl> _handle;
+            Property<void*, ISharedControl> _user;
+
+            Event<ISharedControl> _createEvent;
+            Event<ISharedControl> _destroyEvent;
+            Event<ISharedControl, KeyboardEvent> _keyDownEvent;
+            Event<ISharedControl, KeyboardEvent> _keyUpEvent;
+            Event<ISharedControl, MouseEvent> _mouseDownEvent;
+            Event<ISharedControl, MouseEvent> _mouseUpEvent;
+            Event<ISharedControl, MouseEvent> _mouseMoveEvent;
+            Event<ISharedControl, MouseEvent> _mouseDblClickEvent;
+            Event<ISharedControl> _mouseCaptureLostEvent;
+            Event<ISharedControl> _moveEvent;
+            Event<ISharedControl> _sizeEvent;
+            Event<ISharedControl, ISharedDrawingContext> _paintEvent;
+            Event<ISharedControl, int> _userEvent;
         };
     }
 }

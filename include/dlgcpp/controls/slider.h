@@ -9,14 +9,11 @@ namespace dlgcpp
         class ISlider : public virtual IControl
         {
         public:
-            virtual bool vertical() const = 0;
-            virtual void vertical(bool value) = 0;
-            virtual int value() const = 0;
-            virtual void value(int value) = 0;
-            virtual std::pair<int, int> range() const = 0;
-            virtual void range(int from, int to) = 0;
-            virtual Color barColor() const = 0;
-            virtual void barColor(Color value) = 0;
+            virtual IProperty<bool, ISharedControl>& vertical() = 0;
+            virtual IProperty<int, ISharedControl>& value() = 0;
+            virtual IProperty<std::pair<int, int>, ISharedControl>& range() = 0;
+            virtual IProperty<Color, ISharedControl>& barColor() = 0;
+            virtual IProperty<std::string, ISharedControl>& text() = 0;
 
             virtual IEvent<ISharedControl>& ChangedEvent() = 0;
         };
@@ -34,21 +31,32 @@ namespace dlgcpp
             ~Slider() override;
 
             // ISlider impl.
-            bool vertical() const override;
-            void vertical(bool value) override;
-            int value() const override;
-            void value(int value) override;
-            std::pair<int, int> range() const override;
-            void range(int from, int to) override;
-            Color barColor() const override;
-            void barColor(Color value) override;
+            virtual IProperty<bool, ISharedControl>& vertical() override;
+            virtual IProperty<int, ISharedControl>& value() override;
+            virtual IProperty<std::pair<int, int>, ISharedControl>& range() override;
+            virtual IProperty<Color, ISharedControl>& barColor() override;
+            virtual IProperty<std::string, ISharedControl>& text() override;
 
             IEvent<ISharedControl>& ChangedEvent();
 
+            // compatibility setters
+            void vertical(bool value);
+            void value(int value);
+            void range(int from, int to);
+            void barColor(Color value);
+            void text(const std::string& value);
+
         private:
-            Slider(std::shared_ptr<SliderImpl> impl);
+            Slider(std::shared_ptr<SliderImpl> impl, const Position& p);
 
             std::shared_ptr<SliderImpl> _impl;
+
+            Property<bool, ISharedControl> _vertical;
+            Property<int, ISharedControl> _value;
+            Property<std::pair<int, int>, ISharedControl> _range;
+            Property<Color, ISharedControl> _barColor;
+            Property<std::string, ISharedControl> _text;
+            Event<ISharedControl> _changedEvent;
         };
     }
 }

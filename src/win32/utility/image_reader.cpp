@@ -30,25 +30,25 @@ HBITMAP ImageReader::loadWithGDIPlus(
 
     std::shared_ptr<Gdiplus::Bitmap> source;
 
-    if (image.isFile)
+    if (image.isFile())
     {
         // load image from file
-        source = std::make_shared<Gdiplus::Bitmap>(StringEncoder::toWide(image.id).c_str());
+        source = std::make_shared<Gdiplus::Bitmap>(StringEncoder::toWide(image.id()).c_str());
     }
     else
     {
         // load image from resource
-        HRSRC hRes = FindResourceW(nullptr, StringEncoder::toWide(image.id).c_str(), RT_RCDATA);
+        HRSRC hRes = FindResourceW(nullptr, StringEncoder::toWide(image.id()).c_str(), RT_RCDATA);
         if (!hRes)
         {
-            DLGCPP_CERR("Image resource not found: " << image.id);
+            DLGCPP_CERR("Image resource not found: " << image.id());
             return nullptr;
         }
 
         HGLOBAL hGlob = LoadResource(nullptr, hRes);
         if (!hGlob)
         {
-            DLGCPP_CERR("Failed to load image resource: " << image.id);
+            DLGCPP_CERR("Failed to load image resource: " << image.id());
             return nullptr;
         }
 
@@ -56,7 +56,7 @@ HBITMAP ImageReader::loadWithGDIPlus(
         DWORD size = SizeofResource(nullptr, hRes);
         if (!pResData || size == 0)
         {
-            DLGCPP_CERR("Invalid image resource data: " << image.id);
+            DLGCPP_CERR("Invalid image resource data: " << image.id());
             return nullptr;
         }
 
@@ -64,7 +64,7 @@ HBITMAP ImageReader::loadWithGDIPlus(
         HGLOBAL hGlobal = GlobalAlloc(GMEM_MOVEABLE, size);
         if (!hGlobal)
         {
-            DLGCPP_CERR("GlobalAlloc() failed for image " << image.id);
+            DLGCPP_CERR("GlobalAlloc() failed for image " << image.id());
             return nullptr;
         }
 
@@ -76,7 +76,7 @@ HBITMAP ImageReader::loadWithGDIPlus(
         if (CreateStreamOnHGlobal(hGlobal, TRUE, &pStream) != S_OK)
         {
             GlobalFree(hGlobal);
-            DLGCPP_CERR("CreateStreamOnHGlobal() failed for image " << image.id);
+            DLGCPP_CERR("CreateStreamOnHGlobal() failed for image " << image.id());
             return nullptr;
         }
 
@@ -86,7 +86,7 @@ HBITMAP ImageReader::loadWithGDIPlus(
 
     if (!source || source->GetLastStatus() != Gdiplus::Ok)
     {
-        DLGCPP_CERR("Failed to load image " << image.id);
+        DLGCPP_CERR("Failed to load image " << image.id());
         return nullptr;
     }
 
@@ -114,7 +114,7 @@ HBITMAP ImageReader::loadWithGDIPlus(
     HBITMAP hBitmap = nullptr;
     if (composed.GetHBITMAP(bgColor, &hBitmap) != Gdiplus::Ok)
     {
-        DLGCPP_CERR("GetHBITMAP() failed for image " << image.id);
+        DLGCPP_CERR("GetHBITMAP() failed for image " << image.id());
         return nullptr;
     }
 
@@ -130,16 +130,16 @@ HANDLE ImageReader::load(
     Size& sizePx,
     dlgcpp::Color maskColor)
 {
-    if (image.id.empty())
+    if (image.id().empty())
         return NULL;
 
-    auto imageType = (image.isIcon ? IMAGE_ICON : IMAGE_BITMAP);
+    auto imageType = (image.isIcon() ? IMAGE_ICON : IMAGE_BITMAP);
 
     UINT loadFlags = 0; //LR_CREATEDIBSECTION;
 
     HINSTANCE hInstRes = NULL;
 
-    if (image.isFile)
+    if (image.isFile())
     {
         loadFlags |= LR_LOADFROMFILE;
     }
@@ -153,7 +153,7 @@ HANDLE ImageReader::load(
 
     HANDLE hImage = LoadImageW(
         hInstRes,
-        StringEncoder::toWide(image.id).c_str(),
+        StringEncoder::toWide(image.id()).c_str(),
         imageType,
         sizePx.width(),
         sizePx.height(),
@@ -168,14 +168,14 @@ HANDLE ImageReader::load(
         if (hImage == NULL)
         {
             sizePx = Size();
-            DLGCPP_CERR("Failed to load image with id " << image.id);
+            DLGCPP_CERR("Failed to load image with id " << image.id());
             return NULL;
         }
     }
 
     sizePx = Size();
 
-    if (!image.isIcon)
+    if (!image.isIcon())
     {
         auto bitmap = BITMAP();
         if (GetObject(hImage, sizeof(BITMAP), &bitmap) == FALSE)

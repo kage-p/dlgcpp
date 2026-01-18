@@ -1,67 +1,95 @@
-#include "controls/checkbox_p.h"
+#include "controls/checkbox_impl.h"
 #include "dlgcpp/controls/checkbox.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 CheckBox::CheckBox(const std::string& text, const Position& p)
-    : CheckBox(std::make_shared<CheckBoxImpl>(text, p))
+    : CheckBox(std::make_shared<CheckBoxImpl>(), p)
 {
+    auto ownerFn = [this]() -> ISharedControl { return std::static_pointer_cast<dlgcpp::controls::IControl>(shared_from_this()); };
+
+    // properties
+    _checked.reset(false, nullptr, ownerFn, "checked");
+    _autoCheck.reset(true, nullptr, ownerFn, "autoCheck");
+    _horizontalAlignment.reset(HorizontalAlign::Left, nullptr, ownerFn, "horizontalAlignment");
+    _verticalAlignment.reset(VerticalAlign::Center, nullptr, ownerFn, "verticalAlignment");
+    _text.reset(text, nullptr, ownerFn, "text");
+    _clickEvent.reset(ownerFn, "ClickEvent");
+    _dblClickEvent.reset(ownerFn, "DoubleClickEvent");
+
+    // pass a reference to the implementation class
+    _impl->owner(this);
 }
 
-CheckBox::CheckBox(std::shared_ptr<CheckBoxImpl> impl)
-    : Control(impl), _impl(std::move(impl))
+CheckBox::CheckBox(
+    std::shared_ptr<CheckBoxImpl> impl,
+    const Position& p)
+    : Control(impl, p), _impl(std::move(impl))
 {
 }
 
 CheckBox::~CheckBox()
 {
+    _impl.reset();
 }
 
-bool CheckBox::checked() const
+IProperty<bool, ISharedControl>& CheckBox::checked()
 {
-    return _impl->checked();
+    return _checked;
 }
 
 void CheckBox::checked(bool value)
 {
-    if (_impl->checked() == value)
-        return;
-    _impl->checked(value);
+    _checked = value;
 }
 
-bool CheckBox::autoCheck() const
+IProperty<bool, ISharedControl>& CheckBox::autoCheck()
 {
-    return _impl->autoCheck();
+    return _autoCheck;
 }
 
 void CheckBox::autoCheck(bool value)
 {
-    if (_impl->autoCheck() == value)
-        return;
-    _impl->autoCheck(value);
+    _autoCheck = value;
 }
 
-HorizontalAlign CheckBox::horizontalAlignment() const
+IProperty<HorizontalAlign, ISharedControl>& CheckBox::horizontalAlignment()
 {
-    return _impl->horizontalAlignment();
+    return _horizontalAlignment;
 }
 
 void CheckBox::horizontalAlignment(HorizontalAlign value)
 {
-    if (_impl->horizontalAlignment() == value)
-        return;
-    _impl->horizontalAlignment(value);
+    _horizontalAlignment = value;
 }
 
-VerticalAlign CheckBox::verticalAlignment() const
+IProperty<VerticalAlign, ISharedControl>& CheckBox::verticalAlignment()
 {
-    return _impl->verticalAlignment();
+    return _verticalAlignment;
 }
 
 void CheckBox::verticalAlignment(VerticalAlign value)
 {
-    if (_impl->verticalAlignment() == value)
-        return;
-    _impl->verticalAlignment(value);
+    _verticalAlignment = value;
+}
+
+IProperty<std::string, ISharedControl>& CheckBox::text()
+{
+    return _text;
+}
+
+void CheckBox::text(const std::string& value)
+{
+    _text = value;
+}
+
+IEvent<ISharedControl>& CheckBox::ClickEvent()
+{
+    return _clickEvent;
+}
+
+IEvent<ISharedControl>& CheckBox::DoubleClickEvent()
+{
+    return _dblClickEvent;
 }

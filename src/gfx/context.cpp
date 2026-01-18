@@ -1,5 +1,5 @@
 #include "dlgcpp/gfx/context.h"
-#include "gfx/context_p.h"
+#include "gfx/context_impl.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::gfx;

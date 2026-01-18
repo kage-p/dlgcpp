@@ -102,20 +102,20 @@ std::shared_ptr<Menu> createMenu(
 
     item = std::make_shared<MenuItem>("Show check boxes");
     menu->add(item);
-    item->checked(treeView->checkboxes());
+    item->checked() = treeView->checkboxes();
     item->ClickEvent() += [treeView](ISharedMenuItem m)
         {
             treeView->checkboxes(!treeView->checkboxes());
-            m->checked(treeView->checkboxes());
+            m->checked() = treeView->checkboxes();
         };
 
     item = std::make_shared<MenuItem>("Multi-select items");
     menu->add(item);
-    item->checked(treeView->multiselect());
+    item->checked() = treeView->multiselect();
     item->ClickEvent() += [treeView](ISharedMenuItem m)
         {
             treeView->multiselect(!treeView->multiselect());
-            m->checked(treeView->multiselect());
+            m->checked() = treeView->multiselect();
         };
 
     return menu;
@@ -126,15 +126,15 @@ DemoTreeView::DemoTreeView() :
 {
 }
 
-std::shared_ptr<TreeViewNode> DemoTreeView::rootNode() const
+ISharedTreeViewNode DemoTreeView::rootNode() const
 {
     return _rootNode;
 }
 
-std::vector<std::shared_ptr<TreeViewNode>> DemoTreeView::childNodes(std::shared_ptr<TreeViewNode> parent) const
+std::vector<ISharedTreeViewNode> DemoTreeView::childNodes(ISharedTreeViewNode parent) const
 {
     // return nodes for parent item
-    auto children = std::vector<std::shared_ptr<TreeViewNode>>();
+    auto children = std::vector<ISharedTreeViewNode>();
 
     auto [first, last] = _nodeMap.equal_range(parent->tag());
     for (auto& it = first; it != last; ++it)
@@ -143,7 +143,7 @@ std::vector<std::shared_ptr<TreeViewNode>> DemoTreeView::childNodes(std::shared_
     return children;
 }
 
-bool DemoTreeView::beginEdit(std::shared_ptr<TreeViewNode> node)
+bool DemoTreeView::beginEdit(ISharedTreeViewNode node)
 {
     if (node == rootNode())
         // prevent editing root node
@@ -153,13 +153,13 @@ bool DemoTreeView::beginEdit(std::shared_ptr<TreeViewNode> node)
     return true;
 }
 
-bool DemoTreeView::endEdit(std::shared_ptr<TreeViewNode> node, const std::string& text)
+bool DemoTreeView::endEdit(ISharedTreeViewNode node, const std::string& text)
 {
     if (node == rootNode())
         // prevent editing root node
         return false;
 
-    node->text(text);
+    node->text() = text;
     return true;
 }
 

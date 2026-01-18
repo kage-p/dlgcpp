@@ -29,8 +29,8 @@ void dialogs_tool_demo(ISharedDialog parent)
 {
     dlg = std::make_shared<Dialog>(DialogType::Tool, parent);
     dlg->title("Modeless Tool Demo");
-    dlg->move({ parent->p().x() + parent->p().width(), parent->p().y() });
-    dlg->resize({ 80,parent->p().height() });
+    dlg->move({ parent->p()->x() + parent->p()->width(), parent->p()->y() });
+    dlg->resize({ 80,parent->p()->height() });
 
     dlg->show();
 }
@@ -59,8 +59,8 @@ void dialogs_child_demo(ISharedDialog parent)
         {
             int margin = 10;
             subDlg->move({ margin, margin });
-            subDlg->resize({ dlg->p().width() - (margin * 2),
-                            dlg->p().height() - (margin * 2) });
+            subDlg->resize({ dlg->p()->width() - (margin * 2),
+                            dlg->p()->height() - (margin * 2) });
         };
 
     subDlg->MouseMoveEvent() += [label](ISharedDialog dlg, MouseEvent event)

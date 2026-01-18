@@ -10,19 +10,16 @@ namespace dlgcpp
         class IListBox : public virtual IControl
         {
         public:
-            virtual int currentIndex() const = 0;
-            virtual void currentIndex(int value) = 0;
-            virtual const std::vector<int>& currentIndexes() const = 0;
-            virtual void currentIndexes(const std::vector<int>& indexes) = 0;
-            virtual bool highlight() const = 0;
-            virtual void highlight(bool value) = 0;
-            virtual bool multiselect() const = 0;
-            virtual void multiselect(bool value) = 0;
-            virtual bool sorted() const = 0;
-            virtual void sorted(bool value) = 0;
-            virtual const std::vector<std::string>& items() const = 0;
-            virtual void items(const std::vector<std::string>& items) = 0;
+            // properties
+            virtual IProperty<bool, ISharedControl>& highlight() = 0;
+            virtual IProperty<bool, ISharedControl>& multiselect() = 0;
+            virtual IProperty<bool, ISharedControl>& sorted() = 0;
+            virtual IProperty<std::vector<std::string>, ISharedControl>& items() = 0;
+            virtual IProperty<int, ISharedControl>& selectedIndex() = 0;
+            virtual IProperty<std::vector<int>, ISharedControl>& selectedIndexes() = 0;
 
+            // events
+            virtual IEvent<ISharedControl>& DoubleClickEvent() = 0;
             virtual IEvent<ISharedControl>& SelChangedEvent() = 0;
             virtual IEvent<ISharedControl>& SelCancelEvent() = 0;
         };
@@ -40,26 +37,39 @@ namespace dlgcpp
             ~ListBox() override;
 
             // IListBox impl.
-            int currentIndex() const override;
-            void currentIndex(int value) override;
-            const std::vector<int>& currentIndexes() const override;
-            void currentIndexes(const std::vector<int>& indexes) override;
-            bool highlight() const override;
-            void highlight(bool value) override;
-            bool multiselect() const override;
-            void multiselect(bool value) override;
-            bool sorted() const override;
-            void sorted(bool value) override;
-            const std::vector<std::string>& items() const override;
-            void items(const std::vector<std::string>& items) override;
-
+            IProperty<bool, ISharedControl>& highlight() override;
+            IProperty<bool, ISharedControl>& multiselect() override;
+            IProperty<bool, ISharedControl>& sorted() override;
+            IProperty<std::vector<std::string>, ISharedControl>& items() override;
+            IProperty<int, ISharedControl>& selectedIndex() override;
+            IProperty<std::vector<int>, ISharedControl>& selectedIndexes() override;
+            IEvent<ISharedControl>& DoubleClickEvent() override;
             IEvent<ISharedControl>& SelChangedEvent() override;
             IEvent<ISharedControl>& SelCancelEvent() override;
 
+            // compatibility setters
+            void selectedIndex(int value);
+            void selectedIndexes(const std::vector<int>& indexes);
+            void highlight(bool value);
+            void multiselect(bool value);
+            void sorted(bool value);
+            void items(const std::vector<std::string>& items);
+
         private:
-            ListBox(std::shared_ptr<ListBoxImpl> impl);
+            ListBox(std::shared_ptr<ListBoxImpl> impl, const Position& p);
 
             std::shared_ptr<ListBoxImpl> _impl;
+
+            Property<bool, ISharedControl> _highlight;
+            Property<bool, ISharedControl> _multiselect;
+            Property<bool, ISharedControl> _sorted;
+            Property<std::vector<std::string>, ISharedControl> _items;
+            Property<int, ISharedControl> _selectedIndex;
+            Property<std::vector<int>, ISharedControl> _selectedIndexes;
+
+            Event<ISharedControl> _dblClickEvent;
+            Event<ISharedControl> _selChangedEvent;
+            Event<ISharedControl> _selCancelEvent;
         };
     }
 }

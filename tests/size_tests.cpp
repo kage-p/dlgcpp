@@ -4,7 +4,7 @@
 using namespace dlgcpp;
 using namespace dlgcpp::tests;
 
-TEST_F(SizeTests, test_constructor_default)
+TEST_F(SizeTests, constructor)
 {
     Size target;
 
@@ -12,7 +12,7 @@ TEST_F(SizeTests, test_constructor_default)
     EXPECT_EQ(target.height(), 0);
 }
 
-TEST_F(SizeTests, test_constructor_with_params)
+TEST_F(SizeTests, constructor_with_params)
 {
     Size target(100, 200);
 
@@ -20,7 +20,7 @@ TEST_F(SizeTests, test_constructor_with_params)
     EXPECT_EQ(target.height(), 200);
 }
 
-TEST_F(SizeTests, test_constructor_with_copy)
+TEST_F(SizeTests, constructor_with_copy)
 {
     Size source(100, 200);
     Size target(source);
@@ -29,7 +29,7 @@ TEST_F(SizeTests, test_constructor_with_copy)
     EXPECT_EQ(target.height(), 200);
 }
 
-TEST_F(SizeTests, test_assignment_op)
+TEST_F(SizeTests, op_assignment)
 {
     Size source(100, 200);
     Size target;
@@ -39,7 +39,7 @@ TEST_F(SizeTests, test_assignment_op)
     EXPECT_EQ(target.height(), 200);
 }
 
-TEST_F(SizeTests, test_equal_op)
+TEST_F(SizeTests, op_equal)
 {
     Size source(100, 200);
     Size target(100, 200);
@@ -47,7 +47,7 @@ TEST_F(SizeTests, test_equal_op)
     EXPECT_EQ(target, source);
 }
 
-TEST_F(SizeTests, test_nequal_op)
+TEST_F(SizeTests, op_nequal)
 {
     Size source(100, 200);
     Size target(10, 10);
@@ -55,7 +55,7 @@ TEST_F(SizeTests, test_nequal_op)
     EXPECT_NE(target, source);
 }
 
-TEST_F(SizeTests, test_width)
+TEST_F(SizeTests, width)
 {
     Size target;
 
@@ -68,7 +68,7 @@ TEST_F(SizeTests, test_width)
     EXPECT_EQ(target.width(), 100);
 }
 
-TEST_F(SizeTests, test_height)
+TEST_F(SizeTests, height)
 {
     Size target;
 
@@ -81,7 +81,7 @@ TEST_F(SizeTests, test_height)
     EXPECT_EQ(target.height(), 100);
 }
 
-TEST_F(SizeTests, test_empty)
+TEST_F(SizeTests, empty)
 {
     Size target;
 

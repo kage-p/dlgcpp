@@ -1,94 +1,88 @@
 #include "dlgcpp/controls/toolbar_item.h"
-#include "utility/event.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
-class dlgcpp::controls::ToolBarItemImpl
-{
-public:
-    bool _enabled = true;
-    bool _checked = false;
-    bool _separator = false;
-    ImageSource _image;
-    std::string _text;
-    std::string _toolTipText;
-    Event<ISharedToolBarItem> _clickEvent;
-};
 
 ToolBarItem::ToolBarItem(
     const ImageSource& image,
     const std::string& text,
-    const std::string& toolTipText) :
-    _impl(std::make_shared<ToolBarItemImpl>())
+    const std::string& toolTipText)
 {
-    _impl->_image = image;
-    _impl->_text = text;
-    _impl->_toolTipText = toolTipText;
-    _impl->_separator = image.id.empty();
+    auto ownerFn = [this]() -> ISharedToolBarItem
+        {
+            return std::static_pointer_cast<dlgcpp::controls::IToolBarItem>(shared_from_this());
+        };
+
+    // properties
+    _enabled.reset(true, nullptr, ownerFn, "enabled");
+    _checked.reset(false, nullptr, ownerFn, "checked");
+    _separator.reset(image.id().empty(), nullptr, ownerFn, "separator");
+    _image.reset(image, nullptr, ownerFn, "image");
+    _text.reset(text, nullptr, ownerFn, "text");
+    _toolTipText.reset(toolTipText, nullptr, ownerFn, "toolTipText");
+
+    // events
+    _clickEvent.reset(ownerFn, "ClickEvent");
 }
 
-bool ToolBarItem::enabled() const
+ToolBarItem& ToolBarItem::operator=(const ToolBarItem& other)
 {
-    return _impl->_enabled;
+    if (this != &other)
+    {
+        _image = other._image;
+        _text = other._text;
+        _toolTipText = other._toolTipText;
+        _separator = other._separator;
+    }
+    return *this;
 }
 
-void ToolBarItem::enabled(bool value)
+bool ToolBarItem::operator==(const ToolBarItem& other) const
 {
-    _impl->_enabled = value;
+    return (
+        _image == other._image &&
+        _text == other._text &&
+        _toolTipText == other._toolTipText &&
+        _separator == other._separator);
 }
 
-bool ToolBarItem::checked() const
+bool ToolBarItem::operator!=(const ToolBarItem& other) const
 {
-    return _impl->_checked;
+    return !(*this == other);
 }
 
-void ToolBarItem::checked(bool value)
+IProperty<bool, ISharedToolBarItem>& ToolBarItem::enabled()
 {
-    _impl->_checked = value;
+    return _enabled;
 }
 
-bool ToolBarItem::separator() const
+IProperty<bool, ISharedToolBarItem>& ToolBarItem::checked()
 {
-    return _impl->_separator;
+    return _checked;
 }
 
-void ToolBarItem::separator(bool value)
+IProperty<bool, ISharedToolBarItem>& ToolBarItem::separator()
 {
-    _impl->_separator = value;
+    return _separator;
 }
 
-const std::string& ToolBarItem::text() const
+IProperty<std::string, ISharedToolBarItem>& ToolBarItem::text()
 {
-    return _impl->_text;
+    return _text;
 }
 
-void ToolBarItem::text(const std::string& value)
+IProperty<std::string, ISharedToolBarItem>& ToolBarItem::toolTipText()
 {
-    _impl->_text = value;
+    return _toolTipText;
 }
 
-const std::string& ToolBarItem::toolTipText() const
+IProperty<ImageSource, ISharedToolBarItem>& ToolBarItem::image()
 {
-    return _impl->_toolTipText;
-}
-
-void ToolBarItem::toolTipText(const std::string& value)
-{
-    _impl->_toolTipText = value;
-}
-
-const ImageSource& ToolBarItem::image() const
-{
-    return _impl->_image;
-}
-
-void ToolBarItem::image(ImageSource& value)
-{
-    _impl->_image = value;
+    return _image;
 }
 
 IEvent<ISharedToolBarItem>& ToolBarItem::ClickEvent()
 {
-    return _impl->_clickEvent;
+    return _clickEvent;
 }

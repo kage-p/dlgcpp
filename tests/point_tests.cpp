@@ -4,7 +4,7 @@
 using namespace dlgcpp;
 using namespace dlgcpp::tests;
 
-TEST_F(PointTests, test_constructor_default)
+TEST_F(PointTests, constructor_default)
 {
     Point target;
 
@@ -12,7 +12,7 @@ TEST_F(PointTests, test_constructor_default)
     EXPECT_EQ(target.y(), 0);
 }
 
-TEST_F(PointTests, test_constructor_with_params)
+TEST_F(PointTests, constructor_with_params)
 {
     Point target(100, 200);
 
@@ -20,7 +20,7 @@ TEST_F(PointTests, test_constructor_with_params)
     EXPECT_EQ(target.y(), 200);
 }
 
-TEST_F(PointTests, test_constructor_with_copy)
+TEST_F(PointTests, constructor_with_copy)
 {
     Point source(100, 200);
     Point target(source);
@@ -29,7 +29,7 @@ TEST_F(PointTests, test_constructor_with_copy)
     EXPECT_EQ(target.y(), 200);
 }
 
-TEST_F(PointTests, test_assignment_op)
+TEST_F(PointTests, op_assignment)
 {
     Point source(100, 200);
     Point target;
@@ -39,7 +39,7 @@ TEST_F(PointTests, test_assignment_op)
     EXPECT_EQ(target.y(), 200);
 }
 
-TEST_F(PointTests, test_equal_op)
+TEST_F(PointTests, op_equal)
 {
     Point source(100, 200);
     Point target(100, 200);
@@ -47,7 +47,7 @@ TEST_F(PointTests, test_equal_op)
     EXPECT_EQ(target, source);
 }
 
-TEST_F(PointTests, test_nequal_op)
+TEST_F(PointTests, op_nequal)
 {
     Point source(100, 200);
     Point target(10, 20);
@@ -55,7 +55,7 @@ TEST_F(PointTests, test_nequal_op)
     EXPECT_NE(target, source);
 }
 
-TEST_F(PointTests, test_x)
+TEST_F(PointTests, x)
 {
     Point target;
 
@@ -66,7 +66,7 @@ TEST_F(PointTests, test_x)
     EXPECT_EQ(target.x(), 100);
 }
 
-TEST_F(PointTests, test_y)
+TEST_F(PointTests, y)
 {
     Point target;
 

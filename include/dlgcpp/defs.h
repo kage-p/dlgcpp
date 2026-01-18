@@ -20,6 +20,7 @@ namespace dlgcpp
         class IDialog;
         class Dialog;
         class DialogImpl;
+        class CloseDialogEvent;
     }
 
     namespace controls
@@ -62,10 +63,13 @@ namespace dlgcpp
 
     struct KeyboardEvent;
     struct MouseEvent;
+    class DropFilesEvent;
 
     // shared forwards
     typedef std::shared_ptr<dlgcpp::dialogs::IDialog> ISharedDialog;
+    typedef std::weak_ptr<dlgcpp::dialogs::IDialog> IWeakDialog;
     typedef std::shared_ptr<dlgcpp::controls::IControl> ISharedControl;
+    typedef std::weak_ptr<dlgcpp::controls::IControl> IWeakControl;
     typedef std::shared_ptr<dlgcpp::gfx::IDrawingContext> ISharedDrawingContext;
     typedef std::shared_ptr<dlgcpp::menus::IMenu> ISharedMenu;
     typedef std::shared_ptr<dlgcpp::menus::IMenuItem> ISharedMenuItem;
@@ -73,6 +77,7 @@ namespace dlgcpp
 
 #include "dlgcpp/align.h"
 #include "dlgcpp/colors.h"
+#include "dlgcpp/drop.h"
 #include "dlgcpp/font.h"
 #include "dlgcpp/image.h"
 #include "dlgcpp/keys.h"
