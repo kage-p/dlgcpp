@@ -559,16 +559,17 @@ void DialogImpl::build()
     if (hwnd == NULL)
         return;
 
+    updatePosition();
+    updateDisplayState();
+
     if (!_dialog->menu().empty())
     {
+        // setting the menu triggers size change.
         auto menu = _dialog->menu().value();
         SetMenu(hwnd, menu->impl()->handle());
         DrawMenuBar(hwnd);
         // RedrawWindow(hwnd, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW);
     }
-    updatePosition();
-    updateDisplayState();
-
 
     const auto& controls = _dialog->controls();
     for (auto& c : controls)
@@ -1093,8 +1094,10 @@ void DialogImpl::storePosition()
     if (_hwnd == NULL)
         return;
 
-    //   if (_inhibitSizeAndMoveMessages.get())
-    //       return;
+    if (_inhibitSizeAndMoveMessages.get())
+    {
+        return;
+    }
 
     Position p = _dialog->p();
     bool sendMoveEvent = false;
