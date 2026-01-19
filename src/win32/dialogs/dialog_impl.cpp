@@ -556,20 +556,26 @@ void DialogImpl::build()
         hwndParent,
         dialogWndProc,
         reinterpret_cast<LPARAM>(this));
-    if (hwnd == NULL)
-        return;
 
-    updatePosition();
-    updateDisplayState();
+    if (hwnd == NULL)
+    {
+        DLGCPP_CERR("Dialog build failed. Error " << GetLastError());
+        return;
+    }
 
     if (!_dialog->menu().empty())
     {
-        // setting the menu triggers size change.
+        // prepare the menu now before updating the dialog position.
+        // setting the menu triggers a size change, so prevent this with locks.
+        MessageLocker sizeAndMoveLock(_inhibitSizeAndMoveMessages);
+
         auto menu = _dialog->menu().value();
+        menu->impl()->rebuild();
         SetMenu(hwnd, menu->impl()->handle());
-        DrawMenuBar(hwnd);
-        // RedrawWindow(hwnd, NULL, NULL, RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW);
     }
+
+    updatePosition();
+    updateDisplayState();
 
     const auto& controls = _dialog->controls();
     for (auto& c : controls)
@@ -586,9 +592,6 @@ void DialogImpl::build()
     DragAcceptFiles(_hwnd, _dialog->dropTarget().value());
     updateIcon();
     updateTimer();
-
-    if (_dialog->menu() != nullptr)
-        _dialog->menu().value()->impl()->rebuild();
 
     updateVisibility();
 
