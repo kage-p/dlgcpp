@@ -22,14 +22,13 @@ void SplashDialogImpl::show()
         return;
     }
 
-    auto dlg = std::make_shared<Dialog>(DialogType::Frameless, _splashDialog->parent());
-    _dialog = dlg;
+    _dialog = std::make_shared<Dialog>(DialogType::Frameless, _splashDialog->parent());
 
     auto logoImage = std::make_shared<Image>(Position{ 0, 0, 0, 0 });
     logoImage->colors(Color::Black, Color::White);
     logoImage->autoSize(true);
     logoImage->source(_splashDialog->logoImage());
-    dlg->add(logoImage);
+    _dialog->add(logoImage);
 
     auto imageSize = logoImage->p()->size();
 
@@ -40,27 +39,27 @@ void SplashDialogImpl::show()
         messageLabel->font(Font{ "sans serif", 8, true });
         messageLabel->colors(Color::LtGray, Color::None);
         messageLabel->autoSize(true);
-        dlg->add(messageLabel);
+        _dialog->add(messageLabel);
         BringWindowToTop((HWND)messageLabel->handle().value());
     }
 
-    dlg->resize(imageSize);
-    dlg->center();
-    dlg->show();
-    SetWindowPos((HWND)dlg->handle().value(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    _dialog->resize(imageSize);
+    _dialog->center();
+    _dialog->show();
+    SetWindowPos((HWND)_dialog->handle().value(), HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
     logoImage->ClickEvent() += [&](auto)
         {
-            dlg->close();
+            _dialog->close();
         };
 
     if (_splashDialog->timeout() > 0)
     {
-        dlg->TimerEvent() += [&](auto)
+        _dialog->TimerEvent() += [&](auto)
             {
-                dlg->close();
+                _dialog->close();
             };
-        dlg->timer(_splashDialog->timeout());
+        _dialog->timer(_splashDialog->timeout());
     }
 }
 

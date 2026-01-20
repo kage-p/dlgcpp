@@ -122,7 +122,7 @@ void AboutDialog::show()
         webLink->autoSize(true);
 
         webLink->ClickEvent() +=
-            [&](ISharedControl control)
+            [&,dlg](auto)
             {
                 _impl->openUrl(dlg, _homePageLink);
             };
@@ -137,7 +137,7 @@ void AboutDialog::show()
 
     auto sysInfoButton = std::make_shared<Button>("&System Info...", Position{ 167, 104 + cyLogoOffset, 65, 20 });
     sysInfoButton->ClickEvent() +=
-        [&](ISharedControl control)
+        [&, dlg](auto)
         {
             _impl->openSystemInfo(dlg);
         };
@@ -145,7 +145,7 @@ void AboutDialog::show()
 
     auto closeButton = std::make_shared<Button>("Close", Position{ 237, 104 + cyLogoOffset, 65, 20 });
     closeButton->ClickEvent() +=
-        [&](ISharedControl control)
+        [dlg](auto)
         {
             dlg->close();
         };
