@@ -595,6 +595,9 @@ void DialogImpl::build()
 
     updateVisibility();
 
+    // fire create event
+    _dialog->CreateEvent().invoke();
+
     // always fire the size event
     _dialog->SizeEvent().invoke();
 }
@@ -731,13 +734,6 @@ void DialogImpl::notify(DialogMessage& msg)
 
     switch (wMsg)
     {
-    case WM_INITDIALOG:
-    {
-        // dialog is being initialised
-        _dialog->CreateEvent().invoke();
-        break;
-    }
-
     case WM_COMMAND:
     {
         auto id = (int)LOWORD(wParam);
