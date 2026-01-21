@@ -4,7 +4,7 @@
 using namespace dlgcpp;
 
 std::shared_ptr<Menu> createMenu(
-    std::shared_ptr<ListViewDemoImpl> listview);
+    std::shared_ptr<DemoListView> listview);
 
 void controls_listview_demo(ISharedDialog parent)
 {
@@ -16,7 +16,7 @@ void controls_listview_demo(ISharedDialog parent)
     auto label = std::make_shared<Label>("Right click on list for options", Position{ 10, 10, 430, 15 });
     dlg->add(label);
 
-    auto listView = std::make_shared<ListViewDemoImpl>();
+    auto listView = std::make_shared<DemoListView>();
     listView->p(Position{ 10, 25, 430, 315 });
     listView->colors(Color::Teal, Color::White);
     dlg->add(listView);
@@ -45,12 +45,12 @@ void controls_listview_demo(ISharedDialog parent)
                 {
                     listView->beginEditing(
                         listView->selectedIndex(),
-                        ListViewDemoImpl::RoleId::Column1);
+                        DemoListView::RoleId::Column1);
                 }
             }
         };
 
-    auto items = std::vector<ListViewDemoImpl::ListViewDemoItem>
+    auto items = std::vector<DemoListView::DemoListViewItem>
     {
         { "Item 1", "Value 1.1", "Value 1.2"},
         { "Item 2", "Value 2.1", "Value 2.2"},
@@ -70,7 +70,7 @@ void controls_listview_demo(ISharedDialog parent)
 }
 
 std::shared_ptr<Menu> createMenu(
-    std::shared_ptr<ListViewDemoImpl> listview)
+    std::shared_ptr<DemoListView> listview)
 {
     auto menu = std::make_shared<Menu>();
     ISharedMenuItem item;
@@ -101,35 +101,44 @@ std::shared_ptr<Menu> createMenu(
 
     item = std::make_shared<MenuItem>("Show check boxes");
     menu->add(item);
-    item->checked(listview->checkboxes());
+    item->checked() = listview->checkboxes();
     item->ClickEvent() += [listview](ISharedMenuItem m)
         {
             listview->checkboxes(!listview->checkboxes());
-            m->checked(listview->checkboxes());
+            m->checked() = listview->checkboxes();
         };
 
     item = std::make_shared<MenuItem>("Show grid lines");
     menu->add(item);
-    item->checked(listview->gridlines());
+    item->checked() = listview->gridlines();
     item->ClickEvent() += [listview](ISharedMenuItem m)
         {
             listview->gridlines(!listview->gridlines());
-            m->checked(listview->gridlines());
+            m->checked() = listview->gridlines();
         };
 
     item = std::make_shared<MenuItem>("Multi-select items");
     menu->add(item);
-    item->checked(listview->multiselect());
+    item->checked() = listview->multiselect();
     item->ClickEvent() += [listview](ISharedMenuItem m)
         {
             listview->multiselect(!listview->multiselect());
-            m->checked(listview->multiselect());
+            m->checked() = listview->multiselect();
+        };
+
+    item = std::make_shared<MenuItem>("Sortable columns");
+    menu->add(item);
+    item->checked() = listview->sortColumns();
+    item->ClickEvent() += [listview](ISharedMenuItem m)
+        {
+            listview->sortColumns(!listview->sortColumns());
+            m->checked() = listview->sortColumns();
         };
 
     return menu;
 }
 
-ListViewDemoImpl::ListViewDemoImpl() :
+DemoListView::DemoListView() :
     ListView()
 {
     _roleMap =
@@ -146,7 +155,7 @@ ListViewDemoImpl::ListViewDemoImpl() :
     };
 }
 
-int ListViewDemoImpl::roleData(int column) const
+int DemoListView::roleData(int column) const
 {
     auto it = _roleMap.find(column);
     if (it != _roleMap.end())
@@ -155,7 +164,7 @@ int ListViewDemoImpl::roleData(int column) const
     return -1;
 }
 
-ListViewColumn ListViewDemoImpl::columnData(int role) const
+ListViewColumn DemoListView::columnData(int role) const
 {
     auto it = _columnMap.find(role);
     if (it != _columnMap.end())
@@ -164,12 +173,12 @@ ListViewColumn ListViewDemoImpl::columnData(int role) const
     return ListViewColumn();
 }
 
-size_t ListViewDemoImpl::columnCount() const
+size_t DemoListView::columnCount() const
 {
     return _columnMap.size();
 }
 
-std::string ListViewDemoImpl::rowData(size_t row, int role) const
+std::string DemoListView::rowData(size_t row, int role) const
 {
     if (row >= _items.size())
         return std::string();
@@ -188,12 +197,12 @@ std::string ListViewDemoImpl::rowData(size_t row, int role) const
     return std::string();
 }
 
-size_t ListViewDemoImpl::rowCount() const
+size_t DemoListView::rowCount() const
 {
     return _items.size();
 }
 
-bool ListViewDemoImpl::beginEdit(
+bool DemoListView::beginEdit(
     size_t row,
     int role)
 {
@@ -216,7 +225,7 @@ bool ListViewDemoImpl::beginEdit(
     return false;
 }
 
-bool ListViewDemoImpl::endEdit(
+bool DemoListView::endEdit(
     size_t row,
     int role,
     const std::string& text)
@@ -240,7 +249,7 @@ bool ListViewDemoImpl::endEdit(
     return true;
 }
 
-bool ListViewDemoImpl::checked(size_t row) const
+bool DemoListView::checked(size_t row) const
 {
     if (row >= _items.size())
         return false;
@@ -250,7 +259,7 @@ bool ListViewDemoImpl::checked(size_t row) const
     return item.checked;
 }
 
-void ListViewDemoImpl::checked(size_t row, bool checked)
+void DemoListView::checked(size_t row, bool checked)
 {
     if (row >= _items.size())
         return;
@@ -259,7 +268,7 @@ void ListViewDemoImpl::checked(size_t row, bool checked)
     item.checked = checked;
 }
 
-void ListViewDemoImpl::setItems(const std::vector<ListViewDemoItem>& items)
+void DemoListView::setItems(const std::vector<DemoListViewItem>& items)
 {
     _items = items;
     RowsChangedEvent().invoke();

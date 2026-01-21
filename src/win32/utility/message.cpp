@@ -21,3 +21,13 @@ int MessageProcessor::beginLoop(
     }
     return (int)msg.wParam;
 }
+
+void MessageProcessor::doEvents()
+{
+    auto msg = MSG();
+    while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}

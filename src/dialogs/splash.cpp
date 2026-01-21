@@ -1,53 +1,46 @@
-#include "dialogs/splash_p.h"
+#include "dialogs/splash_impl.h"
+#include "dlgcpp/dialogs/splash.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 using namespace dlgcpp::dialogs;
 
 SplashDialog::SplashDialog(ISharedDialog parent)
-    : SplashDialog(std::make_shared<SplashDialogImpl>(*this, parent))
+    : SplashDialog(std::make_shared<SplashDialogImpl>(this), parent)
 {
 }
 
-SplashDialog::SplashDialog(std::shared_ptr<SplashDialogImpl> impl)
+SplashDialog::SplashDialog(
+    std::shared_ptr<SplashDialogImpl> impl,
+    ISharedDialog parent)
     : _impl(std::move(impl))
 {
+    auto ownerFn = [this]() -> ISharedSplashDialog { return shared_from_this(); };
+
+    _parent.reset(parent, nullptr, ownerFn, "parent");
+    _message.reset(std::string(), nullptr, ownerFn, "title");
+    _logoImage.reset(ImageSource(), nullptr, ownerFn, "logoImage");
+    _timeout.reset(800, nullptr, ownerFn, "timeout");
 }
 
-const std::string& SplashDialog::logoBitmapId() const
+IReadOnlyProperty<ISharedDialog, ISharedSplashDialog>& SplashDialog::parent()
 {
-    return _impl->logoBitmapId();
+    return _parent;
 }
 
-void SplashDialog::logoBitmapId(const std::string& value)
+IProperty<std::string, ISharedSplashDialog>& SplashDialog::message()
 {
-    if (_impl->logoBitmapId() == value)
-        return;
-    _impl->logoBitmapId(value);
+    return _message;
 }
 
-const std::string& SplashDialog::message() const
+IProperty<ImageSource, ISharedSplashDialog>& SplashDialog::logoImage()
 {
-    return _impl->message();
+    return _logoImage;
 }
 
-void SplashDialog::message(const std::string& value)
+IProperty<int, ISharedSplashDialog>& SplashDialog::timeout()
 {
-    if (_impl->message() == value)
-        return;
-    _impl->message(value);
-}
-
-int SplashDialog::timeout() const
-{
-    return _impl->timeout();
-}
-
-void SplashDialog::timeout(int value)
-{
-    if (_impl->timeout() == value)
-        return;
-    _impl->timeout(value);
+    return _timeout;
 }
 
 void SplashDialog::show()

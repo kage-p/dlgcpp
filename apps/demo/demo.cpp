@@ -5,7 +5,7 @@
 #include "advanced/clock_demo.h"
 #include "advanced/drawing_demo.h"
 #include "advanced/graph_demo.h"
-#include "advanced/notes_demo.h"
+#include "advanced/note_keeper_demo.h"
 #include "advanced/popup_menu_demo.h"
 
 #include "controls/button_demo.h"
@@ -44,14 +44,14 @@ int main()
     mainDlg->resize({ 650,500 });
     mainDlg->center();
 
-    auto label = std::make_shared<Label>("Select a demo from the menu", Position(0, 0, mainDlg->p().width(), mainDlg->p().height()));
+    auto label = std::make_shared<Label>("Select a demo from the menu", Position(0, 0, mainDlg->p()->width(), mainDlg->p()->height()));
     label->colors(Color::Gray, Color::None);
     label->autoSize(true);
     mainDlg->add(label);
     mainDlg->SizeEvent() += [label](ISharedDialog dlg)
         {
-            int x = (dlg->p().width() / 2) - (label->p().width() / 2);
-            int y = (dlg->p().height() / 2) - (label->p().height() / 2);
+            int x = (dlg->p()->width() / 2) - (label->p()->width() / 2);
+            int y = (dlg->p()->height() / 2) - (label->p()->height() / 2);
 
             label->move(Point{ x,y });
             label->redraw();

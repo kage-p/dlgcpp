@@ -1,6 +1,8 @@
 #pragma once
 
 #include "dlgcpp/defs.h"
+#include "dlgcpp/property.h"
+#include <ostream>
 #include <string>
 
 namespace dlgcpp
@@ -14,39 +16,54 @@ namespace dlgcpp
             Text,
         };
 
+        inline std::ostream& operator<<(std::ostream& os, PropertyDialogOption e)
+        {
+            switch (e) {
+            case PropertyDialogOption::Check:   return os << "Check";
+            case PropertyDialogOption::List:  return os << "List";
+            case PropertyDialogOption::Text: return os << "Text";
+            }
+            return os << static_cast<int>(e); // fallback
+        }
+
+        class IPropertyDialog;
+        class PropertyDialogImpl;
+        typedef std::shared_ptr<IPropertyDialog> ISharedPropertyDialog;
+
         class IPropertyDialog
         {
         public:
-            virtual const std::string& title() const = 0;
-            virtual void title(const std::string& value) = 0;
-            virtual const std::string& message() const = 0;
-            virtual void message(const std::string& value) = 0;
-            virtual int sectionWidth() const = 0;
-            virtual void sectionWidth(int value) = 0;
+            virtual IReadOnlyProperty<ISharedDialog, ISharedPropertyDialog>& parent() = 0;
+            virtual IProperty<std::string, ISharedPropertyDialog>& title() = 0;
+            virtual IProperty<std::string, ISharedPropertyDialog>& message() = 0;
+            virtual IProperty<int, ISharedPropertyDialog>& sectionWidth() = 0;
+
             virtual bool show() = 0;
         };
 
-        class PropertyDialogImpl;
-
-        class PropertyDialog : public IPropertyDialog
+        class PropertyDialog :
+            public IPropertyDialog,
+            public std::enable_shared_from_this<PropertyDialog>
         {
         public:
             explicit PropertyDialog(ISharedDialog parent = nullptr);
             virtual ~PropertyDialog() = default;
 
             // IPropertyDialog impl.
-            const std::string& title() const override;
-            void title(const std::string& value) override;
-            const std::string& message() const override;
-            void message(const std::string& value) override;
-            int sectionWidth() const override;
-            void sectionWidth(int value) override;
+            IReadOnlyProperty<ISharedDialog, ISharedPropertyDialog>& parent() override;
+            IProperty<std::string, ISharedPropertyDialog>& title() override;
+            IProperty<std::string, ISharedPropertyDialog>& message() override;
+            IProperty<int, ISharedPropertyDialog>& sectionWidth() override;
             bool show() override;
 
         private:
-            PropertyDialog(std::shared_ptr<PropertyDialogImpl> impl);
+            PropertyDialog(std::shared_ptr<PropertyDialogImpl> impl, ISharedDialog parent);
 
             std::shared_ptr<PropertyDialogImpl> _impl;
+            Property<ISharedDialog, ISharedPropertyDialog> _parent;
+            Property<std::string, ISharedPropertyDialog> _title;
+            Property<std::string, ISharedPropertyDialog> _message;
+            Property<int, ISharedPropertyDialog> _sectionWidth;
         };
     }
 }

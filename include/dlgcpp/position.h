@@ -2,6 +2,7 @@
 
 #include "point.h"
 #include "size.h"
+#include <ostream>
 
 namespace dlgcpp
 {
@@ -57,5 +58,15 @@ namespace dlgcpp
 
         inline const Point& point() const { return *this; }
         inline const Size& size() const { return *this; }
+
+        friend std::ostream& operator<<(std::ostream& os, const Position& obj)
+        {
+            return os <<
+                "{ x: " << obj.x() <<
+                ", y: " << obj.y() <<
+                ", width: " << obj.width() <<
+                ", height: " << obj.height() <<
+                " }";
+        }
     };
 }

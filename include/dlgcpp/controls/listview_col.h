@@ -1,5 +1,7 @@
 #pragma once
 
+#include "dlgcpp/defs.h"
+#include "dlgcpp/property.h"
 #include <memory>
 #include <string>
 
@@ -13,32 +15,30 @@ namespace dlgcpp
         class IListViewColumn
         {
         public:
-            virtual const std::string& text() const = 0;
-            virtual void text(const std::string& value) = 0;
-
-            virtual int width() const = 0;
-            virtual void width(int) = 0;
+            virtual IProperty<std::string, ISharedListViewColumn>& text() = 0;
+            virtual IProperty<int, ISharedListViewColumn>& width() = 0;
         };
 
-        class ListViewColumnImpl;
-
-        class ListViewColumn : public IListViewColumn
+        class ListViewColumn :
+            public IListViewColumn,
+            public std::enable_shared_from_this<ListViewColumn>
         {
         public:
-            ListViewColumn();
-            ListViewColumn(const std::string& text, int width = 100);
+            ListViewColumn(const std::string& text = std::string(), int width = 100);
             ListViewColumn(const ListViewColumn& other);
-            ListViewColumn& operator=(const ListViewColumn& other);
             virtual ~ListViewColumn() = default;
 
-            const std::string& text() const override;
-            void text(const std::string& value) override;
+            ListViewColumn& operator=(const ListViewColumn& other);
+            bool operator==(const ListViewColumn& other) const;
+            bool operator!=(const ListViewColumn& other) const;
 
-            int width() const override;
-            void width(int value) override;
+            // IListViewColumn impl.
+            IProperty<std::string, ISharedListViewColumn>& text() override;
+            IProperty<int, ISharedListViewColumn>& width() override;
 
         private:
-            std::shared_ptr<ListViewColumnImpl> _impl;
+            Property<std::string, ISharedListViewColumn> _text;
+            Property<int, ISharedListViewColumn> _width;
         };
     }
 }

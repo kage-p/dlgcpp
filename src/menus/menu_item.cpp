@@ -1,11 +1,29 @@
-#include "menus/menu_item_p.h"
+#include "dlgcpp/menus/menu_item.h"
+#include "menus/menu_item_impl.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::menus;
 
 MenuItem::MenuItem(const std::string& text)
 {
-    _impl = std::make_shared<MenuItemImpl>(*this, text);
+    auto ownerFn = [this]() -> ISharedMenuItem
+        {
+            return std::static_pointer_cast<dlgcpp::menus::IMenuItem>(shared_from_this());
+        };
+
+    // properties
+    _text.reset(text, nullptr, ownerFn, "text");
+    _enabled.reset(true, nullptr, ownerFn, "enabled");
+    _checked.reset(false, nullptr, ownerFn, "checked");
+    _defaultItem.reset(false, nullptr, ownerFn, "defaultItem");
+    _separator.reset(text.empty(), nullptr, ownerFn, "separator");
+    _items.reset(std::vector<ISharedMenuItem>(), nullptr, ownerFn, "items");
+
+    // events
+    _clickEvent.reset(ownerFn, "ClickEvent");
+
+    _impl = std::make_shared<MenuItemImpl>();
+    _impl->owner(this);
 }
 
 MenuItem::~MenuItem()
@@ -13,92 +31,79 @@ MenuItem::~MenuItem()
     _impl.reset();
 }
 
-const std::string& MenuItem::text() const
+std::shared_ptr<MenuItemImpl> MenuItem::impl()
 {
-    return _impl->text();
+    return _impl;
 }
 
-void MenuItem::text(const std::string& value)
+IProperty<std::string, ISharedMenuItem>& MenuItem::text()
 {
-    if (_impl->text() == value)
-        return;
-    _impl->text(value);
+    return _text;
 }
 
-bool MenuItem::enabled() const
+IProperty<bool, ISharedMenuItem>& MenuItem::enabled()
 {
-    return _impl->enabled();
+    return _enabled;
 }
 
-void MenuItem::enabled(bool value)
+IProperty<bool, ISharedMenuItem>& MenuItem::checked()
 {
-    if (_impl->enabled() == value)
-        return;
-    _impl->enabled(value);
+    return _checked;
 }
 
-bool MenuItem::checked() const
+IProperty<bool, ISharedMenuItem>& MenuItem::defaultItem()
 {
-    return _impl->checked();
+    return _defaultItem;
 }
 
-void MenuItem::checked(bool value)
+IProperty<bool, ISharedMenuItem>& MenuItem::separator()
 {
-    if (_impl->checked() == value)
-        return;
-    _impl->checked(value);
-}
-
-bool MenuItem::defaultItem() const
-{
-    return _impl->defaultItem();
-}
-
-void MenuItem::defaultItem(bool value)
-{
-    if (_impl->defaultItem() == value)
-        return;
-    _impl->defaultItem(value);
-}
-
-bool MenuItem::separator() const
-{
-    return _impl->separator();
-}
-
-void MenuItem::separator(bool value)
-{
-    if (_impl->separator() == value)
-        return;
-    _impl->separator(value);
+    return _separator;
 }
 
 void MenuItem::add(ISharedMenuItem item)
 {
-    _impl->add(item);
+    std::vector<ISharedMenuItem> items = _items.value();
+
+    auto it = std::find(items.begin(),
+        items.end(),
+        item);
+    if (it != items.end())
+        return;
+
+    // TODO: dynamic add/remove subitem not yet supported
+    items.push_back(item);
+
+    _items.set(items);
 }
 
 void MenuItem::remove(ISharedMenuItem item)
 {
-    _impl->remove(item);
+    std::vector<ISharedMenuItem> items = _items.value();
+
+    auto it = std::find(items.begin(),
+        items.end(),
+        item);
+    if (it == items.end())
+        return;
+
+    // TODO: dynamic add/remove subitem not yet supported
+    items.erase(it);
+
+    _items.set(items);
 }
 
 void MenuItem::clear()
 {
-    _impl->clear();
+    _items.clear();
 }
 
-const std::vector<ISharedMenuItem>& MenuItem::items() const
+IReadOnlyProperty<std::vector<ISharedMenuItem>, ISharedMenuItem>& MenuItem::items()
 {
-    return _impl->items();
-}
-
-IEvent<ISharedMenuItem>& MenuItem::ChangedEvent()
-{
-    return _impl->ChangedEvent();
+    return _items;
 }
 
 IEvent<ISharedMenuItem>& MenuItem::ClickEvent()
 {
-    return _impl->ClickEvent();
+    return _clickEvent;
 }

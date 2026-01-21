@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ostream>
+
 namespace dlgcpp
 {
     class Point
@@ -53,6 +55,14 @@ namespace dlgcpp
         inline void y(int value)
         {
             _y = value;
+        }
+
+        friend std::ostream& operator<<(std::ostream& os, const Point& obj)
+        {
+            return os <<
+                "{ x: " << obj._x <<
+                ", y: " << obj._y <<
+                " }";
         }
 
     private:

@@ -6,6 +6,7 @@
 #include "dlgcpp/menus/menu.h"
 
 #include <memory>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -24,6 +25,17 @@ namespace dlgcpp
             Tool
         };
 
+        inline std::ostream& operator<<(std::ostream& os, DialogType e)
+        {
+            switch (e) {
+            case DialogType::Application:   return os << "Application";
+            case DialogType::Popup:  return os << "Popup";
+            case DialogType::Frameless: return os << "Frameless";
+            case DialogType::Tool:  return os << "Tool";
+            }
+            return os << static_cast<int>(e); // fallback
+        }
+
         /// <summary>
         /// Dialog display state when visible
         /// </summary>
@@ -34,45 +46,53 @@ namespace dlgcpp
             Maximized
         };
 
+        inline std::ostream& operator<<(std::ostream& os, DisplayState e)
+        {
+            switch (e) {
+            case DisplayState::Normal:   return os << "Normal";
+            case DisplayState::Minimized:  return os << "Minimized";
+            case DisplayState::Maximized: return os << "Maximized";
+            }
+            return os << static_cast<int>(e); // fallback
+        }
+
+        struct CloseDialogEvent
+        {
+            bool cancel = false;
+
+            friend std::ostream& operator<<(std::ostream& os, const CloseDialogEvent& obj)
+            {
+                return os <<
+                    "{ cancel: " << obj.cancel << " }";
+            }
+        };
+
         class IDialog
         {
         public:
             // properties
-            virtual bool enabled() const = 0;
-            virtual void enabled(bool value) = 0;
-            virtual bool visible() const = 0;
-            virtual void visible(bool value) = 0;
-            virtual DisplayState displayState() const = 0;
-            virtual void displayState(DisplayState value) = 0;
-            virtual const Position& p() const = 0;
-            virtual void p(const Position& p) = 0;
-            virtual DialogType type() const = 0;
-            virtual bool showHelp() const = 0;
-            virtual void showHelp(bool value) = 0;
-            virtual const std::string& title() const = 0;
-            virtual void title(const std::string& value) = 0;
-            virtual const ImageSource& image() const = 0;
-            virtual void image(const ImageSource& image) = 0;
-            virtual std::shared_ptr<dlgcpp::menus::Menu> menu() const = 0;
-            virtual void menu(std::shared_ptr<dlgcpp::menus::Menu> menu) = 0;
-            virtual Color color() const = 0;
-            virtual void color(Color value) = 0;
-            virtual Cursor cursor() const = 0;
-            virtual void cursor(Cursor value) = 0;
-            virtual bool dropTarget() const = 0;
-            virtual void dropTarget(bool value) = 0;
-            virtual bool mouseCapture() const = 0;
-            virtual void mouseCapture(bool value) = 0;
-            virtual void* handle() const = 0;
-            virtual void* user() const = 0;
-            virtual void user(void* value) = 0;
-            virtual ISharedDialog parent() const = 0;
+            virtual IProperty<bool, ISharedDialog>& enabled() = 0;
+            virtual IProperty<bool, ISharedDialog>& visible() = 0;
+            virtual IProperty<std::string, ISharedDialog>& title() = 0;
+            virtual IProperty<ImageSource, ISharedDialog>& image() = 0;
+            virtual IProperty<DisplayState, ISharedDialog>& display() = 0;
+            virtual IProperty<Position, ISharedDialog>& p() = 0;
+            virtual IProperty<DialogType, ISharedDialog>& type() = 0;
+            virtual IProperty<Color, ISharedDialog>& color() = 0;
+            virtual IProperty<Cursor, ISharedDialog>& cursor() = 0;
+            virtual IProperty<std::shared_ptr<dlgcpp::menus::Menu>, ISharedDialog>& menu() = 0;
+            virtual IProperty<bool, ISharedDialog>& active() = 0;
+            virtual IProperty<bool, ISharedDialog>& dropTarget() = 0;
+            virtual IProperty<bool, ISharedDialog>& mouseCapture() = 0;
+            virtual IProperty<bool, ISharedDialog>& showHelp() = 0;
+            virtual IReadOnlyProperty<void*, ISharedDialog>& handle() = 0;
+            virtual IProperty<void*, ISharedDialog>& user() = 0;
 
             // actions
+            virtual int exec() = 0;
             virtual void show() = 0;
             virtual void close(int result = 0) = 0;
             virtual void redraw(bool drawChildren = false) = 0;
-            virtual void setFocus() = 0;
             virtual void bringToFront() = 0;
             virtual void sendToBack() = 0;
             virtual void move(const Point& point) = 0;
@@ -82,17 +102,21 @@ namespace dlgcpp
             virtual void sendUserEvent(int param = 0) = 0;
             virtual void timer(int timeout) = 0;
 
-            // child management
-            virtual void add(std::shared_ptr<dlgcpp::controls::Control> child) = 0;
-            virtual void remove(std::shared_ptr<dlgcpp::controls::Control> child) = 0;
-            virtual std::vector<std::shared_ptr<dlgcpp::controls::Control>> controls() const = 0;
-            virtual void add(std::shared_ptr<Dialog> child) = 0;
-            virtual void remove(std::shared_ptr<Dialog> child) = 0;
-            virtual std::vector<std::shared_ptr<Dialog>> dialogs() const = 0;
+            // parent/child management
+            virtual IWeakDialog parent() const = 0;
+            virtual void add(ISharedControl control) = 0;
+            virtual void remove(ISharedControl control) = 0;
+            virtual std::vector<ISharedControl> controls() const = 0;
+            virtual void add(ISharedDialog dialog) = 0;
+            virtual void remove(ISharedDialog dialog) = 0;
+            virtual std::vector<ISharedDialog> dialogs() const = 0;
 
             // events
             virtual IEvent<ISharedDialog>& ConfirmEvent() = 0;
             virtual IEvent<ISharedDialog>& CancelEvent() = 0;
+            virtual IEvent<ISharedDialog, CloseDialogEvent>& CloseEvent() = 0;
+            virtual IEvent<ISharedDialog>& CreateEvent() = 0;
+            virtual IEvent<ISharedDialog>& DestroyEvent() = 0;
             virtual IEvent<ISharedDialog>& HelpEvent() = 0;
             virtual IEvent<ISharedDialog>& MoveEvent() = 0;
             virtual IEvent<ISharedDialog>& SizeEvent() = 0;
@@ -105,59 +129,69 @@ namespace dlgcpp
             virtual IEvent<ISharedDialog, MouseEvent>& MouseMoveEvent() = 0;
             virtual IEvent<ISharedDialog, MouseEvent>& MouseDoubleClickEvent() = 0;
             virtual IEvent<ISharedDialog>& MouseCaptureLostEvent() = 0;
-            virtual IEvent<ISharedDialog, std::vector<std::string>>& DropEvent() = 0;
+            virtual IEvent<ISharedDialog, DropFilesEvent>& DropEvent() = 0;
             virtual IEvent<ISharedDialog, int>& UserEvent() = 0;
+
+            // internal
+            virtual std::shared_ptr<DialogImpl> impl() = 0;
         };
 
         class Dialog :
             public IDialog,
             public std::enable_shared_from_this<Dialog>
         {
-            friend class dlgcpp::dialogs::DialogImpl;
-
         public:
             explicit Dialog(
                 DialogType type = DialogType::Application,
                 ISharedDialog parent = nullptr);
 
-            virtual ~Dialog() = default;
-            int exec();
+            virtual ~Dialog();
+
+            // compatibility setters
+            void enabled(bool value);
+            void visible(bool value);
+            void title(const std::string& value);
+            void image(const ImageSource& image);
+            void display(DisplayState value);
+            void p(const Position& p);
+            void color(Color bgColor);
+            void cursor(Cursor value);
+            void menu(std::shared_ptr<dlgcpp::menus::Menu> value);
+            void active(bool value);
+            void dropTarget(bool value);
+            void mouseCapture(bool value);
+            void showHelp(bool value);
+            void user(void* value);
+
+            // utility
+            Point toPixels(const Point& point) const;
+            Size toPixels(const Size& size) const;
+            Position toPixels(const Position& pos) const;
 
             // IDialog impl.
-            bool enabled() const override;
-            void enabled(bool value) override;
-            bool visible() const override;
-            void visible(bool value) override;
-            DisplayState displayState() const override;
-            void displayState(DisplayState value) override;
-            const Position& p() const override;
-            void p(const Position& p) override;
-            DialogType type() const override;
-            bool showHelp() const override;
-            void showHelp(bool value) override;
-            Color color() const override;
-            void color(Color value) override;
-            Cursor cursor() const override;
-            void cursor(Cursor value) override;
-            bool dropTarget() const override;
-            void dropTarget(bool value) override;
-            bool mouseCapture() const override;
-            void mouseCapture(bool value) override;
-            const std::string& title() const override;
-            void title(const std::string& value) override;
-            const ImageSource& image() const override;
-            void image(const ImageSource& image) override;
-            virtual std::shared_ptr<dlgcpp::menus::Menu> menu() const override;
-            virtual void menu(std::shared_ptr<dlgcpp::menus::Menu> menu) override;
-            void* handle() const override;
-            void* user() const override;
-            void user(void* value) override;
-            ISharedDialog parent() const override;
+
+            // properties
+            IProperty<bool, ISharedDialog>& enabled() override;
+            IProperty<bool, ISharedDialog>& visible() override;
+            IProperty<std::string, ISharedDialog>& title() override;
+            IProperty<ImageSource, ISharedDialog>& image() override;
+            IProperty<DisplayState, ISharedDialog>& display() override;
+            IProperty<Position, ISharedDialog>& p() override;
+            IProperty<DialogType, ISharedDialog>& type() override;
+            IProperty<Color, ISharedDialog>& color() override;
+            IProperty<Cursor, ISharedDialog>& cursor() override;
+            IProperty<std::shared_ptr<dlgcpp::menus::Menu>, ISharedDialog>& menu() override;
+            IProperty<bool, ISharedDialog>& active() override;
+            IProperty<bool, ISharedDialog>& dropTarget() override;
+            IProperty<bool, ISharedDialog>& mouseCapture() override;
+            IProperty<bool, ISharedDialog>& showHelp() override;
+            IReadOnlyProperty<void*, ISharedDialog>& handle() override;
+            IProperty<void*, ISharedDialog>& user() override;
 
             // actions
+            int exec() override;
             void show() override;
             void close(int result = 0) override;
-            void setFocus() override;
             void bringToFront() override;
             void sendToBack() override;
             void move(const Point& point) override;
@@ -168,28 +202,27 @@ namespace dlgcpp
             void redraw(bool drawChildren = false) override;
             void timer(int timeout) override;
 
-            // child management
-            void add(std::shared_ptr<dlgcpp::controls::Control> child) override;
-            void remove(std::shared_ptr<dlgcpp::controls::Control> child) override;
-            std::vector<std::shared_ptr<dlgcpp::controls::Control>> controls() const override;
-            void add(std::shared_ptr<Dialog> child) override;
-            void remove(std::shared_ptr<Dialog> child) override;
-            std::vector<std::shared_ptr<Dialog>> dialogs() const override;
-
-            // utility
-            Point toPixels(const Point& point) const;
-            Size toPixels(const Size& size) const;
-            Position toPixels(const Position& pos) const;
+            // parent/child management
+            IWeakDialog parent() const override;
+            void add(ISharedControl control) override;
+            void remove(ISharedControl control) override;
+            std::vector<ISharedControl> controls() const override;
+            void add(ISharedDialog dialog) override;
+            void remove(ISharedDialog dialog) override;
+            std::vector<ISharedDialog> dialogs() const override;
 
             // events
             IEvent<ISharedDialog>& ConfirmEvent() override;
             IEvent<ISharedDialog>& CancelEvent() override;
+            IEvent<ISharedDialog, CloseDialogEvent>& CloseEvent() override;
+            IEvent<ISharedDialog>& CreateEvent() override;
+            IEvent<ISharedDialog>& DestroyEvent() override;
             IEvent<ISharedDialog>& HelpEvent() override;
             IEvent<ISharedDialog>& MoveEvent() override;
             IEvent<ISharedDialog>& SizeEvent() override;
             IEvent<ISharedDialog, ISharedDrawingContext>& PaintEvent() override;
             IEvent<ISharedDialog>& TimerEvent() override;
-            IEvent<ISharedDialog, std::vector<std::string>>& DropEvent() override;
+            IEvent<ISharedDialog, DropFilesEvent>& DropEvent() override;
             IEvent<ISharedDialog, KeyboardEvent>& KeyDownEvent() override;
             IEvent<ISharedDialog, KeyboardEvent>& KeyUpEvent() override;
             IEvent<ISharedDialog, MouseEvent>& MouseDownEvent() override;
@@ -199,13 +232,60 @@ namespace dlgcpp
             IEvent<ISharedDialog>& MouseCaptureLostEvent() override;
             IEvent<ISharedDialog, int>& UserEvent() override;
 
-        protected:
-            Dialog(std::shared_ptr<DialogImpl> impl);
+            // internal
+            std::shared_ptr<DialogImpl> impl() override;
 
-            std::shared_ptr<DialogImpl> impl();
+        protected:
+            Dialog(
+                std::shared_ptr<DialogImpl> impl,
+                DialogType type,
+                ISharedDialog parent);
 
         private:
             std::shared_ptr<DialogImpl> _impl;
+
+            // properties
+            IWeakDialog _parent;
+            std::vector<ISharedControl> _controls;
+            std::vector<ISharedDialog> _dialogs;
+            Property<bool, ISharedDialog> _enabled;
+            Property<bool, ISharedDialog> _visible;
+            Property<DialogType, ISharedDialog> _type;
+            Property<std::string, ISharedDialog> _title;
+            Property<ImageSource, ISharedDialog> _image;
+            Property<DisplayState, ISharedDialog> _display;
+            Property<Position, ISharedDialog> _p;
+            Property<Color, ISharedDialog> _color;
+            Property<Cursor, ISharedDialog> _cursor;
+            Property<std::shared_ptr<dlgcpp::menus::Menu>, ISharedDialog> _menu;
+            Property<bool, ISharedDialog> _active;
+            Property<bool, ISharedDialog> _dropTarget;
+            Property<bool, ISharedDialog> _mouseCapture;
+            Property<bool, ISharedDialog> _showHelp;
+            Property<void*, ISharedDialog> _handle;
+            Property<void*, ISharedDialog> _user;
+
+            // events
+            Event<ISharedDialog> _confirmEvent;
+            Event<ISharedDialog> _cancelEvent;
+            Event<ISharedDialog, CloseDialogEvent> _closeEvent;
+            Event<ISharedDialog> _createEvent;
+            Event<ISharedDialog> _destroyEvent;
+            Event<ISharedDialog, KeyboardEvent> _keyDownEvent;
+            Event<ISharedDialog, KeyboardEvent> _keyUpEvent;
+            Event<ISharedDialog, MouseEvent> _mouseDownEvent;
+            Event<ISharedDialog, MouseEvent> _mouseUpEvent;
+            Event<ISharedDialog, MouseEvent> _mouseMoveEvent;
+            Event<ISharedDialog, MouseEvent> _mouseDblClickEvent;
+            Event<ISharedDialog> _mouseCaptureLostEvent;
+            Event<ISharedDialog, DropFilesEvent> _dropEvent;
+            Event<ISharedDialog> _focusEvent;
+            Event<ISharedDialog> _helpEvent;
+            Event<ISharedDialog> _moveEvent;
+            Event<ISharedDialog> _sizeEvent;
+            Event<ISharedDialog, ISharedDrawingContext> _paintEvent;
+            Event<ISharedDialog> _timerEvent;
+            Event<ISharedDialog, int> _userEvent;
         };
     }
 }

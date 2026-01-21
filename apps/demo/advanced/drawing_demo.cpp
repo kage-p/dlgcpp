@@ -119,8 +119,8 @@ void advanced_drawing_demo(ISharedDialog parent)
                 Position(
                     0,
                     0,
-                    dlg->p().size().width(),
-                    dlg->p().size().height());
+                    dlg->p()->size().width(),
+                    dlg->p()->size().height());
 
             canvas->p(canvasPos);
             canvas->redraw();

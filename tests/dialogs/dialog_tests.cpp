@@ -1,6 +1,6 @@
-#include "../mocks/mocks.h"
 #include "dialog_tests.h"
-#include "dlgcpp/dlgcpp.h"
+#include "dlgcpp/controls/label.h"
+#include "mocks/mock_dialog.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::dialogs;
@@ -8,194 +8,348 @@ using namespace dlgcpp::controls;
 using namespace dlgcpp::menus;
 using namespace dlgcpp::tests;
 
-TEST(DialogTests, constructor_default)
+void DialogTests::SetUp()
 {
-    auto target = std::make_shared<Dialog>();
-    EXPECT_EQ(target->type(), DialogType::Application);
-    EXPECT_EQ(target->p(), Position(0, 0, 600, 400));
+    // TODO: needs to use mock impl.
+    _target = std::make_shared<Dialog>();
 }
 
-TEST(DialogTests, test_constructor_with_params)
+void DialogTests::TearDown()
+{
+    _target.reset();
+}
+
+TEST_F(DialogTests, constructor_with_params)
 {
     auto parent = std::make_shared<MockDialog>();
 
-    ON_CALL(*parent, p()).WillByDefault(testing::ReturnRefOfCopy(Position(10, 20, 30, 40)));
+    auto posProperty = Property<Position, ISharedDialog>(Position(111, 333, 30, 40));
+    EXPECT_CALL(*parent.get(), p()).WillRepeatedly(testing::ReturnRef(posProperty));
 
     auto target = std::make_shared<Dialog>(DialogType::Popup, parent);
     EXPECT_EQ(target->type(), DialogType::Popup);
-    EXPECT_EQ(target->parent(), parent);
-    EXPECT_EQ(target->p(), Position(10, 20, 600, 400));
+    EXPECT_EQ(target->parent().lock(), parent);
+    EXPECT_EQ(target->p(), Position(111, 333, 600, 400));
+
+    testing::Mock::VerifyAndClearExpectations(parent.get());
 }
 
-TEST(DialogTests, show)
+TEST_F(DialogTests, show)
 {
     int resultCode = 12345;
-    auto target = std::make_shared<Dialog>();
 
-    target->timer(500);
-    target->TimerEvent() += [resultCode](ISharedDialog dlg) { dlg->close(resultCode); };
+    _target->timer(500);
+    _target->TimerEvent() += [resultCode](ISharedDialog dlg) { dlg->close(resultCode); };
 
-    auto result = target->exec();
+    auto result = _target->exec();
     EXPECT_EQ(result, resultCode);
 }
 
-TEST(DialogTests, parent)
+TEST_F(DialogTests, parent)
 {
-    auto target = std::make_shared<Dialog>();
-    EXPECT_EQ(target->parent(), nullptr);
+    EXPECT_TRUE(_target->parent().expired());
 }
 
-TEST(DialogTests, enabled)
+TEST_F(DialogTests, enabled)
 {
-    auto target = std::make_shared<Dialog>();
-    target->enabled(true);
-    EXPECT_TRUE(target->enabled());
-    target->enabled(false);
-    EXPECT_FALSE(target->enabled());
+    EXPECT_TRUE(_target->enabled());
+
+    _target->enabled(false);
+    EXPECT_FALSE(_target->enabled());
+
+    _target->enabled(true);
+    EXPECT_TRUE(_target->enabled());
 }
 
-TEST(DialogTests, visible)
+TEST_F(DialogTests, enabled_after_show)
 {
-    auto target = std::make_shared<Dialog>();
-    target->visible(true);
-    EXPECT_TRUE(target->visible());
-    target->visible(false);
-    EXPECT_FALSE(target->visible());
+    _target->show();
+
+    EXPECT_TRUE(_target->enabled());
+
+    _target->enabled(false);
+    EXPECT_FALSE(_target->enabled());
+
+    _target->enabled(true);
+    EXPECT_TRUE(_target->enabled());
 }
 
-TEST(DialogTests, move)
+TEST_F(DialogTests, visible)
 {
-    auto target = std::make_shared<Dialog>();
+    EXPECT_FALSE(_target->visible());
+
+    _target->visible(true);
+    EXPECT_TRUE(_target->visible());
+
+    _target->visible(false);
+    EXPECT_FALSE(_target->visible());
+}
+
+TEST_F(DialogTests, visible_after_show)
+{
+    _target->show();
+
+    EXPECT_TRUE(_target->visible());
+
+    _target->visible(false);
+    EXPECT_FALSE(_target->visible());
+
+    _target->visible(true);
+    EXPECT_TRUE(_target->visible());
+}
+
+TEST_F(DialogTests, type)
+{
+    EXPECT_EQ(_target->type(), DialogType::Application);
+
+    _target->type() = DialogType::Frameless;
+    EXPECT_EQ(_target->type(), DialogType::Frameless);
+
+    _target->type() = DialogType::Popup;
+    EXPECT_EQ(_target->type(), DialogType::Popup);
+
+    _target->type() = DialogType::Tool;
+    EXPECT_EQ(_target->type(), DialogType::Tool);
+
+    _target->type() = DialogType::Application;
+    EXPECT_EQ(_target->type(), DialogType::Application);
+}
+
+TEST_F(DialogTests, type_after_show)
+{
+    _target->show();
+
+    _target->type() = DialogType::Frameless;
+    EXPECT_FALSE(_target->handle().empty());
+
+    _target->type() = DialogType::Popup;
+    EXPECT_FALSE(_target->handle().empty());
+
+    _target->type() = DialogType::Tool;
+    EXPECT_FALSE(_target->handle().empty());
+
+    _target->type() = DialogType::Application;
+    EXPECT_FALSE(_target->handle().empty());
+}
+
+TEST_F(DialogTests, p)
+{
+    Position expectedPos(0, 0, 600, 400);
+    EXPECT_EQ(_target->p().value(), expectedPos);
+
+    expectedPos = Position(100, 100, 300, 200);
+    _target->p() = expectedPos;
+    EXPECT_EQ(_target->p().value(), expectedPos);
+}
+
+TEST_F(DialogTests, p_after_show)
+{
+    _target->show();
+
+    Position expectedPos(0, 0, 600, 400);
+    EXPECT_EQ(_target->p().value(), expectedPos);
+
+    expectedPos = Position(100, 100, 300, 200);
+    _target->p() = expectedPos;
+
+    Position newPos = _target->p().value();
+
+    EXPECT_EQ(_target->p().value(), expectedPos);
+}
+
+TEST_F(DialogTests, move)
+{
+    Size size = _target->p()->size();
+
     Point p(10, 20);
-    target->move(p);
-    EXPECT_EQ(target->p().x(), 10);
-    EXPECT_EQ(target->p().y(), 20);
+    _target->move(p);
+
+    EXPECT_EQ(_target->p()->x(), 10);
+    EXPECT_EQ(_target->p()->y(), 20);
+    EXPECT_EQ(_target->p()->width(), size.width());
+    EXPECT_EQ(_target->p()->height(), size.height());
 }
 
-TEST(DialogTests, resize)
+TEST_F(DialogTests, move_after_show)
 {
-    auto target = std::make_shared<Dialog>();
+    _target->show();
+
+    Size size = _target->p()->size();
+
+    Point p(10, 20);
+    _target->move(p);
+
+    EXPECT_EQ(_target->p()->x(), 10);
+    EXPECT_EQ(_target->p()->y(), 20);
+    EXPECT_EQ(_target->p()->width(), size.width());
+    EXPECT_EQ(_target->p()->height(), size.height());
+}
+
+TEST_F(DialogTests, resize)
+{
+    Point point = _target->p()->point();
+
     Size s(100, 200);
-    target->resize(s);
-    EXPECT_EQ(target->p().width(), 100);
-    EXPECT_EQ(target->p().height(), 200);
+    _target->resize(s);
+
+    EXPECT_EQ(_target->p()->width(), 100);
+    EXPECT_EQ(_target->p()->height(), 200);
+    EXPECT_EQ(_target->p()->x(), point.x());
+    EXPECT_EQ(_target->p()->y(), point.y());
 }
 
-TEST(DialogTests, showHelp)
+TEST_F(DialogTests, resize_after_show)
 {
-    auto target = std::make_shared<Dialog>();
-    target->showHelp(true);
-    EXPECT_TRUE(target->showHelp());
-    target->showHelp(false);
-    EXPECT_FALSE(target->showHelp());
+    _target->show();
+
+    Point point = _target->p()->point();
+
+    Size s(100, 200);
+    _target->resize(s);
+
+    EXPECT_EQ(_target->p()->width(), 100);
+    EXPECT_EQ(_target->p()->height(), 200);
+    EXPECT_EQ(_target->p()->x(), point.x());
+    EXPECT_EQ(_target->p()->y(), point.y());
 }
 
-TEST(DialogTests, color)
+TEST_F(DialogTests, center)
 {
-    auto target = std::make_shared<Dialog>();
+    Point point = _target->p()->point();
+
+    _target->center();
+
+    EXPECT_EQ(_target->p()->width(), 600);
+    EXPECT_EQ(_target->p()->height(), 400);
+    EXPECT_NE(_target->p()->x(), point.x());
+    EXPECT_NE(_target->p()->y(), point.y());
+}
+
+TEST_F(DialogTests, center_after_show)
+{
+    _target->show();
+
+    Point point = _target->p()->point();
+
+    _target->center();
+
+    EXPECT_EQ(_target->p()->width(), 600);
+    EXPECT_EQ(_target->p()->height(), 400);
+    EXPECT_NE(_target->p()->x(), point.x());
+    EXPECT_NE(_target->p()->y(), point.y());
+}
+
+TEST_F(DialogTests, showHelp)
+{
+    _target->showHelp(true);
+    EXPECT_TRUE(_target->showHelp());
+    _target->showHelp(false);
+    EXPECT_FALSE(_target->showHelp());
+}
+
+TEST_F(DialogTests, color)
+{
     Color c = Color::Red;
-    target->color(c);
-    EXPECT_EQ(target->color(), c);
+    _target->color(c);
+    EXPECT_EQ(_target->color(), c);
 }
 
-TEST(DialogTests, cursor)
+TEST_F(DialogTests, cursor)
 {
-    auto target = std::make_shared<Dialog>();
     Cursor c = Cursor::Busy;
-    target->cursor(c);
-    EXPECT_EQ(target->cursor(), c);
+    _target->cursor(c);
+    EXPECT_EQ(_target->cursor(), c);
 }
 
-TEST(DialogTests, title)
+TEST_F(DialogTests, title)
 {
-    auto target = std::make_shared<Dialog>();
-
-    EXPECT_EQ(target->title(), std::string());
+    EXPECT_EQ(_target->title(), std::string());
 
     std::string title = "Test Dialog";
-    target->title(title);
-    EXPECT_EQ(target->title(), title);
+    _target->title(title);
+    EXPECT_EQ(_target->title(), title);
 }
 
-TEST(DialogTests, image)
+TEST_F(DialogTests, image)
 {
-    auto target = std::make_shared<Dialog>();
     ImageSource img{ "path/to/image", false, false };
+    _target->image(img);
+    EXPECT_EQ(_target->image(), img);
 
-    // must be an icon
-    target->image(img);
-    EXPECT_EQ(target->image(), ImageSource());
-
-    img.isIcon = true;
-    target->image(img);
-    EXPECT_EQ(target->image(), img);
+    _target->image().clear();
+    EXPECT_EQ(_target->image(), ImageSource());
 }
 
-TEST(DialogTests, menu)
+TEST_F(DialogTests, menu)
 {
-    auto target = std::make_shared<Dialog>();
     auto menu = std::make_shared<Menu>();
-    target->menu(menu);
-    EXPECT_EQ(target->menu(), menu);
+    _target->menu(menu);
+    EXPECT_EQ(_target->menu(), menu);
 }
 
-TEST(DialogTests, handle)
+TEST_F(DialogTests, handle)
 {
-    auto target = std::make_shared<Dialog>();
-    EXPECT_EQ(target->handle(), nullptr);
+    EXPECT_TRUE(_target->handle().empty());
 }
 
-TEST(DialogTests, user)
+TEST_F(DialogTests, handle_after_show)
 {
-    auto target = std::make_shared<Dialog>();
+    _target->show();
+    EXPECT_FALSE(_target->handle().empty());
+}
+
+TEST_F(DialogTests, user)
+{
     void* userData = reinterpret_cast<void*>(0x1234);
-    target->user(userData);
-    EXPECT_EQ(target->user(), userData);
+    _target->user(userData);
+    EXPECT_EQ(_target->user(), userData);
 }
 
-TEST(DialogTests, addRemoveChildControl)
+TEST_F(DialogTests, addRemoveChildControl)
 {
-    auto target = std::make_shared<Dialog>();
-    auto child = std::make_shared<Button>();
+    auto child = std::make_shared<Label>();
 
-    target->add(child);
-    auto controls = target->controls();
+    _target->add(child);
+    auto controls = _target->controls();
 
     EXPECT_EQ(controls.size(), 1);
-    target->remove(child);
+    _target->remove(child);
 
-    controls = target->controls();
+    controls = _target->controls();
     EXPECT_TRUE(controls.empty());
 }
 
-TEST(DialogTests, addRemoveChildDialog)
+TEST_F(DialogTests, addRemoveChildDialog)
 {
-    auto target = std::make_shared<Dialog>();
     auto child = std::make_shared<Dialog>(DialogType::Frameless);
 
-    target->add(child);
-    auto dialogs = target->dialogs();
+    _target->add(child);
+    auto dialogs = _target->dialogs();
     EXPECT_EQ(dialogs.size(), 1);
 
-    target->remove(child);
-    dialogs = target->dialogs();
+    _target->remove(child);
+    dialogs = _target->dialogs();
     EXPECT_TRUE(dialogs.empty());
 }
 
-TEST(DialogTests, events)
+TEST_F(DialogTests, events)
 {
-    auto target = std::make_shared<Dialog>();
-    auto& dropEvent = target->DropEvent();
-    auto& mouseDownEvent = target->MouseDownEvent();
-    auto& mouseUpEvent = target->MouseUpEvent();
-    auto& mouseMoveEvent = target->MouseMoveEvent();
-    auto& mouseDoubleClickEvent = target->MouseDoubleClickEvent();
-    auto& mouseCaptureLostEvent = target->MouseCaptureLostEvent();
-    auto& helpEvent = target->HelpEvent();
-    auto& moveEvent = target->MoveEvent();
-    auto& sizeEvent = target->SizeEvent();
-    auto& timerEvent = target->TimerEvent();
+    auto& confirmEvent = _target->ConfirmEvent();
+    auto& cancelEvent = _target->CancelEvent();
+    auto& closeEvent = _target->CloseEvent();
+    auto& createEvent = _target->CreateEvent();
+    auto& destroyEvent = _target->DestroyEvent();
+    auto& dropEvent = _target->DropEvent();
+    auto& mouseDownEvent = _target->MouseDownEvent();
+    auto& mouseUpEvent = _target->MouseUpEvent();
+    auto& mouseMoveEvent = _target->MouseMoveEvent();
+    auto& mouseDoubleClickEvent = _target->MouseDoubleClickEvent();
+    auto& mouseCaptureLostEvent = _target->MouseCaptureLostEvent();
+    auto& helpEvent = _target->HelpEvent();
+    auto& moveEvent = _target->MoveEvent();
+    auto& sizeEvent = _target->SizeEvent();
+    auto& timerEvent = _target->TimerEvent();
 
-    // Additional checks can be added to verify the event handling logic
+    // TODO: Additional checks can be made to verify the event handling logic
 }
 

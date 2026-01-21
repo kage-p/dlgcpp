@@ -8,16 +8,22 @@ namespace dlgcpp
 {
     namespace controls
     {
-        class IToolBar
+        class IToolBar : public virtual IControl
         {
         public:
-            virtual const Size& buttonSize() const = 0;
-            virtual void buttonSize(const Size& value) = 0;
-            virtual const Size& imageSize() const = 0;
-            virtual void imageSize(const Size& value) = 0;
-            virtual const std::vector<ISharedToolBarItem>& items() const = 0;
-            virtual void items(const std::vector<ISharedToolBarItem>& items) = 0;
+            // properties
+            virtual IProperty<Size, ISharedControl>& buttonSize() = 0;
+            virtual IProperty<Size, ISharedControl>& imageSize() = 0;
+            virtual IProperty<std::vector<ISharedToolBarItem>, ISharedControl>& items() = 0;
+
+            // events
+            virtual IEvent<ISharedControl>& ClickEvent() = 0;
+            virtual IEvent<ISharedControl>& DoubleClickEvent() = 0;
+            virtual IEvent<ISharedControl>& RightClickEvent() = 0;
+            virtual IEvent<ISharedControl>& DoubleRightClickEvent() = 0;
         };
+
+        typedef std::shared_ptr<IToolBar> ISharedToolBar;
 
         class ToolBarImpl;
 
@@ -29,17 +35,32 @@ namespace dlgcpp
             explicit ToolBar(const Position& p = Position());
             ~ToolBar() override;
 
-            const Size& buttonSize() const override;
-            void buttonSize(const Size& value) override;
-            const Size& imageSize() const override;
-            void imageSize(const Size& value) override;
-            const std::vector<ISharedToolBarItem>& items() const override;
-            void items(const std::vector<ISharedToolBarItem>& items) override;
+            // IToolBar impl.
+            IProperty<Size, ISharedControl>& buttonSize() override;
+            IProperty<Size, ISharedControl>& imageSize() override;
+            IProperty<std::vector<ISharedToolBarItem>, ISharedControl>& items() override;
+            IEvent<ISharedControl>& ClickEvent() override;
+            IEvent<ISharedControl>& DoubleClickEvent() override;
+            IEvent<ISharedControl>& RightClickEvent() override;
+            IEvent<ISharedControl>& DoubleRightClickEvent() override;
+
+            // compatibility setters
+            void buttonSize(const Size& value);
+            void imageSize(const Size& value);
+            void items(const std::vector<ISharedToolBarItem>& items);
 
         private:
-            ToolBar(std::shared_ptr<ToolBarImpl> impl);
+            ToolBar(std::shared_ptr<ToolBarImpl> impl, const Position& p);
 
             std::shared_ptr<ToolBarImpl> _impl;
+
+            Property<Size, ISharedControl> _buttonSize;
+            Property<Size, ISharedControl> _imageSize;
+            Property<std::vector<ISharedToolBarItem>, ISharedControl> _items;
+            Event<ISharedControl> _clickEvent;
+            Event<ISharedControl> _dblClickEvent;
+            Event<ISharedControl> _rightClickEvent;
+            Event<ISharedControl> _dblRightClickEvent;
         };
     }
 }

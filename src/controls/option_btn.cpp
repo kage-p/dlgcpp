@@ -1,54 +1,94 @@
-#include "controls/option_btn_p.h"
+#include "controls/option_btn_impl.h"
+#include "dlgcpp/controls/option_btn.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 OptionButton::OptionButton(const std::string& text, const Position& p)
-    : OptionButton(std::make_shared<OptionButtonImpl>(*this, text, p))
+    : OptionButton(std::make_shared<OptionButtonImpl>(), p)
 {
+    auto ownerFn = [this]() -> ISharedControl { return std::static_pointer_cast<dlgcpp::controls::IControl>(shared_from_this()); };
+
+    _checked.reset(false, nullptr, ownerFn, "checked");
+    _autoCheck.reset(true, nullptr, ownerFn, "autoCheck");
+    _horizontalAlignment.reset(HorizontalAlign::Left, nullptr, ownerFn, "horizontalAlignment");
+    _verticalAlignment.reset(VerticalAlign::Center, nullptr, ownerFn, "verticalAlignment");
+    _text.reset(text, nullptr, ownerFn, "text");
+    _clickEvent.reset(ownerFn, "ClickEvent");
+    _dblClickEvent.reset(ownerFn, "DoubleClickEvent");
+
+    // pass a reference to the implementation class
+    _impl->owner(this);
 }
 
-OptionButton::OptionButton(std::shared_ptr<OptionButtonImpl> impl)
-    : Control(impl), _impl(std::move(impl))
+OptionButton::OptionButton(
+    std::shared_ptr<OptionButtonImpl> impl,
+    const Position& p)
+    : Control(impl, p), _impl(std::move(impl))
 {
 }
 
 OptionButton::~OptionButton()
 {
+    _impl.reset();
 }
 
-bool OptionButton::checked() const
+IProperty<bool, ISharedControl>& OptionButton::checked()
 {
-    return _impl->checked();
+    return _checked;
 }
 
 void OptionButton::checked(bool value)
 {
-    if (_impl->checked() == value)
-        return;
-    _impl->checked(value);
+    _checked = value;
 }
 
-HorizontalAlign OptionButton::horizontalAlignment() const
+IProperty<bool, ISharedControl>& OptionButton::autoCheck()
 {
-    return _impl->horizontalAlignment();
+    return _autoCheck;
+}
+
+void OptionButton::autoCheck(bool value)
+{
+    _autoCheck = value;
+}
+
+IProperty<HorizontalAlign, ISharedControl>& OptionButton::horizontalAlignment()
+{
+    return _horizontalAlignment;
 }
 
 void OptionButton::horizontalAlignment(HorizontalAlign value)
 {
-    if (_impl->horizontalAlignment() == value)
-        return;
-    _impl->horizontalAlignment(value);
+    _horizontalAlignment = value;
 }
 
-VerticalAlign OptionButton::verticalAlignment() const
+IProperty<VerticalAlign, ISharedControl>& OptionButton::verticalAlignment()
 {
-    return _impl->verticalAlignment();
+    return _verticalAlignment;
 }
 
 void OptionButton::verticalAlignment(VerticalAlign value)
 {
-    if (_impl->verticalAlignment() == value)
-        return;
-    _impl->verticalAlignment(value);
+    _verticalAlignment = value;
+}
+
+IProperty<std::string, ISharedControl>& OptionButton::text()
+{
+    return _text;
+}
+
+void OptionButton::text(const std::string& value)
+{
+    _text = value;
+}
+
+IEvent<ISharedControl>& OptionButton::ClickEvent()
+{
+    return _clickEvent;
+}
+
+IEvent<ISharedControl>& OptionButton::DoubleClickEvent()
+{
+    return _dblClickEvent;
 }

@@ -1,53 +1,46 @@
-#include "dialogs/property_p.h"
+#include "dialogs/property_impl.h"
+#include "dlgcpp/dialogs/property.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 using namespace dlgcpp::dialogs;
 
 PropertyDialog::PropertyDialog(ISharedDialog parent)
-    : PropertyDialog(std::make_shared<PropertyDialogImpl>(*this, parent))
+    : PropertyDialog(std::make_shared<PropertyDialogImpl>(this), parent)
 {
 }
 
-PropertyDialog::PropertyDialog(std::shared_ptr<PropertyDialogImpl> impl)
+PropertyDialog::PropertyDialog(
+    std::shared_ptr<PropertyDialogImpl> impl,
+    ISharedDialog parent)
     : _impl(std::move(impl))
 {
+    auto ownerFn = [this]() -> ISharedPropertyDialog { return shared_from_this(); };
+
+    _parent.reset(parent, nullptr, ownerFn, "parent");
+    _title.reset(std::string(), nullptr, ownerFn, "title");
+    _message.reset(std::string(), nullptr, ownerFn, "message");
+    _sectionWidth.reset(150, nullptr, ownerFn, "sectionWidth");
 }
 
-const std::string& PropertyDialog::title() const
+IReadOnlyProperty<ISharedDialog, ISharedPropertyDialog>& PropertyDialog::parent()
 {
-    return _impl->title();
+    return _parent;
 }
 
-void PropertyDialog::title(const std::string& value)
+IProperty<std::string, ISharedPropertyDialog>& PropertyDialog::title()
 {
-    if (_impl->title() == value)
-        return;
-    _impl->title(value);
+    return _title;
 }
 
-const std::string& PropertyDialog::message() const
+IProperty<std::string, ISharedPropertyDialog>& PropertyDialog::message()
 {
-    return _impl->message();
+    return _message;
 }
 
-void PropertyDialog::message(const std::string& value)
+IProperty<int, ISharedPropertyDialog>& PropertyDialog::sectionWidth()
 {
-    if (_impl->message() == value)
-        return;
-    _impl->message(value);
-}
-
-int PropertyDialog::sectionWidth() const
-{
-    return _impl->sectionWidth();
-}
-
-void PropertyDialog::sectionWidth(int value)
-{
-    if (_impl->sectionWidth() == value)
-        return;
-    _impl->sectionWidth(value);
+    return _sectionWidth;
 }
 
 bool PropertyDialog::show()

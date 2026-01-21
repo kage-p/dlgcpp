@@ -1,6 +1,8 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
+#include <iomanip>
+#include <ostream>
 
 namespace dlgcpp
 {
@@ -42,5 +44,15 @@ namespace dlgcpp
     inline Color MakeColor(int8_t r, int8_t g, int8_t b)
     {
         return (Color)(((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff));
+    }
+
+    inline std::ostream& operator<<(std::ostream& os, Color e)
+    {
+        std::ios_base::fmtflags f(os.flags());
+        os << '#'
+            << std::uppercase << std::setfill('0') << std::hex
+            << std::setw(8) << static_cast<std::uint32_t>(e);
+        os.flags(f);
+        return os;
     }
 }

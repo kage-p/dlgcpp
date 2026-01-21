@@ -1,98 +1,114 @@
-#include "controls/textbox_p.h"
+#include "controls/textbox_impl.h"
+#include "dlgcpp/controls/textbox.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 TextBox::TextBox(const std::string& text, const Position& p)
-    : TextBox(std::make_shared<TextBoxImpl>(*this, text, p))
+    : TextBox(std::make_shared<TextBoxImpl>(), p)
 {
-    this->border(BorderStyle::Sunken);
+    border() = BorderStyle::Sunken;
+
+    auto ownerFn = [this]() -> ISharedControl { return std::static_pointer_cast<dlgcpp::controls::IControl>(shared_from_this()); };
+
+    _maxChars.reset(0, [](int value) {return value >= 0; }, ownerFn, "maxChars");
+    _password.reset(false, nullptr, ownerFn, "password");
+    _readOnly.reset(false, nullptr, ownerFn, "readOnly");
+    _multiline.reset(false, nullptr, ownerFn, "multiline");
+    _wrapText.reset(false, nullptr, ownerFn, "wrapText");
+    _horizontalAlignment.reset(HorizontalAlign::Left, nullptr, ownerFn, "horizontalAlignment");
+    _text.reset(text, nullptr, ownerFn, "text");
+
+    // events
+    _changedEvent.reset(ownerFn, "ChangedEvent");
+
+    // pass a reference to the implementation class
+    _impl->owner(this);
 }
 
-TextBox::TextBox(std::shared_ptr<TextBoxImpl> impl)
-    : Control(impl), _impl(std::move(impl))
+TextBox::TextBox(
+    std::shared_ptr<TextBoxImpl> impl,
+    const Position& p)
+    : Control(impl, p), _impl(std::move(impl))
 {
 }
 
 TextBox::~TextBox()
 {
+    _impl.reset();
 }
 
-HorizontalAlign TextBox::horizontalAlignment() const
+IProperty<HorizontalAlign, ISharedControl>& TextBox::horizontalAlignment()
 {
-    return _impl->horizontalAlignment();
+    return _horizontalAlignment;
 }
 
 void TextBox::horizontalAlignment(HorizontalAlign value)
 {
-    if (_impl->horizontalAlignment() == value)
-        return;
-    _impl->horizontalAlignment(value);
+    _horizontalAlignment = value;
 }
 
-int TextBox::maxChars() const
+IProperty<int, ISharedControl>& TextBox::maxChars()
 {
-    return _impl->maxChars();
+    return _maxChars;
 }
 
 void TextBox::maxChars(int value)
 {
-    if (value < 0)
-        value = 0;
-    if (_impl->maxChars() == value)
-        return;
-    _impl->maxChars(value);
+    _maxChars = value;
 }
 
-bool TextBox::password() const
+IProperty<bool, ISharedControl>& TextBox::password()
 {
-    return _impl->password();
+    return _password;
 }
 
 void TextBox::password(bool value)
 {
-    if (_impl->password() == value)
-        return;
-    _impl->password(value);
+    _password = value;
 }
 
-bool TextBox::readOnly() const
+IProperty<bool, ISharedControl>& TextBox::readOnly()
 {
-    return _impl->readOnly();
+    return _readOnly;
 }
 
 void TextBox::readOnly(bool value)
 {
-    if (_impl->readOnly() == value)
-        return;
-    _impl->readOnly(value);
+    _readOnly = value;
 }
 
-bool TextBox::multiline() const
+IProperty<bool, ISharedControl>& TextBox::multiline()
 {
-    return _impl->multiline();
+    return _multiline;
 }
 
 void TextBox::multiline(bool value)
 {
-    if (_impl->multiline() == value)
-        return;
-    _impl->multiline(value);
+    _multiline = value;
 }
 
-bool TextBox::wrapText() const
+IProperty<bool, ISharedControl>& TextBox::wrapText()
 {
-    return _impl->wrapText();
+    return _wrapText;
 }
 
 void TextBox::wrapText(bool value)
 {
-    if (_impl->wrapText() == value)
-        return;
-    _impl->wrapText(value);
+    _wrapText = value;
+}
+
+IProperty<std::string, ISharedControl>& TextBox::text()
+{
+    return _text;
+}
+
+void TextBox::text(const std::string& value)
+{
+    _text = value;
 }
 
 IEvent<ISharedControl>& TextBox::ChangedEvent()
 {
-    return _impl->ChangedEvent();
+    return _changedEvent;
 }

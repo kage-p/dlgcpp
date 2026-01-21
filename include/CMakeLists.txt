@@ -11,6 +11,7 @@ set(src_files
     dlgcpp/colors.h
     dlgcpp/defs.h
     dlgcpp/dlgcpp.h
+    dlgcpp/drop.h
     dlgcpp/event.h
     dlgcpp/font.h
     dlgcpp/image.h
@@ -18,6 +19,7 @@ set(src_files
     dlgcpp/mouse.h
     dlgcpp/point.h
     dlgcpp/position.h
+	dlgcpp/property.h
     dlgcpp/size.h
     dlgcpp/controls/button.h
     dlgcpp/controls/checkbox.h

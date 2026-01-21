@@ -1,5 +1,6 @@
 #pragma once
 
+#include "dlgcpp/defs.h"
 #include "support/unit_test.h"
 
 namespace dlgcpp
@@ -8,7 +9,11 @@ namespace dlgcpp
     {
         class DialogTests : public UnitTestSupport::CUnitTest
         {
-        public:
+        protected:
+            void SetUp() override;
+            void TearDown() override;
+
+            std::shared_ptr<dlgcpp::dialogs::Dialog> _target;
         };
     }
 }

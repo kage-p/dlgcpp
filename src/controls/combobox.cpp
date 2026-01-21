@@ -1,105 +1,160 @@
-#include "controls/combobox_p.h"
+#include "controls/combobox_impl.h"
+#include "dlgcpp/controls/combobox.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 ComboBox::ComboBox(const Position& p)
-    : ComboBox(std::make_shared<ComboBoxImpl>(*this, p))
+    : ComboBox(std::make_shared<ComboBoxImpl>(), p)
 {
+    border() = BorderStyle::Sunken;
+
+    auto ownerFn = [this]() -> ISharedControl { return std::static_pointer_cast<dlgcpp::controls::IControl>(shared_from_this()); };
+
+    _editable.reset(false, nullptr, ownerFn, "editable");
+    _dropDown.reset(true, nullptr, ownerFn, "dropDown");
+    _sorted.reset(true, nullptr, ownerFn, "sorted");
+
+    _items.reset(
+        std::vector<std::string>(),
+        [&]
+        (const std::vector<std::string>& items)
+        {
+            // reset index if exceeds item count
+            if (_selectedIndex >= items.size())
+                _selectedIndex = -1;
+
+            return true;
+        },
+        ownerFn, "items");
+
+    _text.reset(
+        std::string(),
+        [&]
+        (const std::string& value)
+        {
+            // assignment of string when editable only
+            if (!value.empty())
+                return _editable.value();
+            else
+                return true;
+        }, ownerFn, "text");
+
+    _selectedIndex.reset(
+        -1,
+        [&](int index)
+        {
+            if (index == -1)
+                return true;
+
+            return (index > -1 && index < _items.value().size());
+        },
+        ownerFn, "selectedIndex");
+
+    // events
+    _dblClickEvent.reset(ownerFn, "DoubleClickEvent");
+    _selChangedEvent.reset(ownerFn, "SelChangedEvent");
+    _selCancelEvent.reset(ownerFn, "SelCancelEvent");
+    _listOpenEvent.reset(ownerFn, "ListOpenEvent");
+    _listCloseEvent.reset(ownerFn, "ListCloseEvent");
+
+    // pass a reference to the implementation class
+    _impl->owner(this);
 }
 
-ComboBox::ComboBox(std::shared_ptr<ComboBoxImpl> impl)
-    : Control(impl), _impl(std::move(impl))
+ComboBox::ComboBox(
+    std::shared_ptr<ComboBoxImpl> impl,
+    const Position& p)
+    : Control(impl, p), _impl(std::move(impl))
 {
 }
 
 ComboBox::~ComboBox()
 {
+    _impl.reset();
 }
 
-int ComboBox::currentIndex() const
+IProperty<int, ISharedControl>& ComboBox::selectedIndex()
 {
-    return _impl->currentIndex();
+    return _selectedIndex;
 }
 
-void ComboBox::currentIndex(int value)
+void ComboBox::selectedIndex(int value)
 {
-    if (_impl->currentIndex() == value)
-        return;
-
-    _impl->currentIndex(value);
+    _selectedIndex = value;
 }
 
-bool ComboBox::dropDown() const
+IProperty<bool, ISharedControl>& ComboBox::dropDown()
 {
-    return _impl->dropDown();
+    return _dropDown;
 }
 
 void ComboBox::dropDown(bool value)
 {
-    if (_impl->dropDown() == value)
-        return;
-
-    _impl->dropDown(value);
+    _dropDown = value;
 }
 
-bool ComboBox::editable() const
+IProperty<bool, ISharedControl>& ComboBox::editable()
 {
-    return _impl->editable();
+    return _editable;
 }
 
 void ComboBox::editable(bool value)
 {
-    if (_impl->editable() == value)
-        return;
-
-    _impl->editable(value);
+    _editable = value;
 }
 
-bool ComboBox::sorted() const
+IProperty<bool, ISharedControl>& ComboBox::sorted()
 {
-    return _impl->sorted();
+    return _sorted;
 }
 
 void ComboBox::sorted(bool value)
 {
-    if (_impl->sorted() == value)
-        return;
-
-    _impl->sorted(value);
+    _sorted = value;
 }
 
-const std::vector<std::string>& ComboBox::items() const
+IProperty<std::vector<std::string>, ISharedControl>& ComboBox::items()
 {
-    return _impl->items();
+    return _items;
 }
 
 void ComboBox::items(const std::vector<std::string>& items)
 {
-    _impl->items(items);
+    _items = items;
+}
+
+IProperty<std::string, ISharedControl>& ComboBox::text()
+{
+    return _text;
+}
+
+void ComboBox::text(const std::string& value)
+{
+    _text = value;
+}
+
+IEvent<ISharedControl>& ComboBox::DoubleClickEvent()
+{
+    return _dblClickEvent;
 }
 
 IEvent<ISharedControl>& ComboBox::SelChangedEvent()
 {
-    return _impl->SelChangedEvent();
+    return _selChangedEvent;
 }
 
 IEvent<ISharedControl>& ComboBox::SelCancelEvent()
 {
-    return _impl->SelCancelEvent();
+    return _selCancelEvent;
 }
 
 IEvent<ISharedControl>& ComboBox::ListCloseEvent()
 {
-    return _impl->ListCloseEvent();
+    return _listCloseEvent;
 }
 
 IEvent<ISharedControl>& ComboBox::ListOpenEvent()
 {
-    return _impl->ListOpenEvent();
-}
-
-IEvent<ISharedControl>& ComboBox::TextChangedEvent()
-{
-    return _impl->TextChangedEvent();
+    return _listOpenEvent;
 }

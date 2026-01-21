@@ -1,51 +1,104 @@
-#include "controls/tabs_p.h"
+#include "controls/tabs_impl.h"
+#include "dlgcpp/controls/tabs.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Tabs::Tabs(const Position& p)
-    : Tabs(std::make_shared<TabsImpl>(*this, p))
+    : Tabs(std::make_shared<TabsImpl>(), p)
 {
+    auto ownerFn = [this]() -> ISharedControl { return std::static_pointer_cast<dlgcpp::controls::IControl>(shared_from_this()); };
+
+    _area.reset(Position(), nullptr, ownerFn, "area");
+
+    _items.reset(
+        std::vector<ISharedTabItem>(),
+        [&]
+        (const std::vector<ISharedTabItem>& items)
+        {
+            // reset index if exceeds item count
+            if (_selectedIndex >= items.size())
+                _selectedIndex = -1;
+
+            return true;
+        },
+        ownerFn,
+        "items");
+
+    _selectedIndex.reset(
+        -1,
+        [&](int index)
+        {
+            if (index == -1)
+                return true;
+            return (index > -1 && index < _items.value().size());
+        },
+        ownerFn,
+        "selectedIndex");
+
+    // events
+    _clickEvent.reset(ownerFn, "ClickEvent");
+    _dblClickEvent.reset(ownerFn, "DoubleClickEvent");
+    _dblRightClickEvent.reset(ownerFn, "DoubleRightClickEvent");
+    _rightClickEvent.reset(ownerFn, "RightClickEvent");
+
+    // pass a reference to the implementation class
+    _impl->owner(this);
 }
 
-Tabs::Tabs(std::shared_ptr<TabsImpl> impl)
-    : Control(impl), _impl(std::move(impl))
+Tabs::Tabs(
+    std::shared_ptr<TabsImpl> impl,
+    const Position& p)
+    : Control(impl, p), _impl(std::move(impl))
 {
 }
 
 Tabs::~Tabs()
 {
+    _impl.reset();
 }
 
-Position Tabs::area() const
+IProperty<Position, ISharedControl>& Tabs::area()
 {
-    return _impl->area();
+    return _area;
 }
 
-const std::vector<ISharedTabItem>& Tabs::items() const
+IProperty<int, ISharedControl>& Tabs::selectedIndex()
 {
-    return _impl->items();
+    return _selectedIndex;
+}
+
+void Tabs::selectedIndex(int value)
+{
+    _selectedIndex = value;
+}
+
+IProperty<std::vector<ISharedTabItem>, ISharedControl>& Tabs::items()
+{
+    return _items;
 }
 
 void Tabs::items(const std::vector<ISharedTabItem>& items)
 {
-    _impl->items(items);
+    _items = items;
 }
 
-int Tabs::currentIndex() const
+IEvent<ISharedControl>& Tabs::ClickEvent()
 {
-    return _impl->currentIndex();
+    return _clickEvent;
 }
 
-void Tabs::currentIndex(int value)
+IEvent<ISharedControl>& Tabs::DoubleClickEvent()
 {
-    if (_impl->currentIndex() == value)
-        return;
-
-    _impl->currentIndex(value);
+    return _dblClickEvent;
 }
 
-IEvent<ISharedControl>& Tabs::SelChangedEvent()
+IEvent<ISharedControl>& Tabs::RightClickEvent()
 {
-    return _impl->SelChangedEvent();
+    return _rightClickEvent;
+}
+
+IEvent<ISharedControl>& Tabs::DoubleRightClickEvent()
+{
+    return _dblRightClickEvent;
 }

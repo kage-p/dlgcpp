@@ -1,51 +1,45 @@
-#include "dialogs/folder_p.h"
+#include "dialogs/folder_impl.h"
+#include "dlgcpp/dialogs/folder.h"
 
+using namespace dlgcpp;
 using namespace dlgcpp::dialogs;
 
 FolderDialog::FolderDialog(ISharedDialog parent)
-    : FolderDialog(std::make_shared<FolderDialogImpl>(*this, parent))
+    : FolderDialog(std::make_shared<FolderDialogImpl>(this), parent)
 {
 }
 
-FolderDialog::FolderDialog(std::shared_ptr<FolderDialogImpl> impl)
+FolderDialog::FolderDialog(
+    std::shared_ptr<FolderDialogImpl> impl,
+    ISharedDialog parent)
     : _impl(std::move(impl))
 {
+    auto ownerFn = [this]() -> ISharedFolderDialog { return shared_from_this(); };
+
+    _parent.reset(parent, nullptr, ownerFn, "parent");
+    _title.reset(std::string(), nullptr, ownerFn, "title");
+    _message.reset(std::string(), nullptr, ownerFn, "message");
+    _folderName.reset(std::string(), nullptr, ownerFn, "folderName");
 }
 
-const std::string& FolderDialog::folderName() const
+IReadOnlyProperty<ISharedDialog, ISharedFolderDialog>& FolderDialog::parent()
 {
-    return _impl->folderName();
+    return _parent;
 }
 
-void FolderDialog::folderName(const std::string& value)
+IProperty<std::string, ISharedFolderDialog>& FolderDialog::title()
 {
-    if (_impl->folderName() == value)
-        return;
-    _impl->folderName(value);
+    return _title;
 }
 
-const std::string& FolderDialog::message() const
+IProperty<std::string, ISharedFolderDialog>& FolderDialog::message()
 {
-    return _impl->message();
+    return _message;
 }
 
-void FolderDialog::message(const std::string& value)
+IProperty<std::string, ISharedFolderDialog>& FolderDialog::folderName()
 {
-    if (_impl->message() == value)
-        return;
-    _impl->message(value);
-}
-
-const std::string& FolderDialog::title() const
-{
-    return _impl->title();
-}
-
-void FolderDialog::title(const std::string& value)
-{
-    if (_impl->title() == value)
-        return;
-    _impl->title(value);
+    return _folderName;
 }
 
 bool FolderDialog::create()

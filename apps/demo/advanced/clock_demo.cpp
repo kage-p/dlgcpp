@@ -34,7 +34,7 @@ void advanced_clock_demo(ISharedDialog parent)
             oss << std::put_time(localTime, "%H:%M:%S");
             label->text(oss.str());
         };
-    dlg->TimerEvent().invoke(dlg);
+    dlg->TimerEvent().invoke();
 
     dlg->exec();
 }

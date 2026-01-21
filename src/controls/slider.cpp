@@ -1,72 +1,102 @@
-#include "controls/slider_p.h"
+#include "controls/slider_impl.h"
+#include "dlgcpp/controls/slider.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::controls;
 
 Slider::Slider(const std::string& text, const Position& p)
-    : Slider(std::make_shared<SliderImpl>(*this, text, p))
+    : Slider(std::make_shared<SliderImpl>(), p)
 {
-    this->border(BorderStyle::Thin);
+    border() = BorderStyle::Thin;
+
+    auto ownerFn = [this]() -> ISharedControl { return std::static_pointer_cast<dlgcpp::controls::IControl>(shared_from_this()); };
+
+    // properties
+    _vertical.reset(false, nullptr, ownerFn, "vertical");
+    _range.reset(std::make_pair(0, 100), nullptr, ownerFn, "range");
+    _barColor.reset(Color::Default, nullptr, ownerFn, "barColor");
+    _text.reset(text, nullptr, ownerFn, "text");
+
+    auto valueValidatorFn = [&](int value)
+        {
+            auto& range = _range.value();
+            if (value < range.first ||
+                value > range.second)
+                return false;
+            return true;
+        };
+    _value.reset(0, valueValidatorFn, ownerFn, "value");
+
+    // events
+    _changedEvent.reset(ownerFn, "ChangedEvent");
+
+    // pass a reference to the implementation class
+    _impl->owner(this);
 }
 
-Slider::Slider(std::shared_ptr<SliderImpl> impl)
-    : Control(impl), _impl(std::move(impl))
+Slider::Slider(
+    std::shared_ptr<SliderImpl> impl,
+    const Position& p)
+    : Control(impl, p), _impl(std::move(impl))
 {
 }
 
 Slider::~Slider()
 {
+    _impl.reset();
 }
 
-bool Slider::vertical() const
+IProperty<bool, ISharedControl>& Slider::vertical()
 {
-    return _impl->vertical();
+    return _vertical;
 }
 
 void Slider::vertical(bool value)
 {
-    if (_impl->vertical() == value)
-        return;
-    _impl->vertical(value);
+    _vertical = value;
 }
 
-int Slider::value() const
+IProperty<int, ISharedControl>& Slider::value()
 {
-    return _impl->value();
+    return _value;
 }
 
 void Slider::value(int value)
 {
-    if (_impl->value() == value)
-        return;
-    _impl->value(value);
+    _value = value;
 }
 
-std::pair<int, int> Slider::range() const
+IProperty<std::pair<int, int>, ISharedControl>& Slider::range()
 {
-    return _impl->range();
+    return _range;
 }
 
 void Slider::range(int from, int to)
 {
-    if (_impl->range() == std::pair<int, int>(from, to))
-        return;
-    _impl->range(from, to);
+    _range = std::make_pair(from, to);
 }
 
-Color Slider::barColor() const
+IProperty<Color, ISharedControl>& Slider::barColor()
 {
-    return _impl->barColor();
+    return _barColor;
 }
 
 void Slider::barColor(Color value)
 {
-    if (_impl->barColor() == value)
-        return;
-    _impl->barColor(value);
+    _barColor = value;
+}
+
+IProperty<std::string, ISharedControl>& Slider::text()
+{
+    return _text;
+}
+
+void Slider::text(const std::string& value)
+{
+    _text = value;
 }
 
 IEvent<ISharedControl>& Slider::ChangedEvent()
 {
-    return _impl->ChangedEvent();
+    return _changedEvent;
 }

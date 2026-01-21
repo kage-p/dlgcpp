@@ -5,7 +5,7 @@ using namespace dlgcpp;
 void advanced_popup_menu_demo(ISharedDialog parent)
 {
     auto dlg = std::make_shared<Dialog>(DialogType::Popup, parent);
-    dlg->title("Popup Menu Demo");
+    dlg->title() = "Popup Menu Demo";
     dlg->resize({ 300,200 });
     dlg->center();
 
@@ -17,8 +17,8 @@ void advanced_popup_menu_demo(ISharedDialog parent)
     ISharedMenuItem item;
 
     item = std::make_shared<MenuItem>("Priority/default Item");
-    item->defaultItem(true);
-    item->ClickEvent() += [dlg](ISharedMenuItem m)
+    item->defaultItem() = true;
+    item->ClickEvent() += [&](ISharedMenuItem m)
         {
             dlg->message("Priority Item clicked");
         };
@@ -28,18 +28,18 @@ void advanced_popup_menu_demo(ISharedDialog parent)
     menu->add(item);
 
     item = std::make_shared<MenuItem>("Perform Task 1");
-    item->ClickEvent() += [dlg](ISharedMenuItem m)
+    item->ClickEvent() += [&](ISharedMenuItem m)
         {
             dlg->message("Perform Task 1 clicked");
-            m->enabled(false);
+            m->enabled() = false;
         };
     menu->add(item);
 
     item = std::make_shared<MenuItem>("Perform Task 2");
-    item->ClickEvent() += [dlg](ISharedMenuItem m)
+    item->ClickEvent() += [&](ISharedMenuItem m)
         {
             dlg->message("Perform Task 2 clicked");
-            m->enabled(false);
+            m->enabled() = false;
         };
     menu->add(item);
 
@@ -47,16 +47,16 @@ void advanced_popup_menu_demo(ISharedDialog parent)
     menu->add(item);
 
     item = std::make_shared<MenuItem>("Check Item 1");
-    item->ClickEvent() += [dlg](ISharedMenuItem m)
+    item->ClickEvent() += [&](ISharedMenuItem m)
         {
-            m->checked(!m->checked());
+            m->checked() = !m->checked();
         };
     menu->add(item);
 
     item = std::make_shared<MenuItem>("Check Item 2");
-    item->ClickEvent() += [dlg](ISharedMenuItem m)
+    item->ClickEvent() += [&](ISharedMenuItem m)
         {
-            m->checked(!m->checked());
+            m->checked() = !m->checked();
         };
     menu->add(item);
 
@@ -64,7 +64,7 @@ void advanced_popup_menu_demo(ISharedDialog parent)
     menu->add(item);
 
     item = std::make_shared<MenuItem>("Close Dialog");
-    item->ClickEvent() += [dlg](auto)
+    item->ClickEvent() += [&](auto)
         {
             dlg->close();
         };

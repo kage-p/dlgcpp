@@ -2,6 +2,7 @@
 
 #include "dlgcpp/defs.h"
 #include "dlgcpp/event.h"
+#include "dlgcpp/property.h"
 #include <memory>
 
 namespace dlgcpp
@@ -14,43 +15,45 @@ namespace dlgcpp
         class ITabItem
         {
         public:
-            virtual bool highlight() const = 0;
-            virtual void highlight(bool value) = 0;
-
-            virtual const std::string& text() const = 0;
-            virtual void text(const std::string& value) = 0;
-
-            virtual const std::string& toolTipText() const = 0;
-            virtual void toolTipText(const std::string& value) = 0;
-
-            virtual const ImageSource& image() const = 0;
-            virtual void image(ImageSource& value) = 0;
+            virtual IProperty<bool, ISharedTabItem>& highlight() = 0;
+            virtual IProperty<std::string, ISharedTabItem>& text() = 0;
+            virtual IProperty<std::string, ISharedTabItem>& toolTipText() = 0;
+            virtual IProperty<ImageSource, ISharedTabItem>& image() = 0;
 
             virtual IEvent<ISharedTabItem>& ClickEvent() = 0;
         };
 
         class TabItemImpl;
 
-        class TabItem : public ITabItem
+        class TabItem :
+            public ITabItem,
+            public std::enable_shared_from_this<TabItem>
         {
         public:
-            TabItem(const std::string& text, const ImageSource& image = ImageSource(), const std::string& toolTipText = std::string());
+            TabItem(
+                const std::string& text = std::string(),
+                const ImageSource& image = ImageSource(),
+                const std::string& toolTipText = std::string());
             virtual ~TabItem() = default;
 
+            TabItem& operator=(const TabItem& other);
+            bool operator==(const TabItem& other) const;
+            bool operator!=(const TabItem& other) const;
+
             // ITabItem impl.
-            bool highlight() const override;
-            void highlight(bool value) override;
-            const std::string& text() const override;
-            void text(const std::string& value) override;
-            virtual const std::string& toolTipText() const override;
-            virtual void toolTipText(const std::string& value) override;
-            const ImageSource& image() const override;
-            void image(ImageSource& value) override;
+            IProperty<bool, ISharedTabItem>& highlight() override;
+            IProperty<std::string, ISharedTabItem>& text() override;
+            IProperty<std::string, ISharedTabItem>& toolTipText() override;
+            IProperty<ImageSource, ISharedTabItem>& image() override;
 
             IEvent<ISharedTabItem>& ClickEvent() override;
 
         private:
-            std::shared_ptr<TabItemImpl> _impl;
+            Property<bool, ISharedTabItem> _highlight;
+            Property<std::string, ISharedTabItem> _text;
+            Property<std::string, ISharedTabItem> _toolTipText;
+            Property<ImageSource, ISharedTabItem> _image;
+            Event<ISharedTabItem> _clickEvent;
         };
     }
 }

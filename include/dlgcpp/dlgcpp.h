@@ -86,5 +86,4 @@ namespace dlgcpp
     using controls::TreeView;
     using controls::TreeViewNode;
     using controls::ISharedTreeViewNode;
-
 }

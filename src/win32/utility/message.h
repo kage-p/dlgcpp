@@ -62,5 +62,6 @@ namespace dlgcpp
     {
     public:
         static int beginLoop(HWND hwnd, HACCEL hAccel = nullptr);
+        static void doEvents();
     };
 }

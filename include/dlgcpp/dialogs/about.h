@@ -1,61 +1,62 @@
 #pragma once
 
 #include "dlgcpp/defs.h"
+#include "dlgcpp/property.h"
+
 #include <string>
 
 namespace dlgcpp
 {
     namespace dialogs
     {
+        class IAboutDialog;
+        class AboutDialogImpl;
+        typedef std::shared_ptr<IAboutDialog> ISharedAboutDialog;
+
         class IAboutDialog
         {
         public:
-            virtual const std::string& title() const = 0;
-            virtual void title(const std::string& value) = 0;
-            virtual const std::string& appDetails() const = 0;
-            virtual void appDetails(const std::string& value) = 0;
-            virtual const std::string& description() const = 0;
-            virtual void description(const std::string& value) = 0;
-            virtual const std::string& homePageLink() const = 0;
-            virtual void homePageLink(const std::string& value) = 0;
-            virtual const std::string& releaseDate() const = 0;
-            virtual void releaseDate(const std::string& value) = 0;
-            virtual const std::string& logoBitmapId() const = 0;
-            virtual void logoBitmapId(const std::string& value) = 0;
-            virtual const std::string& logoIconId() const = 0;
-            virtual void logoIconId(const std::string& value) = 0;
+            virtual IReadOnlyProperty<ISharedDialog, ISharedAboutDialog>& parent() = 0;
+            virtual IProperty<std::string, ISharedAboutDialog>& title() = 0;
+            virtual IProperty<std::string, ISharedAboutDialog>& appDetails() = 0;
+            virtual IProperty<std::string, ISharedAboutDialog>& description() = 0;
+            virtual IProperty<std::string, ISharedAboutDialog>& homePageLink() = 0;
+            virtual IProperty<std::string, ISharedAboutDialog>& releaseDate() = 0;
+            virtual IProperty<ImageSource, ISharedAboutDialog>& logoImage() = 0;
+
             virtual void show() = 0;
         };
 
-        class AboutDialogImpl;
-
-        class AboutDialog : public IAboutDialog
+        class AboutDialog :
+            public IAboutDialog,
+            public std::enable_shared_from_this<AboutDialog>
         {
         public:
             explicit AboutDialog(ISharedDialog parent = nullptr);
             virtual ~AboutDialog() = default;
 
             // IAboutDialog impl.
-            const std::string& title() const override;
-            void title(const std::string& value) override;
-            const std::string& appDetails() const override;
-            void appDetails(const std::string& value) override;
-            const std::string& description() const override;
-            void description(const std::string& value) override;
-            const std::string& homePageLink() const override;
-            void homePageLink(const std::string& value) override;
-            const std::string& releaseDate() const override;
-            void releaseDate(const std::string& value) override;
-            const std::string& logoBitmapId() const override;
-            void logoBitmapId(const std::string& value) override;
-            const std::string& logoIconId() const override;
-            void logoIconId(const std::string& value) override;
+            IReadOnlyProperty<ISharedDialog, ISharedAboutDialog>& parent() override;
+            IProperty<std::string, ISharedAboutDialog>& title() override;
+            IProperty<std::string, ISharedAboutDialog>& appDetails() override;
+            IProperty<std::string, ISharedAboutDialog>& description() override;
+            IProperty<std::string, ISharedAboutDialog>& homePageLink() override;
+            IProperty<std::string, ISharedAboutDialog>& releaseDate() override;
+            IProperty<ImageSource, ISharedAboutDialog>& logoImage() override;
+
             void show() override;
 
         private:
-            AboutDialog(std::shared_ptr<AboutDialogImpl> impl);
+            AboutDialog(std::shared_ptr<AboutDialogImpl> impl, ISharedDialog parent);
 
             std::shared_ptr<AboutDialogImpl> _impl;
+            Property<ISharedDialog, ISharedAboutDialog> _parent;
+            Property<std::string, ISharedAboutDialog> _title;
+            Property<std::string, ISharedAboutDialog> _appDetails;
+            Property<std::string, ISharedAboutDialog> _description;
+            Property<std::string, ISharedAboutDialog> _homePageLink;
+            Property<std::string, ISharedAboutDialog> _releaseDate;
+            Property<ImageSource, ISharedAboutDialog> _logoImage;
         };
     }
 }

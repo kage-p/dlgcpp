@@ -5,10 +5,10 @@
 
 void controls_listview_demo(dlgcpp::ISharedDialog parent);
 
-class ListViewDemoImpl : public dlgcpp::ListView
+class DemoListView : public dlgcpp::ListView
 {
 public:
-    ListViewDemoImpl();
+    DemoListView();
 
     enum RoleId
     {
@@ -17,13 +17,15 @@ public:
         Column3 = 997
     };
 
-    typedef struct ListViewDemoItem
+    typedef struct DemoListViewItem
     {
         std::string col1;
         std::string col2;
         std::string col3;
         bool checked = false;
-    } ListViewDemoItem;
+    } DemoListViewItem;
+
+    void setItems(const std::vector<DemoListViewItem>& items);
 
     // ListView impl.
     int roleData(int column) const override;
@@ -36,10 +38,8 @@ public:
     bool checked(size_t row) const override;
     void checked(size_t row, bool checked) override;
 
-    void setItems(const std::vector<ListViewDemoItem>& items);
-
 private:
     std::map<int, int> _roleMap;
     std::map<int, dlgcpp::ListViewColumn> _columnMap;
-    std::vector<ListViewDemoItem> _items;
+    std::vector<DemoListViewItem> _items;
 };

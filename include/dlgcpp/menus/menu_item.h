@@ -2,6 +2,7 @@
 
 #include "dlgcpp/defs.h"
 #include "dlgcpp/event.h"
+#include "dlgcpp/property.h"
 
 #include <memory>
 #include <string>
@@ -11,33 +12,27 @@ namespace dlgcpp
 {
     namespace menus
     {
-        class IMenuItemList
+        class IMenuItem
         {
         public:
+            // properties
+            virtual IProperty<std::string, ISharedMenuItem>& text() = 0;
+            virtual IProperty<bool, ISharedMenuItem>& enabled() = 0;
+            virtual IProperty<bool, ISharedMenuItem>& checked() = 0;
+            virtual IProperty<bool, ISharedMenuItem>& defaultItem() = 0;
+            virtual IProperty<bool, ISharedMenuItem>& separator() = 0;
+
+            // item management
             virtual void add(ISharedMenuItem) = 0;
             virtual void remove(ISharedMenuItem) = 0;
             virtual void clear() = 0;
-            virtual const std::vector<ISharedMenuItem>& items() const = 0;
-        };
-
-        class IMenuItem : public IMenuItemList
-        {
-        public:
-            virtual const std::string& text() const = 0;
-            virtual void text(const std::string& value) = 0;
-            virtual bool enabled() const = 0;
-            virtual void enabled(bool value) = 0;
-            virtual bool checked() const = 0;
-            virtual void checked(bool value) = 0;
-            virtual bool defaultItem() const = 0;
-            virtual void defaultItem(bool value) = 0;
-            virtual bool separator() const = 0;
-            virtual void separator(bool value) = 0;
-            virtual const std::vector<ISharedMenuItem>& items() const = 0;
+            virtual IReadOnlyProperty<std::vector<ISharedMenuItem>, ISharedMenuItem>& items() = 0;
 
             // events
-            virtual IEvent<ISharedMenuItem>& ChangedEvent() = 0;
             virtual IEvent<ISharedMenuItem>& ClickEvent() = 0;
+
+            // internal
+            virtual std::shared_ptr<MenuItemImpl> impl() = 0;
         };
 
         class MenuItem :
@@ -49,27 +44,29 @@ namespace dlgcpp
             virtual ~MenuItem();
 
             // IMenuItem impl.
-            const std::string& text() const override;
-            void text(const std::string& text) override;
-            bool enabled() const override;
-            void enabled(bool value) override;
-            bool checked() const override;
-            void checked(bool value) override;
-            bool defaultItem() const override;
-            void defaultItem(bool value) override;
-            bool separator() const override;
-            void separator(bool value) override;
+            IProperty<std::string, ISharedMenuItem>& text() override;
+            IProperty<bool, ISharedMenuItem>& enabled() override;
+            IProperty<bool, ISharedMenuItem>& checked() override;
+            IProperty<bool, ISharedMenuItem>& defaultItem() override;
+            IProperty<bool, ISharedMenuItem>& separator() override;
+            IReadOnlyProperty<std::vector<ISharedMenuItem>, ISharedMenuItem>& items() override;
             void add(ISharedMenuItem item) override;
             void remove(ISharedMenuItem item) override;
             void clear() override;
-            const std::vector<ISharedMenuItem>& items() const override;
-
-            // events
-            IEvent<ISharedMenuItem>& ChangedEvent() override;
+            std::shared_ptr<MenuItemImpl> impl() override;
             IEvent<ISharedMenuItem>& ClickEvent() override;
 
         private:
             std::shared_ptr<MenuItemImpl> _impl;
+
+            Property<std::string, ISharedMenuItem> _text;
+            Property<bool, ISharedMenuItem> _enabled;
+            Property<bool, ISharedMenuItem> _checked;
+            Property<bool, ISharedMenuItem> _defaultItem;
+            Property<bool, ISharedMenuItem> _separator;
+            Property<std::vector<ISharedMenuItem>, ISharedMenuItem> _items;
+
+            Event<ISharedMenuItem> _clickEvent;
         };
     }
 }
