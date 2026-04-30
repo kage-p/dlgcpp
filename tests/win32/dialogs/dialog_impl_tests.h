@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mocks/fake_dialog.h"
-#include "utfw/unit_test.h"
+#include "unit_test.h"
 #include "win32/dialogs/dialog_impl.h"
 
 namespace dlgcpp

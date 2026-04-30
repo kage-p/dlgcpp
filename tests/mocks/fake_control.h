@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dlgcpp/controls/control.h"
-#include "utfw/unit_test.h"
+#include "unit_test.h"
 
 #pragma push_macro("CreateEvent")
 

@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(src_files
+    unit_test.cpp
+    unit_test.h
     point_tests.cpp
     point_tests.h
     position_tests.cpp
@@ -84,14 +86,14 @@ add_executable(${target} ${src_files} ${platform_src})
 target_compile_definitions(${target} PRIVATE UNICODE _UNICODE)
 
 target_link_libraries(${target} PRIVATE libdlgcpp)
-target_link_libraries(${target} PRIVATE libutfw)
+target_link_libraries(${target} PRIVATE gmock)
+target_link_libraries(${target} PRIVATE gtest_main)
 
 target_include_directories(${target} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(${target} PRIVATE ${platform_includes})
-target_include_directories(${target} PRIVATE "$<TARGET_PROPERTY:libdlgcpp,SOURCE_DIR>")
-target_include_directories(${target} PRIVATE "$<TARGET_PROPERTY:libutfw,SOURCE_DIR>")
 
 if (WIN32)
+    # Access internals
     target_include_directories(${target} PRIVATE "$<TARGET_PROPERTY:libdlgcpp,SOURCE_DIR>/win32")
 endif()
 
