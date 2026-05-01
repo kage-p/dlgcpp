@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dlgcpp/dialogs/dialog.h"
-#include "support/unit_test.h"
+#include "unit_test.h"
 
 namespace dlgcpp
 {

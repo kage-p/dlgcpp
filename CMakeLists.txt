@@ -24,7 +24,7 @@ endif()
 
 if (DLGCPP_TESTS)
     enable_testing()
-    add_subdirectory(3rdparty/utframework)
+    add_subdirectory(3rdparty/googletest)
     add_subdirectory(tests)
 endif()
 

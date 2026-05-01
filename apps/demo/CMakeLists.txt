@@ -74,6 +74,10 @@ endif()
 
 add_executable(${target} ${src_files} ${other})
 
+if (WIN32)
+    set_target_properties(${target} PROPERTIES WIN32_EXECUTABLE TRUE)
+endif()
+
 # requires unicode
 target_compile_definitions(${target} PRIVATE UNICODE _UNICODE)
 

@@ -1,6 +1,6 @@
 #include "convert_tests.h"
 #include "dlgcpp/dialogs/dialog.h"
-#include "win32/utility/convert.h"
+#include "utility/convert.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::dialogs;
