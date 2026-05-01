@@ -1,9 +1,9 @@
+#include "controls/control_impl.h"
 #include "dialog_impl_tests.h"
 #include "mocks/fake_control.h"
 #include "mocks/mock_dialog.h"
-#include "win32/controls/control_impl.h"
-#include "win32/utility/convert.h"
-#include "win32/utility/string_encoder.h"
+#include "utility/convert.h"
+#include "utility/string_encoder.h"
 
 using namespace dlgcpp;
 using namespace dlgcpp::dialogs;

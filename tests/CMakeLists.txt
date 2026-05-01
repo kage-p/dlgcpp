@@ -93,7 +93,7 @@ target_include_directories(${target} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(${target} PRIVATE ${platform_includes})
 
 if (WIN32)
-    # Access internals
+    # Access internals (Windows-specific))
     target_include_directories(${target} PRIVATE "$<TARGET_PROPERTY:libdlgcpp,SOURCE_DIR>/win32")
 endif()
 
