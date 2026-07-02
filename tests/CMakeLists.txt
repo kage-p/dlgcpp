@@ -1,5 +1,22 @@
 cmake_minimum_required(VERSION 3.27)
 include(GoogleTest)
+include(FetchContent)
+
+# Prefer an existing GTest installation (system, vcpkg, Conan, consumer-provided, etc.).
+# Only fetch from source when nothing is found.
+find_package(GTest CONFIG QUIET)
+if(NOT GTest_FOUND)
+    message(STATUS "GTest not found locally - fetching via FetchContent")
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG        v1.15.2
+        GIT_SHALLOW    TRUE
+    )
+    # Keep googletest from overriding our CRT settings on Windows
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+endif()
 
 set(target dlgcpp_tests)
 
