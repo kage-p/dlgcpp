@@ -1,10 +1,10 @@
 
 #include "unit_test.h"
 
-#include <string>
 #include <fstream>
-#include <sstream>
 #include <locale>
+#include <sstream>
+#include <string>
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -12,17 +12,8 @@
 #include <Windows.h>
 #endif
 
-// Android note: unsupported for Android r21 or lower
-// See https://android.googlesource.com/platform/ndk/+/master/docs/Roadmap.md
-#if __cplusplus > 201402L // cpp17
 #include <filesystem>
 using namespace std::filesystem;
-#else
-// MSVC does not correctly set __cplusplus
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-#include <experimental/filesystem>
-using namespace std::experimental::filesystem;
-#endif
 
 using namespace UnitTestSupport;
 
@@ -60,9 +51,9 @@ std::string CUnitTest::getTextFileData(const std::string& fileName)
 {
     std::ifstream file(fileName);
 
-    if (!file.is_open() )
+    if (!file.is_open())
         return std::string();
-    
+
     std::stringstream buffer;
     buffer << file.rdbuf();
 
@@ -80,7 +71,7 @@ std::vector<std::string> CUnitTest::getTextFileList(const std::string& fileName)
     std::vector<std::string> results;
 
     std::ifstream file(fileName);
-    
+
     if (!file.is_open())
         return results;
 
@@ -133,7 +124,7 @@ bool CUnitTest::setupFolder(const std::string& path)
         create_directories(path);
         return true;
     }
-    catch (std::exception &ex)
+    catch (std::exception& ex)
     {
         // cannot remove
         std::cout << "CUnitTest::setupFolder(): Failed to create directory " << path << ". Error: " << ex.what() << std::endl;
@@ -157,11 +148,10 @@ bool CUnitTest::cleanupFolder(const std::string& path)
         remove_all(path);
         return true;
     }
-    catch (std::exception &ex)
+    catch (std::exception& ex)
     {
         // cannot remove
         std::cout << "CUnitTest::cleanupFolder(): Failed to remove directory " << path << ". Error: " << ex.what() << std::endl;
         return false;
     }
 }
-

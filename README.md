@@ -3,7 +3,7 @@
 
 DLGCPP allows you to construct your user interfaces quickly and reliably and with less complexity.
 
-The framework is intended to be lightweight, using pure C++17 constructs and the native Win32 API. It does not contain any third-party dependencies
+The framework is intended to be lightweight, using pure C++20 constructs and the native Win32 API. It does not contain any third-party dependencies
 
 ## Syntax 
 
@@ -75,4 +75,4 @@ DLGCPP is open source and licensed under the Apache 2.0 permissive license. You 
 
 If you do use DLGCPP, please include a reference to the author somewhere in your application, similar to:
 
-    Portions use the DLGCPP library, (c) Kevin Peel 2024. See www.kgpsoftware.com for details
+    Portions use the DLGCPP library, (c) Kevin Peel 2026. See www.kgpsoftware.com for details
